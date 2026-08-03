@@ -43,7 +43,9 @@ export async function createGame(
   mode: import('../types/game').GameMode,
   totalRounds: number,
   roundDurationMinutes: number,
-  secretTalkDurationMinutes: number
+  secretTalkDurationMinutes: number,
+  hasGM: boolean,
+  hostName: string
 ): Promise<string> {
   const gameId = Math.random().toString(36).slice(2, 8).toUpperCase()
   const gameRef = ref(db, `games/${gameId}`)
@@ -53,6 +55,7 @@ export async function createGame(
     playerCount,
     mode,
     phase: 'lobby',
+    hasGM,
     totalRounds,
     roundStartAt: null,
     roundDurationMinutes,
@@ -65,8 +68,8 @@ export async function createGame(
     result: null,
   })
 
-  // host joins as first player
-  await joinGame(gameId, hostId, '（GM）', false)
+  // GMありの場合はGMとして参加、なしの場合はプレイヤーとして参加
+  await joinGame(gameId, hostId, hasGM ? '（GM）' : hostName, false)
 
   return gameId
 }

@@ -127,6 +127,7 @@ export interface GameState {
   playerCount: number
   mode: GameMode
   phase: GamePhase
+  hasGM: boolean
   totalRounds: number
   roundStartAt: number | null
   roundDurationMinutes: number

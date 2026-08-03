@@ -92,7 +92,7 @@ export default function LobbyPage() {
         )}
 
         {/* Actions */}
-        {!myPlayer?.isReady && !myPlayer?.isNPC && (
+        {!myPlayer?.isReady && !myPlayer?.isNPC && !(isHost && game.hasGM) && (
           <button
             onClick={() => setReady(gameId!, uid)}
             className="w-full bg-[#2a1040] hover:bg-[#3a1550] border border-purple-700 text-purple-200 rounded-xl py-3 mb-3 text-sm transition-colors"
@@ -112,7 +112,9 @@ export default function LobbyPage() {
         )}
 
         {!isHost && myPlayer?.isReady && (
-          <p className="text-center text-purple-500 text-sm py-3">GMのゲーム開始を待っています…</p>
+          <p className="text-center text-purple-500 text-sm py-3">
+            {game.hasGM ? 'GMのゲーム開始を待っています…' : 'ゲーム開始を待っています…'}
+          </p>
         )}
       </div>
     </div>
