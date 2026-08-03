@@ -9,12 +9,12 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleCreate() {
+  async function handleCreate(hasGM: boolean) {
     if (!playerName.trim()) { setError('お名前を入力してください'); return }
     setLoading(true)
     try {
       const uid = await signIn()
-      const gameId = await createGame(uid, 5, 'normal', 3, 20, 10)
+      const gameId = await createGame(uid, 5, 'normal', 3, 20, 10, hasGM, playerName)
       navigate(`/lobby/${gameId}?uid=${uid}&name=${encodeURIComponent(playerName)}`)
     } catch (e) {
       setError('ゲームの作成に失敗しました')
@@ -62,13 +62,22 @@ export default function HomePage() {
         </div>
 
         {/* Create game */}
-        <button
-          onClick={handleCreate}
-          disabled={loading}
-          className="w-full bg-purple-700 hover:bg-purple-600 active:bg-purple-800 disabled:opacity-50 text-white font-medium rounded-xl py-3 mb-3 transition-colors text-sm"
-        >
-          ゲームを作成する（GM）
-        </button>
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => handleCreate(true)}
+            disabled={loading}
+            className="flex-1 bg-purple-700 hover:bg-purple-600 active:bg-purple-800 disabled:opacity-50 text-white font-medium rounded-xl py-3 transition-colors text-sm"
+          >
+            作成（GM）
+          </button>
+          <button
+            onClick={() => handleCreate(false)}
+            disabled={loading}
+            className="flex-1 bg-[#2a1040] hover:bg-[#3a1550] active:bg-[#1a0a30] disabled:opacity-50 border border-purple-600 text-purple-200 font-medium rounded-xl py-3 transition-colors text-sm"
+          >
+            作成（GMなし）
+          </button>
+        </div>
 
         <div className="flex items-center gap-2 mb-3">
           <div className="flex-1 h-px bg-purple-900" />
