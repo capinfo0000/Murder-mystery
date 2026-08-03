@@ -37,29 +37,20 @@ export async function signIn(): Promise<string> {
 
 // ── game creation ───────────────────────────────────────────────────────────
 
-export async function createGame(
-  hostId: string,
-  playerCount: number,
-  mode: import('../types/game').GameMode,
-  totalRounds: number,
-  roundDurationMinutes: number,
-  secretTalkDurationMinutes: number,
-  hasGM: boolean,
-  hostName: string
-): Promise<string> {
+export async function createGame(hostId: string): Promise<string> {
   const gameId = Math.random().toString(36).slice(2, 8).toUpperCase()
   const gameRef = ref(db, `games/${gameId}`)
 
   await set(gameRef, {
     hostId,
-    playerCount,
-    mode,
+    playerCount: 5,
+    mode: 'normal',
     phase: 'lobby',
-    hasGM,
-    totalRounds,
+    hasGM: false,
+    totalRounds: 3,
     roundStartAt: null,
-    roundDurationMinutes,
-    secretTalkDurationMinutes,
+    roundDurationMinutes: 20,
+    secretTalkDurationMinutes: 10,
     players: {},
     scenario: null,
     cards: {},
@@ -68,10 +59,28 @@ export async function createGame(
     result: null,
   })
 
-  // GMありの場合はGMとして参加、なしの場合はプレイヤーとして参加
-  await joinGame(gameId, hostId, hasGM ? '（GM）' : hostName, false)
-
   return gameId
+}
+
+export async function updateGameSettings(
+  gameId: string,
+  hostId: string,
+  settings: {
+    playerCount?: number
+    mode?: import('../types/game').GameMode
+    hasGM?: boolean
+    roundDurationMinutes?: number
+    secretTalkDurationMinutes?: number
+    totalRounds?: number
+  }
+): Promise<void> {
+  const snap = await get(ref(db, `games/${gameId}/hostId`))
+  if (snap.val() !== hostId) return
+  const updates: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(settings)) {
+    if (v !== undefined) updates[`games/${gameId}/${k}`] = v
+  }
+  await update(ref(db), updates)
 }
 
 export async function joinGame(
@@ -99,10 +108,11 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   const humanPlayers = Object.entries(state.players).filter(([, p]) => !p.isNPC)
   const humanCount = humanPlayers.length
   const totalCount = state.playerCount
+  const npcCount = Math.min(totalCount - humanCount, 3)
 
-  // fill missing slots with NPC
+  // fill missing slots with NPC (max 3)
   const existingNPCs = Object.keys(state.players).filter(id => state.players[id].isNPC).length
-  for (let i = existingNPCs; i < totalCount - humanCount; i++) {
+  for (let i = existingNPCs; i < npcCount; i++) {
     await joinGame(gameId, `npc_${uuid().slice(0, 6)}`, `NPC${i + 1}`, true)
   }
 
