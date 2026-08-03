@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { subscribeGame, submitVote, finalizeResult } from '../services/firebase'
 import type { CharacterSlot, GameState, VoteData } from '../types/game'
 import { CHARACTERS } from '../data/characters'
@@ -9,6 +9,7 @@ export default function VotingPage() {
   const [searchParams] = useSearchParams()
   const uid = searchParams.get('uid') ?? ''
 
+  const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<CharacterSlot | null>(null)
   const [accuseAll, setAccuseAll] = useState(false)
@@ -19,12 +20,13 @@ export default function VotingPage() {
     return subscribeGame(gameId, setGame)
   }, [gameId])
 
+  useEffect(() => {
+    if (game?.phase === 'result') navigate(`/result/${gameId}?uid=${uid}`, { replace: true })
+  }, [game, gameId, uid, navigate])
+
   if (!game) return <Loading />
 
-  if (game.phase === 'result') {
-    window.location.href = `/result/${gameId}?uid=${uid}`
-    return null
-  }
+  if (game.phase === 'result') return null
 
   const isHost = game.hostId === uid
   const mySlot = game.players[uid]?.characterSlot

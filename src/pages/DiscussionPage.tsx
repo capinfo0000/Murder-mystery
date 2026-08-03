@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   subscribeGame, advancePhase, shareCardWithAll, drawFromDeck,
 } from '../services/firebase'
@@ -27,6 +27,7 @@ export default function DiscussionPage() {
   const [searchParams] = useSearchParams()
   const uid = searchParams.get('uid') ?? ''
 
+  const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
   const [tab, setTab] = useState<'public' | 'hand' | 'deck' | 'secret'>('public')
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
@@ -35,6 +36,14 @@ export default function DiscussionPage() {
     if (!gameId) return
     return subscribeGame(gameId, setGame)
   }, [gameId])
+
+  useEffect(() => {
+    if (!game) return
+    if (game.phase === 'voting') navigate(`/vote/${gameId}?uid=${uid}`, { replace: true })
+    else if (game.phase === 'result') navigate(`/result/${gameId}?uid=${uid}`, { replace: true })
+    else if (!['round1', 'secret_talk', 'round2', 'round3'].includes(game.phase))
+      navigate(`/handout/${gameId}?uid=${uid}`, { replace: true })
+  }, [game, gameId, uid, navigate])
 
   // Timer
   useEffect(() => {
@@ -76,19 +85,7 @@ export default function DiscussionPage() {
 
   if (!game) return <Loading />
 
-  // redirect when phase is out of range
-  if (game.phase === 'voting') {
-    window.location.href = `/vote/${gameId}?uid=${uid}`
-    return null
-  }
-  if (game.phase === 'result') {
-    window.location.href = `/result/${gameId}?uid=${uid}`
-    return null
-  }
-  if (!['round1', 'secret_talk', 'round2', 'round3'].includes(game.phase)) {
-    window.location.href = `/handout/${gameId}?uid=${uid}`
-    return null
-  }
+  if (!['round1', 'secret_talk', 'round2', 'round3'].includes(game.phase)) return null
 
   const isHost = game.hostId === uid
   const myPlayer = game.players[uid]

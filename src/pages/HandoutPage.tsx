@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { subscribeGame, advancePhase, setReady } from '../services/firebase'
 import type { GameState, CharacterSlot } from '../types/game'
 import { CHARACTERS } from '../data/characters'
@@ -14,6 +14,7 @@ export default function HandoutPage() {
   const [searchParams] = useSearchParams()
   const uid = searchParams.get('uid') ?? ''
 
+  const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
   const [tab, setTab] = useState<'character' | 'alibi' | 'cards'>('character')
 
@@ -22,13 +23,15 @@ export default function HandoutPage() {
     return subscribeGame(gameId, setGame)
   }, [gameId])
 
+  useEffect(() => {
+    if (game && game.phase !== 'handout') {
+      navigate(`/game/${gameId}?uid=${uid}`, { replace: true })
+    }
+  }, [game, gameId, uid, navigate])
+
   if (!game) return <Loading />
 
-  // redirect when phase advances
-  if (game.phase !== 'handout') {
-    window.location.href = `/game/${gameId}?uid=${uid}`
-    return null
-  }
+  if (game.phase !== 'handout') return null
 
   const myPlayer = game.players[uid]
   const mySlot = myPlayer?.characterSlot
