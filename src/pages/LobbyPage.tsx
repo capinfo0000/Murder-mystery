@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { subscribeGame, joinGame, startGame, setReady, updateGameSettings } from '../services/firebase'
 import type { GameState, GameMode } from '../types/game'
 
@@ -8,6 +8,7 @@ export default function LobbyPage() {
   const [searchParams] = useSearchParams()
   const uid = searchParams.get('uid') ?? ''
 
+  const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
   const [nameInput, setNameInput] = useState('')
   const [joining, setJoining] = useState(false)
@@ -18,19 +19,26 @@ export default function LobbyPage() {
     return subscribeGame(gameId, setGame)
   }, [gameId])
 
+  useEffect(() => {
+    if (game && game.phase !== 'lobby') {
+      navigate(`/handout/${gameId}?uid=${uid}`, { replace: true })
+    }
+  }, [game, gameId, uid, navigate])
+
   const isHost = game?.hostId === uid
   const myPlayer = game?.players?.[uid]
   const players = Object.entries(game?.players ?? {})
   const humanPlayers = players.filter(([, p]) => !p.isNPC)
   const humanCount = humanPlayers.length
-  const allReady = humanCount > 0 && humanPlayers.every(([, p]) => p.isReady)
+  // GMあり: ホスト自身は準備不要。GMなし: 全員準備必要
+  const playingHumans = (game?.hasGM && isHost)
+    ? humanPlayers.filter(([pid]) => pid !== uid)
+    : humanPlayers
+  const allReady = playingHumans.every(([, p]) => p.isReady)
 
   if (!game) return <Loading />
 
-  if (game.phase !== 'lobby') {
-    window.location.href = `/handout/${gameId}?uid=${uid}`
-    return null
-  }
+  if (game.phase !== 'lobby') return null
 
   async function handleJoin() {
     if (!nameInput.trim()) { setNameError('お名前を入力してください'); return }
@@ -55,10 +63,14 @@ export default function LobbyPage() {
     await updateGameSettings(gameId, uid, { [key]: value })
   }
 
-  const canStart = allReady && humanCount >= (game.hasGM ? 1 : 4)
+  // GMあり: playingHumans(非GM)全員OK → 開始可能（0人でも開始可）
+  // GMなし: 4人以上の人間プレイヤー全員が準備完了
+  const canStart = game.hasGM
+    ? allReady
+    : allReady && humanCount >= 4
   const startLabel = !allReady
-    ? '全員の準備完了を待っています…'
-    : humanCount < 4 && !game.hasGM
+    ? 'プレイヤーの準備完了を待っています…'
+    : !game.hasGM && humanCount < 4
     ? `あと${4 - humanCount}人必要です（GMなしは最低4人）`
     : 'ゲーム開始'
 
