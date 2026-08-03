@@ -105,13 +105,14 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   const state = snap.val() as GameState
   if (!state || state.hostId !== hostId) return
 
-  const humanPlayers = Object.entries(state.players).filter(([, p]) => !p.isNPC)
+  const playersMap = state.players ?? {}
+  const humanPlayers = Object.entries(playersMap).filter(([, p]) => !p.isNPC)
   const humanCount = humanPlayers.length
   const totalCount = state.playerCount
   const npcCount = Math.min(totalCount - humanCount, 3)
 
   // fill missing slots with NPC (max 3)
-  const existingNPCs = Object.keys(state.players).filter(id => state.players[id].isNPC).length
+  const existingNPCs = Object.keys(playersMap).filter(id => playersMap[id].isNPC).length
   for (let i = existingNPCs; i < npcCount; i++) {
     await joinGame(gameId, `npc_${uuid().slice(0, 6)}`, `NPC${i + 1}`, true)
   }

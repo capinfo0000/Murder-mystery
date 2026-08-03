@@ -19,7 +19,7 @@ export default function LobbyPage() {
   }, [gameId])
 
   const isHost = game?.hostId === uid
-  const myPlayer = game?.players[uid]
+  const myPlayer = game?.players?.[uid]
   const players = Object.entries(game?.players ?? {})
   const humanPlayers = players.filter(([, p]) => !p.isNPC)
   const humanCount = humanPlayers.length
