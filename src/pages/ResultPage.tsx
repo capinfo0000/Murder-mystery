@@ -1,0 +1,205 @@
+import { useEffect, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { subscribeGame } from '../services/firebase'
+import type { GameState, CharacterSlot } from '../types/game'
+import { CHARACTERS } from '../data/characters'
+import { LOCATION_NAMES } from '../data/locations'
+
+export default function ResultPage() {
+  const { gameId } = useParams<{ gameId: string }>()
+  const [searchParams] = useSearchParams()
+  const uid = searchParams.get('uid') ?? ''
+  const [game, setGame] = useState<GameState | null>(null)
+  const [tab, setTab] = useState<'scores' | 'truth' | 'cards'>('scores')
+
+  useEffect(() => {
+    if (!gameId) return
+    return subscribeGame(gameId, setGame)
+  }, [gameId])
+
+  if (!game) return <Loading />
+  if (!game.result) return <Loading />
+
+  const { result, players, scenario, cards } = game
+  const sortedPlayers = Object.entries(result.scores).sort(
+    (a, b) => b[1].total - a[1].total
+  )
+  const isWinner = (pid: string) => result.winnerIds.includes(pid)
+
+  return (
+    <div className="min-h-screen bg-[#0f0a1a] pb-16">
+      {/* Header */}
+      <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-4 text-center">
+        <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
+          {result.mainKillerCaught ? '✓ 犯人逮捕成功' : '✗ 犯人逃走'}
+        </div>
+        <p className="text-purple-400 text-xs">
+          {result.mainKillerCaught
+            ? '真犯人への最多票が一致しました'
+            : '無実の人物への最多票が集まりました'}
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-purple-900 bg-[#12091e]">
+        {(['scores', 'truth', 'cards'] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 py-2.5 text-xs font-medium transition-colors ${tab === t ? 'text-purple-200 border-b-2 border-purple-500' : 'text-purple-600'}`}
+          >
+            {t === 'scores' ? 'スコア' : t === 'truth' ? '真相' : 'カード真偽'}
+          </button>
+        ))}
+      </div>
+
+      <div className="max-w-md mx-auto px-4 py-4">
+        {/* SCORES */}
+        {tab === 'scores' && (
+          <div className="space-y-2">
+            {sortedPlayers.map(([playerId, score], i) => {
+              const player = players[playerId]
+              if (!player) return null
+              const isMe = playerId === uid
+              const slot = player.characterSlot
+              const char = slot ? CHARACTERS[slot] : null
+              return (
+                <div
+                  key={playerId}
+                  className={`rounded-xl p-3 border ${
+                    isWinner(playerId)
+                      ? 'border-amber-500 bg-amber-900/20'
+                      : 'border-purple-900 bg-[#1a0f2e]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-purple-500 text-sm w-5">{i + 1}.</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${isMe ? 'text-purple-100' : 'text-purple-200'}`}>
+                          {player.name}
+                          {isMe && <span className="text-purple-500 text-xs ml-1">（あなた）</span>}
+                        </span>
+                        {isWinner(playerId) && (
+                          <span className="text-amber-400 text-xs">👑 勝者</span>
+                        )}
+                      </div>
+                      {char && (
+                        <span className="text-purple-500 text-xs">{char.name} ({slot}枠)</span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-purple-100 text-lg font-bold">{score.total}pt</div>
+                      <div className="text-purple-600 text-[10px]">
+                        基本{score.base} + 立回{score.tachimawari} + ボーナス{score.bonus}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* TRUTH */}
+        {tab === 'truth' && scenario && (
+          <div className="space-y-4">
+            {/* Killers */}
+            <Section title="🔪 真犯人">
+              {scenario.killers.map(k => (
+                <div key={k.slot} className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 mb-2">
+                  <div className="text-red-300 font-medium text-sm mb-1">
+                    {CHARACTERS[k.slot]?.name} ({k.slot}枠)
+                  </div>
+                  <div className="text-red-200/70 text-xs space-y-0.5">
+                    <p>被害者: {CHARACTERS[k.victimSlot]?.name}</p>
+                    <p>凶器: {k.weapon.name}</p>
+                    <p>場所: {LOCATION_NAMES[k.location]}</p>
+                    <p>偽装: {k.weapon.disguisedAs}</p>
+                  </div>
+                </div>
+              ))}
+            </Section>
+
+            {/* All secret actions */}
+            <Section title="全員の秘密行動">
+              {(Object.entries(scenario.secretActions) as [CharacterSlot, string][]).map(([slot, action]) => (
+                <div key={slot} className="flex gap-2 py-1.5 border-b border-purple-900/30 last:border-0">
+                  <span className="text-purple-500 text-xs w-20 shrink-0">{CHARACTERS[slot]?.name}</span>
+                  <span className="text-purple-300 text-xs">{action}</span>
+                </div>
+              ))}
+            </Section>
+
+            {/* Alibis */}
+            <Section title="真のアリバイ一覧">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-purple-500">
+                      <th className="text-left pb-1">人物</th>
+                      <th className="text-left pb-1">T1</th>
+                      <th className="text-left pb-1 text-red-400">T2</th>
+                      <th className="text-left pb-1">T3</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(Object.entries(scenario.alibis) as [CharacterSlot, { T1: string; T2: string; T3: string }][]).map(([slot, ali]) => (
+                      <tr key={slot} className="text-purple-300">
+                        <td className="py-0.5 pr-2">{CHARACTERS[slot]?.name}</td>
+                        <td className="py-0.5 pr-2">{(LOCATION_NAMES as Record<string, string>)[ali.T1] ?? ali.T1}</td>
+                        <td className="py-0.5 pr-2 text-red-300">{(LOCATION_NAMES as Record<string, string>)[ali.T2] ?? ali.T2}</td>
+                        <td className="py-0.5">{(LOCATION_NAMES as Record<string, string>)[ali.T3] ?? ali.T3}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Section>
+          </div>
+        )}
+
+        {/* CARDS TRUE/FALSE */}
+        {tab === 'cards' && (
+          <div className="space-y-2">
+            <p className="text-purple-500 text-xs">全カードの真偽を公開します。感想戦にご活用ください。</p>
+            {Object.values(cards ?? {}).map(card => (
+              <div
+                key={card.id}
+                className={`rounded-xl p-3 border text-xs ${
+                  card.isTrue
+                    ? 'border-green-900/60 bg-green-950/20'
+                    : 'border-red-900/40 bg-red-950/10'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <span className={`shrink-0 mt-0.5 ${card.isTrue ? 'text-green-400' : 'text-red-400'}`}>
+                    {card.isTrue ? '✓ 真実' : '✗ 嘘'}
+                  </span>
+                  <span className="text-purple-200 leading-relaxed">{card.content}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-[#1a0f2e] border border-purple-900 rounded-xl p-4">
+      <h3 className="text-purple-300 text-xs font-medium mb-3">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function Loading() {
+  return (
+    <div className="min-h-screen bg-[#0f0a1a] flex items-center justify-center">
+      <div className="text-purple-400 text-sm animate-pulse">読み込み中…</div>
+    </div>
+  )
+}
