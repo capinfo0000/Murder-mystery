@@ -95,14 +95,16 @@ function connToText(type: ConnectionType, fromName: string): string {
 }
 
 function generateConnections(slots: CharacterSlot[]): PlayerConnection[] {
-  if (slots.length < 2 || Math.random() < 0.5) return []
-  const count = Math.random() < 0.7 ? 1 : 2
+  if (slots.length < 2) return []
+  const count = Math.floor(Math.random() * 3)  // 0, 1, 2 — equally likely
+  if (count === 0) return []
   const result: PlayerConnection[] = []
   const used = new Set<string>()
   const shuffled = shuffle(slots)
   const types: ConnectionType[] = [
     'lookout', 'preparation', 'silence_deal',
     'weapon_supply', 'victim_lure', 'map_provision',
+    'false_alibi', 'distraction', 'evidence_disposal', 'key_provision',
   ]
 
   for (let i = 0; i < count; i++) {
@@ -172,7 +174,7 @@ export function generateScenario(
     // Hitman killed 2–4 NPCs; rest died naturally (noise)
     const numMurderNpcs = Math.floor(Math.random() * 3) + 2
     const murderNpcs = shuffledNpcs.slice(0, numMurderNpcs)
-    const naturalNpcs = shuffledNpcs.slice(numMurderNpcs, numMurderNpcs + Math.floor(Math.random() * 2) + 1)
+    const naturalNpcs = shuffledNpcs.slice(numMurderNpcs, numMurderNpcs + Math.floor(Math.random() * 3))
 
     npcVictims = [
       ...murderNpcs.map(npc => ({
@@ -193,24 +195,28 @@ export function generateScenario(
   } else {
     const shuffledNpcs = shuffle(EXTRA_NPCS)
     const numKillers = killerSlots.length
-    const dualActive = numKillers >= 2 && Math.random() < 0.4
+    const dualActive = numKillers >= 2 && Math.random() < 0.5
 
     if (dualActive) {
-      // killerSlots[0] (poison) and killerSlots[1] (weapon) share npcVictims[0]
-      // remaining killers each get their own NPC
-      const sharedNpc = shuffledNpcs[0]
-      const soloNpcs = shuffledNpcs.slice(1, numKillers - 1)  // killers[2+]
-      const naturalNpcs = shuffledNpcs.slice(numKillers - 1, numKillers - 1 + Math.floor(Math.random() * 2) + 1)
+      type DualCategory = 'poison' | 'physical' | 'environmental'
+      const POISON_NPC_IDS = ['cook', 'maid_haru', 'gardener', 'secretary', 'footman', 'accountant']
+      const PHYSICAL_NPC_IDS = ['lawyer', 'maid_tsuki', 'night_guard']
+      const ENVIRONMENTAL_NPC_IDS = ['driver']
+      const PATTERNS_BY_CATEGORY: Record<DualCategory, DualKillerPattern[]> = {
+        poison: ['poison_then_weapon', 'weapon_found_dead', 'weapon_then_poison', 'poison_failed_weapon_killed'],
+        physical: ['double_weapon_first_failed', 'double_weapon_overlap'],
+        environmental: ['environment_then_weapon'],
+      }
+      const chosenCategory = pickRandom<DualCategory>(['poison', 'physical', 'environmental'])
+      const preferredIds = chosenCategory === 'poison' ? POISON_NPC_IDS
+        : chosenCategory === 'physical' ? PHYSICAL_NPC_IDS
+        : ENVIRONMENTAL_NPC_IDS
+      const sharedNpc = shuffledNpcs.find(n => preferredIds.includes(n.id)) ?? shuffledNpcs[0]
+      const remainingNpcs = shuffledNpcs.filter(n => n.id !== sharedNpc.id)
+      const soloNpcs = remainingNpcs.slice(0, numKillers - 2)  // killers[2+]
+      const naturalNpcs = remainingNpcs.slice(numKillers - 2, numKillers - 2 + Math.floor(Math.random() * 3))
+      const chosenDualPattern = pickRandom(PATTERNS_BY_CATEGORY[chosenCategory])
 
-      const DUAL_PATTERNS: DualKillerPattern[] = [
-        'poison_then_weapon',
-        'weapon_found_dead',
-        'weapon_then_poison',
-        'poison_failed_weapon_killed',
-        'double_weapon_first_failed',
-        'double_weapon_overlap',
-        'environment_then_weapon',
-      ]
       npcVictims = [
         {
           name: sharedNpc.role,
@@ -218,9 +224,9 @@ export function generateScenario(
           apparentCause: sharedNpc.disguisedMurderCause,
           isRelatedToCase: true,
           trueMurderDetail: undefined,  // filled after killers are built
-          killerSlot: killerSlots[0],   // poison killer is "primary"
+          killerSlot: killerSlots[0],
           secondKillerSlot: killerSlots[1],
-          dualKillerPattern: DUAL_PATTERNS[Math.floor(Math.random() * DUAL_PATTERNS.length)],
+          dualKillerPattern: chosenDualPattern,
         },
         ...soloNpcs.map((npc, i) => ({
           name: npc.role,
@@ -240,7 +246,7 @@ export function generateScenario(
     } else {
       // Normal: each killer gets their own NPC
       const murderNpcs = shuffledNpcs.slice(0, numKillers)
-      const naturalNpcs = shuffledNpcs.slice(numKillers, numKillers + Math.floor(Math.random() * 2) + 1)
+      const naturalNpcs = shuffledNpcs.slice(numKillers, numKillers + Math.floor(Math.random() * 3))
 
       npcVictims = [
         ...murderNpcs.map((npc, i) => ({
@@ -349,6 +355,9 @@ export function generateScenario(
         break
     }
     npcVictims[0] = { ...npcVictims[0], trueMurderDetail: detail }
+    if (dualPattern === 'environment_then_weapon') {
+      npcVictims[0] = { ...npcVictims[0], apparentCause: killers[0].weapon.disguisedAs }
+    }
   }
 
   // ── alibis ────────────────────────────────────────────────
