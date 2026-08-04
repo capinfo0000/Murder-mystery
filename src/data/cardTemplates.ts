@@ -518,13 +518,63 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'bg_022',
-    content: 'Aは若い頃に美術学校に通っていたという話がある。絵画の模写を繰り返していたと同期生が証言した。（Cへの疑惑を強める可能性あり）',
+    content: 'Aは若い頃に美術学校に通っていたという話がある。絵画の模写を繰り返していたと同期生が証言した。',
     category: 'background', relatedSlot: 'A', baseIsTrue: false,
   },
   {
     id: 'ph_023',
     content: 'BのカバンにE向けと思われる未開封の酒瓶が入っていた。ラベルに手書きの文字がある。（実際は贈り物用だった）',
     category: 'physical', relatedSlot: 'B', baseIsTrue: false,
+  },
+  {
+    id: 'al_020',
+    content: 'T2頃、絵画室のあたりで黒部に似た人物が廊下をうろついているのを見た。（暗くて顔まではわからなかった）',
+    category: 'alibi', relatedSlot: 'E', baseIsTrue: false,
+  },
+  {
+    id: 'al_021',
+    content: '氷室は「ワインの味の変化には敏感なんです」と笑いながら話していた。専門家並みの知識を披露した。',
+    category: 'alibi', relatedSlot: 'C', baseIsTrue: false,
+  },
+  {
+    id: 'ph_024',
+    content: '小夜の私物の引き出しに、封蝋の道具と見知らぬ家紋の印章が隠されていた。（館の調度品を修繕するための備品だった）',
+    category: 'physical', relatedSlot: 'D', baseIsTrue: false,
+  },
+  {
+    id: 'bg_023',
+    content: '蓮はかつて海外の醸造所で働いていたことがあると言われる。植物の発酵・蒸留に詳しいという話が出回っている。',
+    category: 'background', relatedSlot: 'F', baseIsTrue: false,
+  },
+  {
+    id: 'ps_015',
+    content: 'Eは被害者のワインを注ぐとき、わずかに手元を隠すような動きをしていたと複数の者が証言している。',
+    category: 'psychology', relatedSlot: 'E', baseIsTrue: false,
+  },
+  {
+    id: 'ps_016',
+    content: 'Aは食事の席でペンをいじりながら、紙の端に何かを素早く書いては消していた。緊張しているようには見えなかった。',
+    category: 'psychology', relatedSlot: 'A', baseIsTrue: false,
+  },
+  {
+    id: 'ph_025',
+    content: '麗華の荷物に、医薬品の添付文書が数枚混入していた。薬品名には印がつけられていた。（かかりつけ医への確認用だった）',
+    category: 'physical', relatedSlot: 'G', baseIsTrue: false,
+  },
+  {
+    id: 'bg_024',
+    content: '氷室は20代に一時期、錠前職人のいとこの家に居候していたという話がある。鍵の仕組みに詳しいと本人が言ったとか。',
+    category: 'background', relatedSlot: 'C', baseIsTrue: false,
+  },
+  {
+    id: 'al_022',
+    content: 'T1頃、金庫室の近くで白川に似た人物を見かけた者がいる。白川は「そちらには行っていない」と言い張った。',
+    category: 'alibi', relatedSlot: 'B', baseIsTrue: false,
+  },
+  {
+    id: 'ps_017',
+    content: '小夜は被害者のそばでワインのデキャンタを扱うとき、液体の色をやけに注意深く観察していた。',
+    category: 'psychology', relatedSlot: 'D', baseIsTrue: false,
   },
 
   // ───── 技術情報（technical）─────
