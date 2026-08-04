@@ -430,6 +430,43 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     category: 'victim', relatedSlot: null, baseIsTrue: false,
   },
 
+  // ───── 組織についての情報（外部犯時のみ真）─────
+  {
+    id: 'org_001',
+    content: '「組織」と呼ばれる国際的な犯罪集団が暗躍しているという情報がある。構成員は色を冠したコードネームで互いを呼び合い、上位の者ほど本名を知る者がいない。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_002',
+    content: '組織は口封じに一切の躊躇を見せない——証人・内通者・利用価値を失った者、誰であれ目障りになれば消される。地位も年齢も関係ない。それが組織の鉄則だ。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_003',
+    content: '組織の資金源は麻薬売買・武器密輸・資産洗浄と多岐にわたるとされる。複数国の当局が内偵を続けているが、いまだ中枢には届いていない。逮捕された者は必ず口を閉ざしたまま死ぬ。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_004',
+    content: '組織のメンバーは超一流の技術を持つとされる——毒物・偽装工作・証拠の完全消去。どれも痕跡を残さず実行できる専門家が揃っており、捜査当局すら手が出せない。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_005',
+    content: '「組織に近づいた者は最後には消される」——それが業界内での暗黙の了解だという。過去に組織との関係を公言した人物が相次いで「事故死」や「病死」を遂げている。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_006',
+    content: 'ある内部告発者の証言によれば、組織が人間に対して取る手段は二択しかないという——「脅して支配する」か「消す」か。従えるうちは使い、反旗を翻せばそれまでだ。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_007',
+    content: '組織は標的を殺す前に必ず周囲を調べ上げる。目撃者・家族・関係者——誰が「危険な証人」になりうるかを事前に洗い出し、必要であれば同時に処理する。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+
   // ───── 全員無実の示唆（外部犯時のみ真）─────
   {
     id: 'innocent_A',
