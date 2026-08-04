@@ -70,7 +70,7 @@ export function generateScenario(
 
     npcVictims = [
       ...murderNpcs.map((npc, i) => ({
-        name: npc.name,
+        name: npc.role,
         role: npc.role,
         apparentCause: npc.disguisedMurderCause,
         isRelatedToCase: true,
@@ -78,7 +78,7 @@ export function generateScenario(
         killerSlot: killerSlots[i],
       })),
       ...naturalNpcs.map(npc => ({
-        name: npc.name,
+        name: npc.role,
         role: npc.role,
         apparentCause: npc.naturalDeathCause,
         isRelatedToCase: false,
@@ -99,7 +99,7 @@ export function generateScenario(
     } else {
       // NPC victim (index matches killer index)
       const npc = npcVictims[i]
-      victimName = npc.name
+      victimName = npc.role
     }
 
     return {
