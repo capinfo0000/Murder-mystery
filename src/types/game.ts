@@ -153,6 +153,7 @@ export interface Scenario {
   secretActions: Partial<Record<CharacterSlot, string>>
   puzzleTargets?: Partial<Record<CharacterSlot, CharacterSlot>>
   outsideKiller?: boolean      // true when a hired hitman (not any player) committed all murders
+  suicide?: boolean            // true when the main victim took their own life
   connections?: PlayerConnection[]  // optional inter-player secret arrangements
   dualKillerInfo?: DualKillerInfo  // set when two killers independently targeted the same victim
   cooperationChain?: CooperationChain  // anonymous chain coordination between killers
@@ -192,6 +193,7 @@ export interface Player {
 
 export interface VoteData {
   killerSlots: CharacterSlot[]
+  suicideVote?: boolean
   puzzleAnswer?: Record<CharacterSlot, CharacterSlot>
   submittedAt?: number
 }
@@ -206,6 +208,7 @@ export interface ScoreBreakdown {
 export interface GameResult {
   mainKillerCaught: boolean
   outsideKillerCase?: boolean  // true when the scenario was an outside killer
+  suicideCase?: boolean        // true when the scenario was a suicide
   scores: Record<string, ScoreBreakdown>
   winnerIds: string[]
   trueScenario: Scenario

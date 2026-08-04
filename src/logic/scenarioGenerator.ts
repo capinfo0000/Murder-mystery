@@ -232,11 +232,12 @@ export function generateScenario(
   // ── killers ───────────────────────────────────────────────
   let killerSlots: CharacterSlot[]
   let outsideKiller = false
+  let suicide = false
   if (mode === 'puzzle') {
     killerSlots = [...slots]
   } else {
-    // 1-killer = 50%; remaining options (2..n-1 killers + outside killer) share 50%
-    const remainingOptions = slots.length - 1
+    // 1-killer = 50%; remaining options (2..n-1 killers + outside killer + suicide) share 50%
+    const remainingOptions = slots.length
     let roll: number
     if (remainingOptions === 0 || Math.random() < 0.5) {
       roll = 0
@@ -246,6 +247,9 @@ export function generateScenario(
     if (roll === slots.length - 1) {
       killerSlots = []
       outsideKiller = true
+    } else if (roll === slots.length) {
+      killerSlots = []
+      suicide = true
     } else {
       killerSlots = shuffledSlots.slice(0, roll + 1)
     }
@@ -267,6 +271,16 @@ export function generateScenario(
     victims = slots.map(slot => ({
       slot,
       background: pickRandom(VICTIM_BACKGROUNDS).detail,
+    }))
+  } else if (suicide) {
+    // 当主が自ら命を絶った夜 — 関係者は誰も殺されていない（0〜2件の自然死がノイズとして混入）
+    const shuffledNpcs = shuffle(EXTRA_NPCS)
+    const naturalNpcs = shuffledNpcs.slice(0, Math.floor(Math.random() * 3))
+    npcVictims = naturalNpcs.map(npc => ({
+      name: npc.role,
+      role: npc.role,
+      apparentCause: npc.naturalDeathCause,
+      isRelatedToCase: false,
     }))
   } else if (outsideKiller) {
     const shuffledNpcs = shuffle(EXTRA_NPCS)
@@ -489,7 +503,7 @@ export function generateScenario(
   }
 
   const cooperationChain =
-    !outsideKiller && mode !== 'puzzle' && killerSlots.length >= 2
+    !outsideKiller && !suicide && mode !== 'puzzle' && killerSlots.length >= 2
       ? generateCooperationChain(killerSlots)
       : undefined
 
@@ -525,7 +539,7 @@ export function generateScenario(
   ).slice(0, 3).map(n => ({ role: n.role }))
 
   // ── synopsis ──────────────────────────────────────────────────────────
-  const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, cooperationChain, slots.length)
+  const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, suicide, cooperationChain, slots.length)
 
   return {
     victims,
@@ -536,6 +550,7 @@ export function generateScenario(
     secretActions,
     puzzleTargets,
     outsideKiller: outsideKiller || undefined,
+    suicide: suicide || undefined,
     connections: connections.length > 0 ? connections : undefined,
     dualKillerInfo,
     cooperationChain: cooperationChain ?? undefined,
@@ -549,11 +564,16 @@ function generateSynopsis(
   killers: KillerInfo[],
   npcVictims: NpcVictim[],
   outsideKiller: boolean,
+  suicide: boolean,
   cooperationChain: CooperationChain | undefined | null,
   playerCount: number,
 ): string {
   const murderedNpcs = npcVictims.filter(v => v.isRelatedToCase)
   const mainApparentCause = killers[0]?.weapon.disguisedAs ?? '不審な死'
+
+  if (suicide) {
+    return `嵐の気配が漂う夜、紫苑館の当主・神条源太郎が自室で冷たくなっているのが発見された。死因は「${mainApparentCause.includes('自') ? mainApparentCause : '突然死（死因不明）'}」とされているが、遺書らしきものは見つかっていない。長年にわたり裏社会の組織と深い関係を持っていた当主の死には、外部からの圧力の影がちらつく——しかし${playerCount}名の滞在者全員に何かしらの後ろ暗い秘密がある夜、真相は霧の中に包まれている。`
+  }
 
   if (outsideKiller) {
     const npcCount = npcVictims.length

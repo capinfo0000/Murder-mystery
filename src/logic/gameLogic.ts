@@ -37,8 +37,13 @@ export function determineMainKillerCaught(state: GameState): boolean {
   const allVotes = Object.values(iVotes)
   const totalVoters = allVotes.length
 
+  if (scenario.suicide) {
+    const suicideCount = allVotes.filter(v => v.suicideVote === true).length
+    return totalVoters > 0 && suicideCount * 2 > totalVoters
+  }
+
   if (scenario.outsideKiller) {
-    const emptyCount = allVotes.filter(v => (v.killerSlots ?? []).length === 0).length
+    const emptyCount = allVotes.filter(v => (v.killerSlots ?? []).length === 0 && !v.suicideVote).length
     return totalVoters > 0 && emptyCount * 2 > totalVoters
   }
 
@@ -54,6 +59,7 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
 
   const scores: Record<string, ScoreBreakdown> = {}
   const isOutsideKiller = scenario.outsideKiller === true
+  const isSuicide = scenario.suicide === true
 
   // Killers excluded from majority in non-puzzle mode
   const iVotes = innocentVotes(state)
@@ -62,14 +68,19 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
 
   // Per-killer caught status
   const allKillerSlots = scenario.killers.map(k => k.slot)
-  const caught = isOutsideKiller ? [] : caughtSlots(allKillerSlots, iVotes)
-  const allCaught = !isOutsideKiller && allKillerSlots.length > 0 && caught.length === allKillerSlots.length
+  const caught = (isOutsideKiller || isSuicide) ? [] : caughtSlots(allKillerSlots, iVotes)
+  const allCaught = !isOutsideKiller && !isSuicide && allKillerSlots.length > 0 && caught.length === allKillerSlots.length
   const numCaught = caught.length
 
-  // Outside killer: did majority of innocent-voters vote nobody?
+  // Outside killer: did majority of innocent-voters vote nobody (and not suicide)?
   const outsideCaught = isOutsideKiller &&
     totalIVoters > 0 &&
-    allIVotes.filter(v => (v.killerSlots ?? []).length === 0).length * 2 > totalIVoters
+    allIVotes.filter(v => (v.killerSlots ?? []).length === 0 && !v.suicideVote).length * 2 > totalIVoters
+
+  // Suicide: did majority of innocent-voters vote suicide?
+  const suicideCaught = isSuicide &&
+    totalIVoters > 0 &&
+    allIVotes.filter(v => v.suicideVote === true).length * 2 > totalIVoters
 
   for (const [playerId, player] of Object.entries(players)) {
     if (player.isNPC || !player.characterSlot) continue
@@ -81,6 +92,8 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
     let base: number
     if (state.mode === 'puzzle') {
       base = 1  // puzzle: base is minimal; +10 bonus drives the outcome
+    } else if (isSuicide) {
+      base = suicideCaught ? 5 : 0
     } else if (isOutsideKiller) {
       base = outsideCaught ? 5 : 0
     } else if (role === 'killer') {

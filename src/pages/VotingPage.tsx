@@ -12,6 +12,7 @@ export default function VotingPage() {
   const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
   const [killerSlots, setKillerSlots] = useState<CharacterSlot[]>([])
+  const [suicideVote, setSuicideVote] = useState(false)
   // puzzle mode: victimSlot → killerSlot mapping
   const [puzzleAnswer, setPuzzleAnswer] = useState<Partial<Record<CharacterSlot, CharacterSlot>>>({})
   const [submitted, setSubmitted] = useState(false)
@@ -39,9 +40,15 @@ export default function VotingPage() {
   const isPuzzle = game.mode === 'puzzle'
 
   function toggleKiller(slot: CharacterSlot) {
+    setSuicideVote(false)
     setKillerSlots(prev =>
       prev.includes(slot) ? prev.filter(s => s !== slot) : [...prev, slot]
     )
+  }
+
+  function toggleSuicide() {
+    setKillerSlots([])
+    setSuicideVote(prev => !prev)
   }
 
   function setPuzzleKiller(victimSlot: CharacterSlot, killerSlot: CharacterSlot | '') {
@@ -69,7 +76,7 @@ export default function VotingPage() {
       }
       vote = { killerSlots: Object.keys(killerToVictim) as CharacterSlot[], puzzleAnswer: killerToVictim }
     } else {
-      vote = { killerSlots }
+      vote = { killerSlots, suicideVote: suicideVote || undefined }
     }
     await submitVote(gameId!, uid, vote)
     setSubmitted(true)
@@ -159,7 +166,7 @@ export default function VotingPage() {
                   <div className="w-2 h-2 rounded-full bg-red-400" />
                   <h3 className="text-red-300 text-sm font-medium">犯人候補</h3>
                 </div>
-                <p className="text-purple-600 text-xs mb-3 pl-4">自殺の場合は死亡者を選択・外部犯の場合は誰もチェックしない</p>
+                <p className="text-purple-600 text-xs mb-3 pl-4">犯人と思う人物をチェックしてください</p>
                 <div className="grid grid-cols-2 gap-2">
                   {allSlots.map(slot => (
                     <CheckCard
@@ -173,11 +180,45 @@ export default function VotingPage() {
                 </div>
               </section>
 
+              {/* Special verdict options */}
+              <section>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-400" />
+                  <h3 className="text-amber-300 text-sm font-medium">特殊判定（人物以外）</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => { setKillerSlots([]); setSuicideVote(false) }}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      killerSlots.length === 0 && !suicideVote
+                        ? 'border-amber-500 bg-amber-900/20'
+                        : 'border-purple-900 bg-[#1a0f2e] hover:border-purple-700'
+                    }`}
+                  >
+                    <div className="text-lg mb-1">🔫</div>
+                    <div className="text-purple-100 text-xs font-medium">外部犯</div>
+                    <div className="text-purple-500 text-[10px] mt-0.5">組織の殺し屋</div>
+                  </button>
+                  <button
+                    onClick={toggleSuicide}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      suicideVote
+                        ? 'border-amber-500 bg-amber-900/20'
+                        : 'border-purple-900 bg-[#1a0f2e] hover:border-purple-700'
+                    }`}
+                  >
+                    <div className="text-lg mb-1">💊</div>
+                    <div className="text-purple-100 text-xs font-medium">自殺</div>
+                    <div className="text-purple-500 text-[10px] mt-0.5">当主が自ら命を絶った</div>
+                  </button>
+                </div>
+              </section>
+
               <button
                 onClick={handleSubmit}
                 className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold rounded-xl py-3 text-sm tracking-wide transition-colors"
               >
-                {killerSlots.length === 0 ? '外部犯で投票する' : '投票する'}
+                {suicideVote ? '自殺で投票する' : killerSlots.length === 0 ? '外部犯で投票する' : '投票する'}
               </button>
             </>
           )
@@ -198,6 +239,8 @@ export default function VotingPage() {
                   )
                 })}
               </div>
+            ) : myVote?.suicideVote ? (
+              <p className="text-purple-400 text-sm text-center">💊 自殺で投票しました</p>
             ) : (myVote?.killerSlots?.length ?? 0) > 0 ? (
               <div>
                 <p className="text-red-400 text-xs mb-1">犯人として告発:</p>
@@ -206,7 +249,7 @@ export default function VotingPage() {
                 </p>
               </div>
             ) : (
-              <p className="text-purple-400 text-sm text-center">外部犯で投票しました</p>
+              <p className="text-purple-400 text-sm text-center">🔫 外部犯で投票しました</p>
             )}
             <p className="text-purple-600 text-xs text-center">他のプレイヤーの投票を待っています…</p>
           </div>

@@ -159,6 +159,7 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
     scenario.npcSurvivors ?? [],
     scenario.npcVictims ?? [],
     scenario.outsideKiller ?? false,
+    scenario.suicide ?? false,
   )
 
   const cardUpdates: Record<string, EvidenceCard> = {}
@@ -305,11 +306,13 @@ export async function finalizeResult(gameId: string, hostId: string): Promise<vo
   const winnerIds = determineWinners(scores)
   const mainKillerCaught = determineMainKillerCaught(state)
   const outsideKillerCase = state.scenario?.outsideKiller === true
+  const suicideCase = state.scenario?.suicide === true
 
   await update(ref(db), {
     [`games/${gameId}/result`]: {
       mainKillerCaught,
       outsideKillerCase,
+      suicideCase,
       scores,
       winnerIds,
       trueScenario: state.scenario,

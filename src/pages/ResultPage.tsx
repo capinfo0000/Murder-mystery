@@ -50,7 +50,14 @@ export default function ResultPage() {
     <div className="min-h-screen bg-[#0f0a1a] pb-16">
       {/* Header */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-4 text-center">
-        {result.outsideKillerCase ? (
+        {result.suicideCase ? (
+          <>
+            <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
+              {result.mainKillerCaught ? '✓ 自殺と見破った' : '✗ 自殺を見抜けず'}
+            </div>
+            <p className="text-purple-400 text-xs">当主が組織の追手を悟り、自ら命を絶った</p>
+          </>
+        ) : result.outsideKillerCase ? (
           <>
             <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
               {result.mainKillerCaught ? '✓ 外部犯を見破った' : '✗ 外部犯を見破れず'}
@@ -142,7 +149,14 @@ export default function ResultPage() {
             </Section>
 
             {/* Killers */}
-            {scenario.outsideKiller ? (
+            {scenario.suicide ? (
+              <Section title="💊 真相：自殺">
+                <div className="bg-amber-950/30 border border-amber-900/50 rounded-lg p-3">
+                  <div className="text-amber-300 font-medium text-sm mb-1">神条源太郎（自死）</div>
+                  <p className="text-amber-200/70 text-xs">裏社会の組織が自分を消しに来ることを悟った当主は、追い詰められた末に自ら命を絶った。プレイヤーの誰も殺人は犯していない。館に集う者たちはそれぞれの秘密行動に追われ、当主の最後の苦悩を知らなかった。</p>
+                </div>
+              </Section>
+            ) : scenario.outsideKiller ? (
               <Section title="🔫 真犯人">
                 <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-3">
                   <div className="text-red-300 font-medium text-sm mb-1">組織の殺し屋（身元不明・逃走済み）</div>

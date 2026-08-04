@@ -113,6 +113,7 @@ export function dealCards(
   npcSurvivors: NpcSurvivor[] = [],
   npcVictims: NpcVictim[] = [],
   outsideKiller = false,
+  suicide = false,
 ): Record<string, EvidenceCard> {
   const killerSlots = killers.map(k => k.slot)
   const killerWeaponIds = killers.map(k => k.weapon.id)
@@ -124,7 +125,9 @@ export function dealCards(
     let isTrue = t.baseIsTrue
 
     if (t.condition) {
-      if (t.condition === 'outside_killer') {
+      if (t.condition === 'suicide') {
+        isTrue = suicide
+      } else if (t.condition === 'outside_killer') {
         isTrue = outsideKiller
       } else if (t.condition.startsWith('crime_scene:')) {
         const loc = t.condition.replace('crime_scene:', '')
