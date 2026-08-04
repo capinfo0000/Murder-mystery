@@ -6,6 +6,7 @@ import { CHARACTERS } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
 import AlibiMatrix from '../components/AlibiMatrix'
 import EvidenceCardView from '../components/EvidenceCard'
+import ManorMap from '../components/ManorMap'
 
 const ROUND1_PHASE = 'round1'
 
@@ -17,6 +18,7 @@ export default function HandoutPage() {
   const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
   const [tab, setTab] = useState<'character' | 'alibi' | 'cards'>('character')
+  const [showMap, setShowMap] = useState(false)
 
   useEffect(() => {
     if (!gameId) return
@@ -52,6 +54,7 @@ export default function HandoutPage() {
 
   return (
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
+      {showMap && <ManorMap onClose={() => setShowMap(false)} />}
       {/* Top bar */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3 flex items-center justify-between">
         <div>
@@ -59,8 +62,16 @@ export default function HandoutPage() {
           <h2 className="text-purple-100 font-bold text-lg leading-tight" style={{ fontFamily: 'serif' }}>{char.name}</h2>
           <span className="text-purple-500 text-xs">{char.role}</span>
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-medium ${myRole === 'killer' ? 'bg-red-900/50 text-red-300 border border-red-800' : 'bg-purple-900/50 text-purple-300 border border-purple-800'}`}>
-          {myRole === 'killer' ? '🔪 犯人' : '👁 無実'}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMap(true)}
+            className="text-purple-400 hover:text-purple-200 text-xs px-2 py-1 rounded border border-purple-800 hover:border-purple-600 transition-colors"
+          >
+            🗺 マップ
+          </button>
+          <div className={`px-3 py-1 rounded-full text-xs font-medium ${myRole === 'killer' ? 'bg-red-900/50 text-red-300 border border-red-800' : 'bg-purple-900/50 text-purple-300 border border-purple-800'}`}>
+            {myRole === 'killer' ? '🔪 犯人' : '👁 無実'}
+          </div>
         </div>
       </div>
 

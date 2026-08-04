@@ -7,6 +7,7 @@ import type { GameState, GamePhase } from '../types/game'
 import EvidenceCardView from '../components/EvidenceCard'
 import DeckPanel from '../components/DeckPanel'
 import SecretMessagePanel from '../components/SecretMessagePanel'
+import ManorMap from '../components/ManorMap'
 
 const PHASE_LABELS: Record<string, string> = {
   round1: 'ラウンド1 — 全体討議',
@@ -31,6 +32,7 @@ export default function DiscussionPage() {
   const [game, setGame] = useState<GameState | null>(null)
   const [tab, setTab] = useState<'public' | 'hand' | 'deck' | 'secret'>('public')
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
+  const [showMap, setShowMap] = useState(false)
 
   useEffect(() => {
     if (!gameId) return
@@ -103,14 +105,23 @@ export default function DiscussionPage() {
 
   return (
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
+      {showMap && <ManorMap onClose={() => setShowMap(false)} />}
       {/* Top bar */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3">
         <div className="flex items-center justify-between">
           <h2 className="text-purple-200 font-medium text-sm">
             {PHASE_LABELS[game.phase] ?? game.phase}
           </h2>
-          <div className={`text-lg font-mono font-bold ${timerColor}`}>
-            {mins}:{secs}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowMap(true)}
+              className="text-purple-400 hover:text-purple-200 text-sm px-2 py-0.5 rounded border border-purple-800 hover:border-purple-600 transition-colors"
+            >
+              🗺 マップ
+            </button>
+            <div className={`text-lg font-mono font-bold ${timerColor}`}>
+              {mins}:{secs}
+            </div>
           </div>
         </div>
         {isSecretTalk && (
