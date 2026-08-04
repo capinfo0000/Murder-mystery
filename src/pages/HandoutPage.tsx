@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { subscribeGame, advancePhase, setReady } from '../services/firebase'
 import type { GameState, CharacterSlot } from '../types/game'
-import { CHARACTERS } from '../data/characters'
+import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
 import AlibiMatrix from '../components/AlibiMatrix'
 import EvidenceCardView from '../components/EvidenceCard'
@@ -98,6 +98,11 @@ export default function HandoutPage() {
                 <p className="text-purple-200 text-sm leading-relaxed italic">{scenario.synopsis}</p>
               </Section>
             )}
+            {/* Main victim profile — shown to all players */}
+            <Section title={`💀 被害者: ${MAIN_VICTIM.name}（${MAIN_VICTIM.role}）`}>
+              <p className="text-purple-200 text-sm leading-relaxed">{MAIN_VICTIM.background}</p>
+            </Section>
+
             {/* Public: manor staff — dead and surviving */}
             {(scenario.npcVictims.length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
               <Section title="🕯 館の関係者（全員既知）">

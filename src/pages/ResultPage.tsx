@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { subscribeGame } from '../services/firebase'
 import type { GameState, CharacterSlot, DualKillerPattern } from '../types/game'
-import { CHARACTERS } from '../data/characters'
+import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
 
 const DUAL_FIRST_LABEL: Record<DualKillerPattern, string> = {
@@ -135,6 +135,12 @@ export default function ResultPage() {
         {/* TRUTH */}
         {tab === 'truth' && scenario && (
           <div className="space-y-4">
+            {/* Main victim profile */}
+            <Section title={`💀 被害者: ${MAIN_VICTIM.name}`}>
+              <div className="text-purple-400 text-xs mb-1">{MAIN_VICTIM.role}</div>
+              <p className="text-purple-200 text-xs leading-relaxed">{MAIN_VICTIM.background}</p>
+            </Section>
+
             {/* Killers */}
             {scenario.outsideKiller ? (
               <Section title="🔫 真犯人">

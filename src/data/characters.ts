@@ -1,5 +1,12 @@
 import type { CharacterDef, CharacterSlot } from '../types/game'
 
+export const MAIN_VICTIM = {
+  name: '神条 源太郎',
+  role: '当主 / 神条財閥総帥',
+  background:
+    '神条財閥を一代で築き上げた老齢の総帥。裏社会の巨大犯罪組織と深く結びつき、組織の資金と人脈を利用して財を成してきた。その過程で脅迫・横領・証拠隠滅など数々の悪事に手を染め、館に集う者の多くを踏みにじってきた。冷徹な支配者として恐れられる一方、好色で気まぐれな本性を家人には隠さない。長年の悪行が積もった今夜、複数の者が彼の命を狙っていた。',
+}
+
 export const CHARACTERS: Record<string, CharacterDef> = {
   A: {
     slot: 'A',
@@ -111,7 +118,7 @@ export const CHARACTERS: Record<string, CharacterDef> = {
       '突然館に現れた謎めいた未亡人。語る経歴が聞くたびに微妙にずれており、整合性が取れない。実は被害者の隠し子であり、正式な相続権を主張するために館に侵入した。',
     secretAction:
       '館の権利証と自分の出生に関する書類を書斎から密かに奪おうとしていた。',
-    t2Location: 'guest_room',
+    t2Location: 'study',
     killerMotive:
       '自分の存在を隠蔽しようとした被害者を、正当な権利のために消した。書類偽造と証拠の操作により、別の人物に疑いが向くよう周到に工作した。',
     relationships: {

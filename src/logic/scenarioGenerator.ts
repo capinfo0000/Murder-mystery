@@ -14,7 +14,7 @@ import type {
   Scenario,
   VictimInfo,
 } from '../types/game'
-import { CHARACTERS, getSlotsForCount } from '../data/characters'
+import { CHARACTERS, MAIN_VICTIM, getSlotsForCount } from '../data/characters'
 import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { WEAPONS } from '../data/weapons'
 import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
@@ -389,7 +389,7 @@ export function generateScenario(
     const w1 = isDbl
       ? pickRandom(physicalWeapons.filter(w => w.id !== w0.id))
       : pickRandom(physicalWeapons)
-    const vName = npcVictims[0].role
+    const vName = MAIN_VICTIM.name
     return [
       { slot: killerSlots[0], victimName: vName, weapon: w0, location: sharedLocation!, method: method0, isDualKiller: true },
       { slot: killerSlots[1], victimName: vName, weapon: w1, location: sharedLocation!, method: 'weapon' as const, isDualKiller: true },
@@ -408,9 +408,7 @@ export function generateScenario(
       victimSlot = slots[(idx + 1) % slots.length]
       victimName = CHARACTERS[victimSlot]?.name
     } else {
-      // NPC index offset for dual (dual pair occupies index 0, solo killers from index 1)
-      const npcIdx = dualPattern ? i - 1 : i
-      victimName = npcVictims[npcIdx]?.role
+      victimName = MAIN_VICTIM.name
     }
 
     return {
@@ -428,7 +426,7 @@ export function generateScenario(
     const k2 = killers[1]
     const k1Name = CHARACTERS[k1.slot].name
     const k2Name = CHARACTERS[k2.slot].name
-    const v = npcVictims[0].name
+    const v = MAIN_VICTIM.name
 
     let detail: string
     switch (dualPattern) {
@@ -554,34 +552,35 @@ function generateSynopsis(
   cooperationChain: CooperationChain | undefined | null,
   playerCount: number,
 ): string {
-  const murderVictims = npcVictims.filter(v => v.isRelatedToCase)
-  const victimCount = murderVictims.length
-  const apparentCause = murderVictims[0]?.apparentCause ?? '不審な死'
+  const murderedNpcs = npcVictims.filter(v => v.isRelatedToCase)
+  const mainApparentCause = killers[0]?.weapon.disguisedAs ?? '不審な死'
 
   if (outsideKiller) {
-    return `嵐の夜、紫苑館で${victimCount}名が相次いで命を落とした。表向きは事故や病死とされているが、証拠が別の何かを示している。組織から派遣された外部の殺し屋による犯行か——それとも別の真相が潜んでいるのか。${playerCount}名の滞在者全員が容疑の外にいるとは限らない。`
+    const npcCount = npcVictims.length
+    return `嵐の夜、紫苑館の当主・神条源太郎が謎の死を遂げ、関係者${npcCount}名も相次いで命を落とした。表向きは事故や病死とされているが、証拠が別の何かを示している。組織から派遣された外部の殺し屋による犯行か——それとも別の真相が潜んでいるのか。${playerCount}名の滞在者全員が容疑の外にいるとは限らない。`
   }
 
   if (killers.length === 0) {
-    return `今夜、紫苑館で不審な事件が発生した。死因は「${apparentCause}」とされているが、現場には疑問点が残る。${playerCount}名の滞在者の中に、真相を知る者がいる。`
+    return `今夜、紫苑館の当主・神条源太郎が「${mainApparentCause}」で発見された。現場には疑問点が残る。${playerCount}名の滞在者の中に、真相を知る者がいる。`
   }
 
   const dualPattern = npcVictims[0]?.dualKillerPattern
-  const multiVictim = victimCount > 1
+  const hasNpcDeaths = murderedNpcs.length > 0
 
   if (dualPattern) {
-    return `雨降る夜、紫苑館で${multiVictim ? `${victimCount}名` : '当主'}が${apparentCause}で発見された。複数の証言が矛盾を示し、事故として処理するには不自然な点が多すぎる。二つの殺意が交差したこの夜、${playerCount}名の滞在者それぞれが胸に秘密を抱えている。`
+    return `雨降る夜、紫苑館の当主・神条源太郎が「${mainApparentCause}」で発見された。複数の証言が矛盾を示し、事故として処理するには不自然な点が多すぎる。二つの殺意が交差したこの夜、${playerCount}名の滞在者それぞれが胸に秘密を抱えている。`
   }
 
   if (killers.length === 1) {
-    return `嵐が近づく夜、紫苑館で${multiVictim ? `${victimCount}名` : '当主'}が${apparentCause}で発見された。偶然の事故とも、仕組まれた罠とも読める——${playerCount}名の滞在者それぞれが嘘をつく理由を持つこの夜、ひとつの殺意が静かに動いていた。`
+    const suffix = hasNpcDeaths ? `関係者にも不審な死者が出ている。` : ''
+    return `嵐が近づく夜、紫苑館の当主・神条源太郎が「${mainApparentCause}」で発見された。偶然の事故とも、仕組まれた罠とも読める——${playerCount}名の滞在者それぞれが嘘をつく理由を持つこの夜、ひとつの殺意が静かに動いていた。${suffix}`
   }
 
   if (cooperationChain) {
-    return `静かな夜のはずだった。しかし夜明け前、紫苑館では${victimCount}名が命を落としていた。黒幕の命令が見えない連鎖を作り、複数の人間が知らぬ間に関与していた——${playerCount}名の滞在者の中で、秘密と欺瞞が絡み合う。`
+    return `静かな夜のはずだった。しかし夜明け前、紫苑館の当主・神条源太郎が謎の死を遂げ、複数の関係者も命を落としていた。黒幕の命令が見えない連鎖を作り、複数の人間が知らぬ間に関与していた——${playerCount}名の滞在者の中で、秘密と欺瞞が絡み合う。`
   }
 
-  return `嵐の一夜、紫苑館では${victimCount}名が「${apparentCause}」で相次いで発見された。それぞれが異なる動機と秘密を抱えた${playerCount}名の中に、複数の殺意が潜んでいる。真相は討議の中にのみ現れる。`
+  return `嵐の一夜、紫苑館の当主・神条源太郎が「${mainApparentCause}」で発見された。さらに複数の関係者が相次いで命を落とし、館は混乱に包まれた。それぞれが異なる動機と秘密を抱えた${playerCount}名の中に、複数の殺意が潜んでいる。真相は討議の中にのみ現れる。`
 }
 
 export { getSlotsForCount }
