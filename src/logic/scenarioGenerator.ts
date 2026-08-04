@@ -236,22 +236,31 @@ export function generateScenario(
   if (mode === 'puzzle') {
     killerSlots = [...slots]
   } else {
-    // 1-killer = 50%; remaining options (2..n-1 killers + outside killer + suicide) share 50%
-    const remainingOptions = slots.length
+    // 1-killer = 50%; rest = 50% split among: multi-killers (2..n-1) + outside killer + suicide
+    // multiKillerCount = max(0, n-2), remainingOptions = multiKillerCount + 2
+    const multiKillerCount = Math.max(0, slots.length - 2)
+    const remainingOptions = multiKillerCount + 2
+
     let roll: number
-    if (remainingOptions === 0 || Math.random() < 0.5) {
+    if (Math.random() < 0.5) {
       roll = 0
     } else {
       roll = 1 + Math.floor(Math.random() * remainingOptions)
     }
-    if (roll === slots.length - 1) {
-      killerSlots = []
-      outsideKiller = true
-    } else if (roll === slots.length) {
-      killerSlots = []
-      suicide = true
+
+    if (roll === 0) {
+      killerSlots = shuffledSlots.slice(0, 1)
     } else {
-      killerSlots = shuffledSlots.slice(0, roll + 1)
+      const idx = roll - 1  // 0-based index into remaining options
+      if (idx < multiKillerCount) {
+        killerSlots = shuffledSlots.slice(0, idx + 2)
+      } else if (idx === multiKillerCount) {
+        killerSlots = []
+        outsideKiller = true
+      } else {
+        killerSlots = []
+        suicide = true
+      }
     }
   }
 

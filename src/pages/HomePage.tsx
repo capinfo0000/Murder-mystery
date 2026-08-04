@@ -60,7 +60,7 @@ export default function HomePage() {
           <div>
             <label className="text-purple-400 text-xs block mb-1">プレイヤー数</label>
             <p className="text-purple-700 text-xs mb-2">GMは含まない人数</p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 mb-1">
               {[4, 5, 6, 7].map(n => (
                 <button
                   key={n}
@@ -72,6 +72,21 @@ export default function HomePage() {
                   }`}
                 >
                   {n}人
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setPlayerCount(n)}
+                  className={`py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                    playerCount === n
+                      ? 'bg-purple-900 border-purple-600 text-purple-300'
+                      : 'bg-[#0d0820] border-purple-900 text-purple-700 hover:border-purple-800'
+                  }`}
+                >
+                  {n}人 🔧
                 </button>
               ))}
             </div>
@@ -95,9 +110,6 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-            {!hasGM && (
-              <p className="text-purple-700 text-xs mt-1.5">GMなしは最低4人のプレイヤーが必要</p>
-            )}
           </div>
 
           {/* Discussion time */}
@@ -210,7 +222,7 @@ export default function HomePage() {
         )}
       </div>
 
-      <p className="text-purple-800 text-xs mt-6">4〜7人対応 · 対面プレイ推奨</p>
+      <p className="text-purple-800 text-xs mt-6">4〜7人対応 · 対面プレイ推奨 · 🔧 1〜3人はデバッグ用</p>
     </div>
   )
 }
