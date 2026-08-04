@@ -295,8 +295,9 @@ export async function finalizeResult(gameId: string, hostId: string): Promise<vo
 
   const counts: Record<string, number> = {}
   for (const v of Object.values(votes)) {
-    if (!v.targetSlot) continue
-    counts[v.targetSlot] = (counts[v.targetSlot] || 0) + 1
+    for (const slot of v.killerSlots ?? []) {
+      counts[slot] = (counts[slot] || 0) + 1
+    }
   }
   const mv = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
   const mainKillerCaught = mv === mainKillerSlot

@@ -101,8 +101,8 @@ export interface Player {
 }
 
 export interface VoteData {
-  targetSlot: CharacterSlot | null
-  accuseAll: boolean
+  killerSlots: CharacterSlot[]
+  victimSlots: CharacterSlot[]
   puzzleAnswer?: Record<CharacterSlot, CharacterSlot>
   submittedAt?: number
 }

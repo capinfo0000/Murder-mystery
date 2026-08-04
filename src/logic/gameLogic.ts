@@ -6,26 +6,24 @@ import type {
   VoteData,
 } from '../types/game'
 
-function mostVotedSlot(
-  votes: Record<string, VoteData>,
-  _players: Record<string, Player>
-): CharacterSlot | null {
+function mostVotedKillerSlot(votes: Record<string, VoteData>): CharacterSlot | null {
   const counts: Record<string, number> = {}
   for (const [, vote] of Object.entries(votes)) {
-    if (!vote.targetSlot) continue
-    counts[vote.targetSlot] = (counts[vote.targetSlot] || 0) + 1
+    for (const slot of vote.killerSlots ?? []) {
+      counts[slot] = (counts[slot] || 0) + 1
+    }
   }
   if (Object.keys(counts).length === 0) return null
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as CharacterSlot
 }
 
-function getVotesAgainst(
+function getKillerVotesAgainst(
   playerId: string,
   characterSlot: CharacterSlot,
   votes: Record<string, VoteData>
 ): number {
   return Object.entries(votes).filter(
-    ([voterId, v]) => voterId !== playerId && v.targetSlot === characterSlot
+    ([voterId, v]) => voterId !== playerId && (v.killerSlots ?? []).includes(characterSlot)
   ).length
 }
 
@@ -36,8 +34,7 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
   const scores: Record<string, ScoreBreakdown> = {}
   const mainKillerSlot = scenario.killers[0]?.slot ?? null
 
-  // was the main killer caught?
-  const mv = mostVotedSlot(votes, players)
+  const mv = mostVotedKillerSlot(votes)
   const mainKillerCaught = mv === mainKillerSlot
 
   for (const [playerId, player] of Object.entries(players)) {
@@ -54,25 +51,13 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
       base = role === 'innocent' ? 1 : 5
     }
 
-    // 2. tachimawari bonus (+2) — has secret action and received 0 votes
+    // 2. tachimawari bonus (+2) — has secret action and received 0 killer votes
     const hasSecret = !!scenario.secretActions[slot]
-    const votesAgainst = getVotesAgainst(playerId, slot, votes)
+    const votesAgainst = getKillerVotesAgainst(playerId, slot, votes)
     const tachimawari = hasSecret && votesAgainst === 0 ? 2 : 0
 
     // 3. special bonuses
     let bonus = 0
-
-    // "accuse all" bonus: a completely innocent player (innocent, no secret motive used)
-    // who accuses everyone else of being bad actors — if correct
-    if (vote?.accuseAll && role === 'innocent') {
-      const allOthersGuilty = Object.entries(players).every(([pid, p]) => {
-        if (pid === playerId || p.isNPC) return true
-        const s = p.characterSlot
-        if (!s) return true
-        return (scenario.roles[s] === 'killer') || !!scenario.secretActions[s]
-      })
-      if (allOthersGuilty) bonus += 7
-    }
 
     // puzzle mode perfect match (+10)
     if (state.mode === 'puzzle' && vote?.puzzleAnswer && scenario.puzzleTargets) {
