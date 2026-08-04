@@ -504,6 +504,36 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     content: '麗華の客間のゴミ箱に、用途不明の封蝋の欠片と、異なるインクで書かれた数枚の下書きが捨てられていた。',
     category: 'physical', relatedSlot: 'G', baseIsTrue: true,
   },
+  {
+    id: 'te_013',
+    content: '筆跡鑑定の専門家によると、遺言書の一部の文字はインクの乾き具合が他の箇所と微妙に異なる。後から書き加えた可能性がある。',
+    category: 'technical', relatedSlot: 'A', baseIsTrue: true,
+  },
+  {
+    id: 'ph_026',
+    content: '白川の往診カバンの奥に、医療現場では使わない化学系の試薬名が書かれたメモが挟まれていた。',
+    category: 'physical', relatedSlot: 'B', baseIsTrue: true,
+  },
+  {
+    id: 'ps_018',
+    content: '氷室は夕食の席で、立ち上がるたびに身のこなしが変わる瞬間があった。舞台に立ち慣れた者特有の、重心の切り替えに見えた。',
+    category: 'psychology', relatedSlot: 'C', baseIsTrue: true,
+  },
+  {
+    id: 'bg_025',
+    content: '小夜が鍵束を管理する方法は独特で、錠前ごとに素材と構造を書いたメモを添えている。趣味の域を超えた几帳面さだ。',
+    category: 'background', relatedSlot: 'D', baseIsTrue: true,
+  },
+  {
+    id: 'vi_011',
+    content: '被害者の寝室のグラスに残っていたワインを調べると、通常の銘柄と異なる微量成分が検出された。飲み残しは一口分だった。',
+    category: 'victim', relatedSlot: 'E', baseIsTrue: true,
+  },
+  {
+    id: 'ps_019',
+    content: '蓮は狭い通路を通るとき、肩をすくめる前に一瞬だけ体の向きを確認してから通り抜けた。身体訓練を受けた者の癖に見えた。',
+    category: 'psychology', relatedSlot: 'F', baseIsTrue: true,
+  },
 
   // ───── 過去職業ミスリード（別キャラへの疑惑誘導）─────
   {
@@ -550,26 +580,6 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     id: 'ps_015',
     content: 'Eは被害者のワインを注ぐとき、わずかに手元を隠すような動きをしていたと複数の者が証言している。',
     category: 'psychology', relatedSlot: 'E', baseIsTrue: false,
-  },
-  {
-    id: 'ps_016',
-    content: 'Aは食事の席でペンをいじりながら、紙の端に何かを素早く書いては消していた。緊張しているようには見えなかった。',
-    category: 'psychology', relatedSlot: 'A', baseIsTrue: false,
-  },
-  {
-    id: 'ph_025',
-    content: '麗華の荷物に、医薬品の添付文書が数枚混入していた。薬品名には印がつけられていた。（かかりつけ医への確認用だった）',
-    category: 'physical', relatedSlot: 'G', baseIsTrue: false,
-  },
-  {
-    id: 'bg_024',
-    content: '氷室は20代に一時期、錠前職人のいとこの家に居候していたという話がある。鍵の仕組みに詳しいと本人が言ったとか。',
-    category: 'background', relatedSlot: 'C', baseIsTrue: false,
-  },
-  {
-    id: 'al_022',
-    content: 'T1頃、金庫室の近くで白川に似た人物を見かけた者がいる。白川は「そちらには行っていない」と言い張った。',
-    category: 'alibi', relatedSlot: 'B', baseIsTrue: false,
   },
   {
     id: 'ps_017',
