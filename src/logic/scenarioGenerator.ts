@@ -235,8 +235,14 @@ export function generateScenario(
   if (mode === 'puzzle') {
     killerSlots = [...slots]
   } else {
-    // n equal options: 1..n-1 player killers + outside killer (each 1/n probability)
-    const roll = Math.floor(Math.random() * slots.length)
+    // 1-killer = 50%; remaining options (2..n-1 killers + outside killer) share 50%
+    const remainingOptions = slots.length - 1
+    let roll: number
+    if (remainingOptions === 0 || Math.random() < 0.5) {
+      roll = 0
+    } else {
+      roll = 1 + Math.floor(Math.random() * remainingOptions)
+    }
     if (roll === slots.length - 1) {
       killerSlots = []
       outsideKiller = true
