@@ -28,6 +28,7 @@ function generateNpcTestimonyCards(
   npcVictims: NpcVictim[],
   killers: KillerInfo[],
   slots: CharacterSlot[],
+  assignedProfessions: Partial<Record<CharacterSlot, string>>,
 ): EvidenceCard[] {
   if (killers.length === 0) return []
   const cards: EvidenceCard[] = []
@@ -63,15 +64,39 @@ function generateNpcTestimonyCards(
     }
   })
 
-  // Dead NPCs: posthumous testimony cards
+  // Dead NPCs: cipher card (behavior described, no name) + decoder card (name + behavior)
+  // Players must hold both cards to identify who the diary entry points to.
   npcVictims.filter(v => v.isRelatedToCase).forEach((victim, i) => {
     const killer = shuffledKillers[i % shuffledKillers.length]
-    const killerName = CHARACTERS[killer.slot].name
-    const posthumousVariants = [
-      `命を落とした${victim.role}は生前、他の使用人に「${killerName}が今夜妙な様子だった」と話していたという。`,
-      `死亡した${victim.role}の手帳に走り書きがあった。「${killerName}と目が合った——あの目は普通ではなかった」と記されている。`,
-    ]
-    cards.push(makeCard(posthumousVariants[i % posthumousVariants.length], 'alibi', killer.slot, true))
+    const killerSlot = killer.slot
+    const killerName = CHARACTERS[killerSlot].name
+    const profId = assignedProfessions[killerSlot]
+    const prof = profId ? PAST_PROFESSIONS.find(p => p.id === profId) : undefined
+
+    if (prof) {
+      // Remove trailing 。for embedding mid-sentence
+      const hint = prof.observableHint.replace(/。$/, '')
+
+      // Cipher: observableHint written as description, no name
+      const cipherVariants = [
+        `死亡した${victim.role}の手帳に走り書きが残されていた。『T2前後、${hint}人物が廊下でこちらを見た。何か知っているのだろうか』——誰のことを指しているのか。`,
+        `死亡した${victim.role}の遺品にメモがあった。『${hint}者が夜、${LOCATION_NAMES[killer.location]}付近にいた』とだけ記されていた。人物は特定されていない。`,
+      ]
+      cards.push(makeCard(cipherVariants[i % cipherVariants.length], 'alibi', killerSlot, true))
+
+      // Decoder: name the person and describe the same behavior
+      const decoderVariants = [
+        `周囲の者は${killerName}についてこう語る——「${hint}のが気になる。昔から染み付いた習慣なのかもしれない」。`,
+        `館の滞在者数名が${killerName}の独特の癖を指摘している。${hint}という。本人は意識していないようだ。`,
+      ]
+      cards.push(makeCard(decoderVariants[i % decoderVariants.length], 'background', killerSlot, true))
+    } else {
+      // Fallback: vague but not direct
+      cards.push(makeCard(
+        `死亡した${victim.role}の手帳の最終ページに断片的な記録があった。『T2頃、廊下で見知った顔と目が合った。あの足取りはどこへ向かっていたのか』——読み取れるのはそれだけだ。`,
+        'alibi', killerSlot, true
+      ))
+    }
   })
 
   return cards
@@ -140,7 +165,7 @@ export function dealCards(
   }
 
   // NPC testimony cards
-  const npcCards = generateNpcTestimonyCards(npcSurvivors, npcVictims, killers, slots)
+  const npcCards = generateNpcTestimonyCards(npcSurvivors, npcVictims, killers, slots, assignedProfessions)
 
   const shuffled = shuffle([...resolved, ...professionCards, ...npcCards])
   const totalNeeded = playerIds.length * cardsPerPlayer + deckSize
