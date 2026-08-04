@@ -55,7 +55,7 @@ export default function VotingPage() {
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3">
         <h2 className="text-purple-200 font-bold text-lg" style={{ fontFamily: 'serif' }}>投票フェーズ</h2>
-        <p className="text-purple-500 text-xs mt-0.5">犯人と思う人物をチェックしてください（複数可・不明なら空欄）</p>
+        <p className="text-purple-500 text-xs mt-0.5">犯人と思う人物をチェックしてください（複数可）</p>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-4 space-y-4">
