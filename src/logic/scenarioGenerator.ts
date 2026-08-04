@@ -1,6 +1,9 @@
 import type {
+  ChainContactMethod,
+  ChainLink,
   CharacterSlot,
   ConnectionType,
+  CooperationChain,
   DualKillerInfo,
   DualKillerPattern,
   GameMode,
@@ -129,6 +132,93 @@ function generateConnections(slots: CharacterSlot[]): PlayerConnection[] {
   return result
 }
 
+// ── cooperation chain (anonymous chain coordination) ──────────
+
+const CHAIN_METHODS: ChainContactMethod[] = ['anonymous_phone', 'anonymous_letter', 'blackmail_face']
+const ANON_METHODS: ChainContactMethod[] = ['anonymous_phone', 'anonymous_letter']
+
+function buildChainLink(
+  from: CharacterSlot,
+  to: CharacterSlot,
+  method: ChainContactMethod,
+  relayTo?: CharacterSlot,
+  relayMethod?: ChainContactMethod,
+): ChainLink {
+  const toName = CHARACTERS[to].name
+  const fromName = CHARACTERS[from].name
+  const relayToName = relayTo ? CHARACTERS[relayTo].name : undefined
+  const senderKnown = method === 'blackmail_face'
+
+  const relayInstructionFrom = relayTo && relayToName
+    ? `また、${relayToName}に対しても${relayMethod === 'anonymous_letter' ? '差出人不明の手紙を届けるよう' : relayMethod === 'blackmail_face' ? '直接接触するよう' : '声を変えて電話するよう'}命じた。${toName}があなたとの繋がりを${relayToName}に明かすことはない——あなたとCとの直接の繋がりは存在しない。`
+    : ''
+
+  const relayReceiveText = relayTo && relayToName
+    ? `さらに「${relayToName}に${relayMethod === 'anonymous_letter' ? '封書を届けろ' : relayMethod === 'blackmail_face' ? '直接接触せよ' : '匿名で連絡せよ'}」とも命じられた。あなたは言われた通り${relayToName}に接触した。${relayToName}はあなたが使者に過ぎない可能性も感じているかもしれないが、真の指示者が誰かはわからないはずだ。`
+    : ''
+
+  let fromText: string
+  if (method === 'anonymous_phone') {
+    fromText = `あなたは変声器を使い、${toName}に電話で接触した。「今夜の計画に従え。断れば秘密を暴く」と告げた。${toName}はあなたの正体を知らない。${relayInstructionFrom}`
+  } else if (method === 'anonymous_letter') {
+    fromText = `あなたは差出人不明の手紙を${toName}に届け、今夜の凶行への協力を命じた。筆跡を変え、証拠を残さないよう細心の注意を払った。${toName}はあなたの正体を知らない。${relayInstructionFrom}`
+  } else {
+    fromText = `あなたは${toName}の弱みを握り、直接対面して脅迫した。「今夜の凶行に協力しろ。断れば秘密を暴く」と告げた。${toName}はあなたが${fromName}であることを知っているが、計画の全容は告げていない。${relayInstructionFrom}`
+  }
+
+  let toText: string
+  if (method === 'anonymous_phone') {
+    toText = `T2の直前、声を変えた電話がかかってきた。「今夜の凶行に従え。断れば秘密を暴く」と脅された。送り主は名乗らず——誰からの電話かわからない。${relayReceiveText}その指示に従うしかなかった。`
+  } else if (method === 'anonymous_letter') {
+    toText = `今夜の始まる前、差出人のない封書が手元に届いた。「今夜の凶行に従え。断れば秘密を暴く」とあった。誰が送ってきたのかわからない。${relayReceiveText}指示に従うしかなかった。`
+  } else {
+    toText = `${fromName}に弱みを握られていた。直接「今夜の凶行に協力しろ。断れば秘密を暴く」と脅された。${fromName}が何を企んでいるかは教えてもらえなかった。${relayReceiveText}逆らえなかった。`
+  }
+
+  return { fromSlot: from, toSlot: to, method, senderKnown, relayToSlot: relayTo, relayMethod, fromText, toText }
+}
+
+function generateCooperationChain(killerSlots: CharacterSlot[]): CooperationChain | null {
+  if (killerSlots.length < 2) return null
+  if (Math.random() < 0.35) return null  // 65% chance of chain
+
+  const shuffled = shuffle(killerSlots)
+  const mastermind = shuffled[0]
+  const links: ChainLink[] = []
+
+  if (killerSlots.length === 2) {
+    // A → B
+    links.push(buildChainLink(mastermind, shuffled[1], pickRandom(CHAIN_METHODS)))
+  } else if (killerSlots.length === 3) {
+    if (Math.random() < 0.5) {
+      // Chain: A → B (relay to C) → C
+      const relay = shuffled[1]
+      const foot = shuffled[2]
+      const m1 = pickRandom(CHAIN_METHODS)
+      const m2 = pickRandom(ANON_METHODS)
+      links.push(buildChainLink(mastermind, relay, m1, foot, m2))
+      links.push(buildChainLink(relay, foot, m2))
+    } else {
+      // Fork: A → B, A → C (both blind to each other)
+      links.push(buildChainLink(mastermind, shuffled[1], pickRandom(CHAIN_METHODS)))
+      links.push(buildChainLink(mastermind, shuffled[2], pickRandom(CHAIN_METHODS)))
+    }
+  } else {
+    // 4+ killers: chain of 3 (A→B→C) + remaining as direct from A
+    const relay = shuffled[1]
+    const foot = shuffled[2]
+    const m1 = pickRandom(CHAIN_METHODS)
+    const m2 = pickRandom(ANON_METHODS)
+    links.push(buildChainLink(mastermind, relay, m1, foot, m2))
+    links.push(buildChainLink(relay, foot, m2))
+    for (let i = 3; i < shuffled.length; i++) {
+      links.push(buildChainLink(mastermind, shuffled[i], pickRandom(CHAIN_METHODS)))
+    }
+  }
+
+  return { mastermindSlot: mastermind, links }
+}
+
 export function generateScenario(
   playerCount: number,
   mode: GameMode
@@ -195,7 +285,8 @@ export function generateScenario(
   } else {
     const shuffledNpcs = shuffle(EXTRA_NPCS)
     const numKillers = killerSlots.length
-    const dualActive = numKillers >= 2 && Math.random() < 0.5
+    const dualThreshold = 0.3 + Math.random() * 0.4  // 30〜70% variable
+    const dualActive = numKillers >= 2 && Math.random() < dualThreshold
 
     if (dualActive) {
       type DualCategory = 'poison' | 'physical' | 'environmental'
@@ -390,6 +481,11 @@ export function generateScenario(
     }
   }
 
+  const cooperationChain =
+    !outsideKiller && mode !== 'puzzle' && killerSlots.length >= 2
+      ? generateCooperationChain(killerSlots)
+      : undefined
+
   return {
     victims,
     npcVictims,
@@ -401,6 +497,7 @@ export function generateScenario(
     outsideKiller: outsideKiller || undefined,
     connections: connections.length > 0 ? connections : undefined,
     dualKillerInfo,
+    cooperationChain: cooperationChain ?? undefined,
   }
 }
 

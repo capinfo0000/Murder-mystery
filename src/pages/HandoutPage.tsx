@@ -148,6 +148,42 @@ export default function HandoutPage() {
                 </Section>
               )
             })()}
+            {/* Cooperation chain — only visible to involved killers */}
+            {(() => {
+              const chain = scenario.cooperationChain
+              if (!chain) return null
+              const myLinks = chain.links.filter(l => l.fromSlot === mySlot || l.toSlot === mySlot)
+              if (myLinks.length === 0) return null
+              const methodLabel: Record<string, string> = {
+                anonymous_phone: '声変え電話',
+                anonymous_letter: '差出人不明の手紙',
+                blackmail_face: '直接対面での脅迫',
+              }
+              return (
+                <Section title="📞 秘密の指令（あなただけが知ること）" accent="amber">
+                  <p className="text-amber-400/70 text-xs mb-3">以下の情報は他のプレイヤーには絶対に見せないでください。</p>
+                  <div className="space-y-4">
+                    {myLinks.map((link, i) => {
+                      const isFrom = link.fromSlot === mySlot
+                      const text = isFrom ? link.fromText : link.toText
+                      const label = isFrom
+                        ? `指示を出した（${methodLabel[link.method]}）`
+                        : link.senderKnown
+                          ? `脅迫を受けた — ${CHARACTERS[link.fromSlot].name}から`
+                          : `${methodLabel[link.method]}を受けた（送り主不明）`
+                      return (
+                        <div key={i} className="space-y-1.5">
+                          <span className="inline-block text-xs px-2 py-0.5 rounded border border-amber-700 bg-amber-900/30 text-amber-300">
+                            {label}
+                          </span>
+                          <p className="text-amber-100 text-sm leading-relaxed">{text}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Section>
+              )
+            })()}
             {myRole === 'killer' && myKillerInfo && (
               <Section title="🔪 あなたが行った凶行（厳重に秘密）" accent="red">
                 <div className="space-y-2 text-sm">

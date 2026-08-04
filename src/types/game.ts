@@ -117,6 +117,28 @@ export interface PlayerConnection {
   toText: string            // shown only to toSlot
 }
 
+// Anonymous chain coordination — killers coerced/organized without knowing each other's identity
+export type ChainContactMethod =
+  | 'anonymous_phone'   // 声を変えた電話（送り主不明）
+  | 'anonymous_letter'  // 差出人不明の手紙（送り主不明）
+  | 'blackmail_face'    // 直接対面での脅迫（送り主は特定される）
+
+export interface ChainLink {
+  fromSlot: CharacterSlot
+  toSlot: CharacterSlot
+  method: ChainContactMethod
+  senderKnown: boolean          // toSlotは送り主がfromSlotだと知っているか
+  relayToSlot?: CharacterSlot   // toSlotが次の人物へ中継するよう命じられている場合
+  relayMethod?: ChainContactMethod
+  fromText: string              // fromSlotのハンドアウト用テキスト
+  toText: string                // toSlotのハンドアウト用テキスト
+}
+
+export interface CooperationChain {
+  mastermindSlot: CharacterSlot
+  links: ChainLink[]
+}
+
 export interface Scenario {
   victims: VictimInfo[]        // player victims (puzzle mode only)
   npcVictims: NpcVictim[]      // NPC deaths: murder victims + natural death noise
@@ -128,6 +150,7 @@ export interface Scenario {
   outsideKiller?: boolean      // true when a hired hitman (not any player) committed all murders
   connections?: PlayerConnection[]  // optional inter-player secret arrangements
   dualKillerInfo?: DualKillerInfo  // set when two killers independently targeted the same victim
+  cooperationChain?: CooperationChain  // anonymous chain coordination between killers
 }
 
 export interface EvidenceCard {
