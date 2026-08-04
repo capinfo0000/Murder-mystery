@@ -86,7 +86,7 @@ export default function HomePage() {
                       : 'bg-[#0d0820] border-purple-900 text-purple-700 hover:border-purple-800'
                   }`}
                 >
-                  {n}人 🔧
+                  {n}人
                 </button>
               ))}
             </div>
@@ -222,7 +222,7 @@ export default function HomePage() {
         )}
       </div>
 
-      <p className="text-purple-800 text-xs mt-6">4〜7人対応 · 対面プレイ推奨 · 🔧 1〜3人はデバッグ用</p>
+      <p className="text-purple-800 text-xs mt-6">4〜7人対応 · 対面プレイ推奨</p>
     </div>
   )
 }

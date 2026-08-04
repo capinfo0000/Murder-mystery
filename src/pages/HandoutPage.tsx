@@ -19,6 +19,7 @@ export default function HandoutPage() {
   const [game, setGame] = useState<GameState | null>(null)
   const [tab, setTab] = useState<'character' | 'alibi' | 'cards'>('character')
   const [showMap, setShowMap] = useState(false)
+  const [activeViewSlot, setActiveViewSlot] = useState<CharacterSlot | null>(null)
 
   useEffect(() => {
     if (!gameId) return
@@ -39,12 +40,17 @@ export default function HandoutPage() {
   const mySlot = myPlayer?.characterSlot
   if (!mySlot) return <Loading />
 
-  const char = CHARACTERS[mySlot]
   const scenario = game.scenario!
-  const myRole = scenario.roles[mySlot]
-  const myKillerInfo = scenario.killers.find(k => k.slot === mySlot)
-  const myAlibis = scenario.alibis[mySlot]
-  const myCards = Object.values(game.cards || {}).filter(c => c.ownerId === uid)
+  const isDebug = game.playerCount < 4
+  const allSlots = Object.keys(scenario.roles) as CharacterSlot[]
+  const viewSlot: CharacterSlot = (isDebug && activeViewSlot) ? activeViewSlot : mySlot
+  const viewUid = Object.entries(game.players).find(([, p]) => p.characterSlot === viewSlot)?.[0] ?? uid
+
+  const char = CHARACTERS[viewSlot]
+  const myRole = scenario.roles[viewSlot]
+  const myKillerInfo = scenario.killers.find(k => k.slot === viewSlot)
+  const myAlibis = scenario.alibis[viewSlot]
+  const myCards = Object.values(game.cards || {}).filter(c => c.ownerId === viewUid)
   const isHost = game.hostId === uid
 
   const allReady = Object.values(game.players).filter(p => !p.isNPC).every(p => p.isReady)
@@ -58,7 +64,12 @@ export default function HandoutPage() {
       {/* Top bar */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3 flex items-center justify-between">
         <div>
-          <span className="text-purple-400 text-xs">{char.slot}枠</span>
+          <span className="text-purple-400 text-xs">
+            {viewSlot}枠
+            {isDebug && viewSlot !== mySlot && (
+              <span className="text-amber-500 text-xs ml-1">（閲覧モード）</span>
+            )}
+          </span>
           <h2 className="text-purple-100 font-bold text-lg leading-tight" style={{ fontFamily: 'serif' }}>{char.name}</h2>
           <span className="text-purple-500 text-xs">{char.role}</span>
         </div>
@@ -87,6 +98,32 @@ export default function HandoutPage() {
           </button>
         ))}
       </div>
+
+      {/* Debug character switcher */}
+      {isDebug && (
+        <div className="bg-[#0d0820] border-b border-purple-900/50 px-4 py-2">
+          <div className="flex gap-1.5 max-w-md mx-auto overflow-x-auto">
+            {allSlots.map(slot => {
+              const slotEntry = Object.entries(game.players).find(([, p]) => p.characterSlot === slot)
+              const slotPlayer = slotEntry?.[1]
+              return (
+                <button
+                  key={slot}
+                  onClick={() => setActiveViewSlot(slot === mySlot ? null : slot)}
+                  className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                    viewSlot === slot
+                      ? 'bg-purple-700 border-purple-500 text-white'
+                      : 'bg-[#1a0f2e] border-purple-800 text-purple-500 hover:border-purple-600 hover:text-purple-300'
+                  }`}
+                >
+                  {slot}枠 {CHARACTERS[slot]?.name}
+                  {slotPlayer?.isNPC && <span className="opacity-50 ml-0.5">NPC</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-md mx-auto px-4 py-4">
         {/* CHARACTER tab */}
@@ -138,7 +175,7 @@ export default function HandoutPage() {
             {/* Inter-player connections — only visible to the relevant players */}
             {(() => {
               const myConns = (scenario.connections ?? []).filter(
-                c => c.fromSlot === mySlot || c.toSlot === mySlot
+                c => c.fromSlot === viewSlot || c.toSlot === viewSlot
               )
               if (myConns.length === 0) return null
               const typeLabel: Record<string, string> = {
@@ -157,7 +194,7 @@ export default function HandoutPage() {
                 <Section title="🤝 今夜の密約（あなただけが知ること）" accent="amber">
                   <div className="space-y-4">
                     {myConns.map((conn, i) => {
-                      const isFrom = conn.fromSlot === mySlot
+                      const isFrom = conn.fromSlot === viewSlot
                       const otherSlot = isFrom ? conn.toSlot : conn.fromSlot
                       const otherChar = CHARACTERS[otherSlot]
                       const text = isFrom ? conn.fromText : conn.toText
@@ -183,7 +220,7 @@ export default function HandoutPage() {
             {(() => {
               const chain = scenario.cooperationChain
               if (!chain) return null
-              const myLinks = chain.links.filter(l => l.fromSlot === mySlot || l.toSlot === mySlot)
+              const myLinks = chain.links.filter(l => l.fromSlot === viewSlot || l.toSlot === viewSlot)
               if (myLinks.length === 0) return null
               const methodLabel: Record<string, string> = {
                 anonymous_phone: '声変え電話',
@@ -195,7 +232,7 @@ export default function HandoutPage() {
                   <p className="text-amber-400/70 text-xs mb-3">以下の情報は他のプレイヤーには絶対に見せないでください。</p>
                   <div className="space-y-4">
                     {myLinks.map((link, i) => {
-                      const isFrom = link.fromSlot === mySlot
+                      const isFrom = link.fromSlot === viewSlot
                       const text = isFrom ? link.fromText : link.toText
                       const label = isFrom
                         ? `指示を出した（${methodLabel[link.method]}）`
@@ -235,7 +272,7 @@ export default function HandoutPage() {
                         const v = myKillerInfo.victimName ?? '被害者'
                         const pat = scenario.dualKillerInfo?.type
                         // First-attacker for double_weapon / environment patterns
-                        const isFirst = scenario.killers.findIndex(k => k.slot === mySlot) === 0
+                        const isFirst = scenario.killers.findIndex(k => k.slot === viewSlot) === 0
 
                         if (myKillerInfo.method === 'poison') {
                           if (pat === 'poison_failed_weapon_killed') {

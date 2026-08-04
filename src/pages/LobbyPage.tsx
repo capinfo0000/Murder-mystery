@@ -51,8 +51,9 @@ export default function LobbyPage() {
     : humanPlayers
   const allReady = playingHumans.every(([, p]) => p.isReady)
 
-  const minPlayers = game.playerCount >= 4 ? 4 : 1
-  const canStart = allReady && humanCount >= minPlayers
+  const isDebug = game.playerCount < 4
+  const minPlayers = isDebug ? 1 : 4
+  const canStart = (isDebug || allReady) && humanCount >= minPlayers
   const startLabel = !canStart
     ? (humanCount < minPlayers
         ? `あと${minPlayers - humanCount}人必要`
