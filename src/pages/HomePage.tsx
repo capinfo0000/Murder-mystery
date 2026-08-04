@@ -61,7 +61,8 @@ export default function HomePage() {
 
           {/* Player count */}
           <div>
-            <label className="text-purple-400 text-xs block mb-2">プレイヤー数</label>
+            <label className="text-purple-400 text-xs block mb-1">プレイヤー数</label>
+            <p className="text-purple-700 text-xs mb-2">GMは含まない人数</p>
             <div className="grid grid-cols-4 gap-2">
               {[4, 5, 6, 7].map(n => (
                 <button
@@ -81,19 +82,24 @@ export default function HomePage() {
 
           {/* Mode */}
           <div>
-            <label className="text-purple-400 text-xs block mb-2">モード</label>
+            <label className="text-purple-400 text-xs block mb-2">難易度モード</label>
             <div className="grid grid-cols-3 gap-2">
-              {(['normal', 'hard', 'puzzle'] as const).map(m => (
+              {([
+                { key: 'normal', label: 'ノーマル', desc: '犯人1人' },
+                { key: 'hard',   label: 'ハード',   desc: '犯人複数' },
+                { key: 'puzzle', label: 'パズル',   desc: '全員犯人\n組み合わせ推理' },
+              ] as const).map(({ key: m, label, desc }) => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className={`py-2 rounded-lg text-sm font-medium transition-colors border ${
+                  className={`py-2 px-1 rounded-lg text-sm font-medium transition-colors border flex flex-col items-center gap-0.5 ${
                     mode === m
                       ? 'bg-purple-700 border-purple-500 text-white'
                       : 'bg-[#120a22] border-purple-800 text-purple-400 hover:border-purple-600'
                   }`}
                 >
-                  {m === 'normal' ? 'ノーマル' : m === 'hard' ? 'ハード' : 'パズル'}
+                  <span>{label}</span>
+                  <span className={`text-xs font-normal whitespace-pre-line leading-tight ${mode === m ? 'text-purple-300' : 'text-purple-600'}`}>{desc}</span>
                 </button>
               ))}
             </div>
