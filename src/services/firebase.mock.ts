@@ -2,7 +2,7 @@
 import type { EvidenceCard, GamePhase, GameState, VoteData } from '../types/game'
 import { generateScenario } from '../logic/scenarioGenerator'
 import { dealCards } from '../logic/cardDealer'
-import { computeScores, determineWinners } from '../logic/gameLogic'
+import { computeScores, determineWinners, determineMainKillerCaught } from '../logic/gameLogic'
 import { getSlotsForCount } from '../data/characters'
 import { v4 as uuid } from 'uuid'
 
@@ -166,18 +166,8 @@ export async function finalizeResult(gameId: string, hostId: string): Promise<vo
   if (!state || state.hostId !== hostId) return
   const scores = computeScores(state)
   const winnerIds = determineWinners(scores)
-  const mainKillerSlot = state.scenario?.killers[0]?.slot ?? null
-  const votes = state.votes || {}
-  const counts: Record<string, number> = {}
-  for (const v of Object.values(votes)) {
-    for (const slot of v.killerSlots ?? []) {
-      counts[slot] = (counts[slot] || 0) + 1
-    }
-  }
-  const mv = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+  const mainKillerCaught = determineMainKillerCaught(state)
   const outsideKillerCase = state.scenario?.outsideKiller === true
-  // For outside killer: correct when no player received the most votes (mv === null)
-  const mainKillerCaught = outsideKillerCase ? mv === null : mv === mainKillerSlot
   state.result = { mainKillerCaught, outsideKillerCase, scores, winnerIds, trueScenario: state.scenario! }
   state.phase = 'result'
   notify(gameId)
