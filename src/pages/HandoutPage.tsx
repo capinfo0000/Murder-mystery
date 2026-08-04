@@ -81,6 +81,12 @@ export default function HandoutPage() {
         {/* CHARACTER tab */}
         {tab === 'character' && (
           <div className="space-y-4">
+            {/* Synopsis — shown to all players */}
+            {scenario.synopsis && (
+              <Section title="📜 あらすじ">
+                <p className="text-purple-200 text-sm leading-relaxed italic">{scenario.synopsis}</p>
+              </Section>
+            )}
             {/* Public: all NPC deaths visible to every player */}
             {scenario.npcVictims.length > 0 && (
               <Section title="🕯 今夜の死亡者（全員既知）">

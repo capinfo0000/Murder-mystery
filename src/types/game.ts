@@ -152,6 +152,7 @@ export interface Scenario {
   dualKillerInfo?: DualKillerInfo  // set when two killers independently targeted the same victim
   cooperationChain?: CooperationChain  // anonymous chain coordination between killers
   assignedProfessions?: Partial<Record<CharacterSlot, string>>  // past profession id per slot
+  synopsis?: string  // auto-generated narrative summary shown to all players
 }
 
 export interface EvidenceCard {

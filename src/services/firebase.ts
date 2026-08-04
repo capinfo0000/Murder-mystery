@@ -154,7 +154,8 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
     scenario.killers,
     scenario.victims,
     5,
-    25
+    25,
+    scenario.assignedProfessions ?? {}
   )
 
   const cardUpdates: Record<string, EvidenceCard> = {}

@@ -1,6 +1,8 @@
 import { v4 as uuid } from 'uuid'
 import type { EvidenceCard, CharacterSlot } from '../types/game'
 import { CARD_TEMPLATES } from '../data/cardTemplates'
+import { PAST_PROFESSIONS } from '../data/pastProfessions'
+import { CHARACTERS } from '../data/characters'
 import type { KillerInfo, VictimInfo } from '../types/game'
 
 function shuffle<T>(arr: T[]): T[] {
@@ -14,11 +16,12 @@ function shuffle<T>(arr: T[]): T[] {
 
 export function dealCards(
   playerIds: string[],
-  _slots: CharacterSlot[],
+  slots: CharacterSlot[],
   killers: KillerInfo[],
   victims: VictimInfo[],
   cardsPerPlayer = 5,
-  deckSize = 25
+  deckSize = 25,
+  assignedProfessions: Partial<Record<CharacterSlot, string>> = {}
 ): Record<string, EvidenceCard> {
   const killerSlots = killers.map(k => k.slot)
   const killerWeaponIds = killers.map(k => k.weapon.id)
@@ -60,7 +63,28 @@ export function dealCards(
     } satisfies EvidenceCard
   })
 
-  const shuffled = shuffle(resolved)
+  // generate profession hint cards for each slot
+  const professionCards: EvidenceCard[] = []
+  for (const slot of slots) {
+    const profId = assignedProfessions[slot]
+    if (!profId) continue
+    const prof = PAST_PROFESSIONS.find(p => p.id === profId)
+    if (!prof) continue
+    const charName = CHARACTERS[slot]?.name ?? slot
+    for (const tmpl of prof.cards) {
+      professionCards.push({
+        id: uuid(),
+        content: tmpl.content.replace(/\{name\}/g, charName),
+        category: tmpl.category,
+        relatedSlot: slot,
+        isTrue: tmpl.isTrue,
+        ownerId: 'deck' as 'deck',
+        sharedWith: [] as string[],
+      })
+    }
+  }
+
+  const shuffled = shuffle([...resolved, ...professionCards])
   const totalNeeded = playerIds.length * cardsPerPlayer + deckSize
   const pool = shuffled.slice(0, Math.min(totalNeeded, shuffled.length))
 

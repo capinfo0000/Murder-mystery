@@ -488,12 +488,33 @@ export function generateScenario(
       ? generateCooperationChain(killerSlots)
       : undefined
 
-  // Shuffle professions and assign one per slot
+  // ── profession assignment (killer aligned with weapon category) ──────
+  const POISON_PROF_IDS = ['sommelier', 'herbalist', 'pharma_researcher', 'perfumer']
+  const PHYSICAL_PROF_IDS = ['locksmith', 'architect_assistant', 'acrobat', 'performer']
   const shuffledProfessions = shuffle([...PAST_PROFESSIONS])
-  const assignedProfessions: Partial<Record<CharacterSlot, string>> = {}
-  for (let i = 0; i < slots.length; i++) {
-    assignedProfessions[slots[i]] = shuffledProfessions[i % shuffledProfessions.length].id
+  const assignedProfessionIds = new Set<string>()
+
+  function pickProfForCategory(preferIds: string[]): string {
+    const preferred = shuffledProfessions.find(p => preferIds.includes(p.id) && !assignedProfessionIds.has(p.id))
+    if (preferred) { assignedProfessionIds.add(preferred.id); return preferred.id }
+    const any = shuffledProfessions.find(p => !assignedProfessionIds.has(p.id))!
+    assignedProfessionIds.add(any.id); return any.id
   }
+
+  const assignedProfessions: Partial<Record<CharacterSlot, string>> = {}
+  for (const killer of killers) {
+    const prefIds = killer.weapon.isPoison ? POISON_PROF_IDS : PHYSICAL_PROF_IDS
+    assignedProfessions[killer.slot] = pickProfForCategory(prefIds)
+  }
+  for (const slot of slots) {
+    if (assignedProfessions[slot]) continue
+    const prof = shuffledProfessions.find(p => !assignedProfessionIds.has(p.id))!
+    assignedProfessionIds.add(prof.id)
+    assignedProfessions[slot] = prof.id
+  }
+
+  // ── synopsis ──────────────────────────────────────────────────────────
+  const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, cooperationChain, slots.length)
 
   return {
     victims,
@@ -508,7 +529,45 @@ export function generateScenario(
     dualKillerInfo,
     cooperationChain: cooperationChain ?? undefined,
     assignedProfessions,
+    synopsis,
   }
+}
+
+function generateSynopsis(
+  killers: KillerInfo[],
+  npcVictims: NpcVictim[],
+  outsideKiller: boolean,
+  cooperationChain: CooperationChain | undefined | null,
+  playerCount: number,
+): string {
+  const murderVictims = npcVictims.filter(v => v.isRelatedToCase)
+  const victimCount = murderVictims.length
+  const apparentCause = murderVictims[0]?.apparentCause ?? '不審な死'
+
+  if (outsideKiller) {
+    return `嵐の夜、紫苑館で${victimCount}名が相次いで命を落とした。表向きは事故や病死とされているが、証拠が別の何かを示している。組織から派遣された外部の殺し屋による犯行か——それとも別の真相が潜んでいるのか。${playerCount}名の滞在者全員が容疑の外にいるとは限らない。`
+  }
+
+  if (killers.length === 0) {
+    return `今夜、紫苑館で不審な事件が発生した。死因は「${apparentCause}」とされているが、現場には疑問点が残る。${playerCount}名の滞在者の中に、真相を知る者がいる。`
+  }
+
+  const dualPattern = npcVictims[0]?.dualKillerPattern
+  const multiVictim = victimCount > 1
+
+  if (dualPattern) {
+    return `雨降る夜、紫苑館で${multiVictim ? `${victimCount}名` : '当主'}が${apparentCause}で発見された。複数の証言が矛盾を示し、事故として処理するには不自然な点が多すぎる。二つの殺意が交差したこの夜、${playerCount}名の滞在者それぞれが胸に秘密を抱えている。`
+  }
+
+  if (killers.length === 1) {
+    return `嵐が近づく夜、紫苑館で${multiVictim ? `${victimCount}名` : '当主'}が${apparentCause}で発見された。偶然の事故とも、仕組まれた罠とも読める——${playerCount}名の滞在者それぞれが嘘をつく理由を持つこの夜、ひとつの殺意が静かに動いていた。`
+  }
+
+  if (cooperationChain) {
+    return `静かな夜のはずだった。しかし夜明け前、紫苑館では${victimCount}名が命を落としていた。黒幕の命令が見えない連鎖を作り、複数の人間が知らぬ間に関与していた——${playerCount}名の滞在者の中で、秘密と欺瞞が絡み合う。`
+  }
+
+  return `嵐の一夜、紫苑館では${victimCount}名が「${apparentCause}」で相次いで発見された。それぞれが異なる動機と秘密を抱えた${playerCount}名の中に、複数の殺意が潜んでいる。真相は討議の中にのみ現れる。`
 }
 
 export { getSlotsForCount }
