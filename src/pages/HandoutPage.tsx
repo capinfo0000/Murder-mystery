@@ -117,6 +117,10 @@ export default function HandoutPage() {
                 weapon_supply: '凶器・品物の調達',
                 victim_lure: '被害者の誘導',
                 map_provision: '見取り図の提供',
+                false_alibi: '偽アリバイの口裏合わせ',
+                distraction: '陽動・騒ぎの演出',
+                evidence_disposal: '証拠品の処分',
+                key_provision: '合鍵の提供',
               }
               return (
                 <Section title="🤝 今夜の密約（あなただけが知ること）" accent="amber">
@@ -160,12 +164,30 @@ export default function HandoutPage() {
                 {myKillerInfo.isDualKiller && (
                   <div className="mt-3 pt-3 border-t border-red-900/40">
                     <p className="text-red-200/80 text-xs leading-relaxed">
-                      {myKillerInfo.method === 'poison'
-                        ? `あなたは毒を盛り、その場を立ち去った。遅効性のため${myKillerInfo.victimName ?? '被害者'}はすぐには倒れなかった。その後、遺体がどのような状態で発見されたかはあなたも知らない。`
-                        : scenario.dualKillerInfo?.type === 'weapon_found_dead'
-                          ? `T2、凶器を手に${myKillerInfo.victimName ?? '被害者'}の部屋へ踏み込んだとき、すでに${myKillerInfo.victimName ?? '被害者'}は床に倒れており、脈はなかった。誰かに先を越されたのだと悟り、動揺しながらその場を後にした。凶器はそのまま持ち帰った。`
-                          : `T2に${myKillerInfo.victimName ?? '被害者'}の元へ向かい、凶器で致命傷を与えた。${myKillerInfo.victimName ?? '被害者'}の様子にどこか違和感があったかもしれないが、あなたは凶器による一撃しか知らない。`
-                      }
+                      {(() => {
+                        const v = myKillerInfo.victimName ?? '被害者'
+                        const pat = scenario.dualKillerInfo?.type
+                        if (myKillerInfo.method === 'poison') {
+                          if (pat === 'poison_failed_weapon_killed') {
+                            return `あなたは毒を使ったが、${v}はその後も動き回っているように見えた。量が足りなかったのか、体質的に効かなかったのか——自分でも今夜起きたことへの確信が持てないまま討議に臨んでいる。`
+                          }
+                          if (pat === 'weapon_then_poison') {
+                            return `T2、${v}の元へ向かうとすでに${v}は苦しんでいた。何があったかは確認できなかったが、毒を盛り立ち去った。自分が止めを刺したのかどうか、今もはっきりしない。`
+                          }
+                          return `あなたは毒を盛り、その場を立ち去った。遅効性のため${v}はすぐには倒れなかった。その後、遺体がどのような状態で発見されたかはあなたも知らない。`
+                        }
+                        // weapon killer
+                        if (pat === 'weapon_found_dead') {
+                          return `T2、凶器を手に${v}の部屋へ踏み込んだとき、すでに${v}は床に倒れており、脈はなかった。誰かに先を越されたのだと悟り、動揺しながらその場を後にした。凶器はそのまま持ち帰った。`
+                        }
+                        if (pat === 'weapon_then_poison') {
+                          return `T2に${v}を凶器で傷つけ、致命傷を与えたと判断してその場を去った。その後、別の誰かが来て何かをしたとは知る由もない。`
+                        }
+                        if (pat === 'poison_failed_weapon_killed') {
+                          return `T2に${v}を凶器で仕留めた。完全に息絶えたのを確認して立ち去った。誰かが先に毒を盛っていたとは知る由もない。`
+                        }
+                        return `T2に${v}の元へ向かい、凶器で致命傷を与えた。${v}の様子に違和感があったかもしれないが、あなたは凶器による一撃しか知らない。`
+                      })()}
                     </p>
                   </div>
                 )}

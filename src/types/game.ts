@@ -64,7 +64,7 @@ export interface NpcVictim {
   isRelatedToCase: boolean   // truth: was this actually murder?
   trueMurderDetail?: string  // revealed at result when isRelatedToCase=true
   killerSlot?: CharacterSlot // which player killed them (poison killer for dual scenarios)
-  dualKillerPattern?: 'poison_then_weapon' | 'weapon_found_dead'
+  dualKillerPattern?: DualKillerPattern
   secondKillerSlot?: CharacterSlot  // weapon killer in dual scenarios
 }
 
@@ -78,20 +78,30 @@ export interface KillerInfo {
   isDualKiller?: boolean        // true when part of a dual-killer pair
 }
 
+export type DualKillerPattern =
+  | 'poison_then_weapon'        // 毒→凶器: 遅効性毒の後に凶器犯が止めを刺す
+  | 'weapon_found_dead'         // 凶器到着時に毒で既死: 凶器未使用
+  | 'weapon_then_poison'        // 凶器→毒: 凶器で傷を負わせ立ち去る→毒犯が止めを刺す
+  | 'poison_failed_weapon_killed' // 毒失敗→凶器: 毒の量が足りず、凶器犯が独立に殺害
+
 export interface DualKillerInfo {
-  type: 'poison_then_weapon' | 'weapon_found_dead'
+  type: DualKillerPattern
   poisonKillerSlot: CharacterSlot
   weaponKillerSlot: CharacterSlot
   victimName: string
 }
 
 export type ConnectionType =
-  | 'lookout'
-  | 'preparation'
-  | 'silence_deal'
-  | 'weapon_supply'   // 凶器・毒物の調達を依頼
-  | 'victim_lure'     // 被害者を特定場所へ誘導
-  | 'map_provision'   // 館の見取り図・通路情報を提供
+  | 'lookout'           // 見張り番
+  | 'preparation'       // 準備の手伝い
+  | 'silence_deal'      // 口止め取引
+  | 'weapon_supply'     // 凶器・毒物の調達
+  | 'victim_lure'       // 被害者を特定場所へ誘導
+  | 'map_provision'     // 館の見取り図・通路情報の提供
+  | 'false_alibi'       // 偽アリバイの口裏合わせ
+  | 'distraction'       // 別場所での陽動・騒ぎ
+  | 'evidence_disposal' // 証拠品の密かな処分
+  | 'key_provision'     // 施錠された部屋の合鍵の提供
 
 export interface PlayerConnection {
   fromSlot: CharacterSlot   // the player with leverage / who benefits

@@ -2,6 +2,7 @@ import type {
   CharacterSlot,
   ConnectionType,
   DualKillerInfo,
+  DualKillerPattern,
   GameMode,
   KillerInfo,
   NpcVictim,
@@ -45,6 +46,18 @@ function connFromText(type: ConnectionType, toName: string): string {
   if (type === 'map_provision') {
     return `${toName}から館の内部構造を詳しく教えてもらった。どこに何があるか、誰がどこを通るかを事前に把握した。${toName}はなぜ知りたいのかを聞かずに教えてくれた。`
   }
+  if (type === 'false_alibi') {
+    return `${toName}には「T2、ふたりで話していたことにしてほしい」と頼んである。実際に何があったかは告げていない。${toName}は了承してくれた。`
+  }
+  if (type === 'distraction') {
+    return `${toName}に「T2頃、食堂か廊下で何か騒ぎを起こして人目を引きつけておいてほしい」と頼んだ。理由は告げなかったが、${toName}は引き受けてくれた。`
+  }
+  if (type === 'evidence_disposal') {
+    return `${toName}に「ある物を人知れず処分してほしい」と頼んだ。中身を見せず、理由も告げなかった。${toName}は黙って引き受けてくれた。`
+  }
+  if (type === 'key_provision') {
+    return `今夜のために、${toName}が持っていた合鍵を借りた。何に使うかは告げなかった。`
+  }
   // silence_deal
   return `T2の頃、あなたは偶然にも${toName}の秘密の行動を目撃してしまった。本人も気づいていた——目が合った瞬間、${toName}の顔が青ざめるのがわかった。その後、ふたりきりになった際、あなたは静かに切り出した。「見てしまったことは、誰にも言わない。ただ、今夜の話し合いで少しだけ協力してほしい」。${toName}は長い沈黙の後、うなずいた。`
 }
@@ -64,6 +77,18 @@ function connToText(type: ConnectionType, fromName: string): string {
   }
   if (type === 'map_provision') {
     return `${fromName}に、館の見取り図や通路の位置を教えてほしいと頼まれた。こんな時間になぜそんなことを聞くのかと思いながらも、聞かれたことだけを答えた。その情報がどう使われたかは知らない。`
+  }
+  if (type === 'false_alibi') {
+    return `${fromName}から「もし誰かに聞かれたら、T2はふたりで話していたと答えてほしい」と頼まれた。実際は別々にいたが、なぜそんなことを頼むのかを聞かずに承諾した。`
+  }
+  if (type === 'distraction') {
+    return `${fromName}に「人目を引くような些細な騒ぎを起こしてほしい」と頼まれた。詳しい理由は教えてもらえなかったが、言われた通りに動いた。自分が何かの計画に使われたとは知らない。`
+  }
+  if (type === 'evidence_disposal') {
+    return `${fromName}から包まれた何かを渡され「誰にも見られないよう捨ててきてほしい」と頼まれた。中身は確認していない。自分が何を処分したのか、今も知らない。`
+  }
+  if (type === 'key_provision') {
+    return `${fromName}に「今夜だけ合鍵を貸してほしい」と頼まれた。「大事なものを確認するだけだ」と言われたが、それ以上の説明はなかった。鍵がどう使われたかは知らない。`
   }
   // silence_deal
   return `T2の頃、${fromName}と目が合った。あの瞬間、見られたと悟った。その後、${fromName}が静かに近づいてきた。「あのことは、誰にも話さない。ただ、今夜の話し合いで少しだけ協力してほしい」。断ることもできたが——できなかった。あなたは無言でうなずいた。`
@@ -177,6 +202,12 @@ export function generateScenario(
       const soloNpcs = shuffledNpcs.slice(1, numKillers - 1)  // killers[2+]
       const naturalNpcs = shuffledNpcs.slice(numKillers - 1, numKillers - 1 + Math.floor(Math.random() * 2) + 1)
 
+      const DUAL_PATTERNS: DualKillerPattern[] = [
+        'poison_then_weapon',
+        'weapon_found_dead',
+        'weapon_then_poison',
+        'poison_failed_weapon_killed',
+      ]
       npcVictims = [
         {
           name: sharedNpc.role,
@@ -186,7 +217,7 @@ export function generateScenario(
           trueMurderDetail: undefined,  // filled after killers are built
           killerSlot: killerSlots[0],   // poison killer is "primary"
           secondKillerSlot: killerSlots[1],
-          dualKillerPattern: Math.random() < 0.5 ? 'poison_then_weapon' : 'weapon_found_dead',
+          dualKillerPattern: DUAL_PATTERNS[Math.floor(Math.random() * DUAL_PATTERNS.length)],
         },
         ...soloNpcs.map((npc, i) => ({
           name: npc.role,
@@ -287,9 +318,23 @@ export function generateScenario(
     const wk = killers[1]  // weapon killer
     const pkName = CHARACTERS[pk.slot].name
     const wkName = CHARACTERS[wk.slot].name
-    const detail = dualPattern === 'poison_then_weapon'
-      ? `${pkName}がT2に遅効性の毒（${pk.weapon.name}）を使い、その場を立ち去った。苦しみながら部屋へ戻った被害者のところへ、そこへ${wkName}が${wk.weapon.name}を持って現れ、止めを刺した。ふたりは互いの行動を知らなかった。`
-      : `${pkName}がT2に遅効性の毒（${pk.weapon.name}）を使い、立ち去った。その後、${wkName}が${wk.weapon.name}を持って部屋に乗り込んだとき、すでに被害者は息絶えていた。凶器は使われなかった。`
+    const v = npcVictims[0].name
+
+    let detail: string
+    switch (dualPattern) {
+      case 'poison_then_weapon':
+        detail = `${pkName}がT2に遅効性の毒（${pk.weapon.name}）を使い立ち去った。苦しみながら部屋へ戻った${v}のところへ、${wkName}が${wk.weapon.name}を持って現れ止めを刺した。ふたりは互いの行動を知らなかった。`
+        break
+      case 'weapon_found_dead':
+        detail = `${pkName}がT2に遅効性の毒（${pk.weapon.name}）で${v}を毒殺した。その後、${wkName}が凶器（${wk.weapon.name}）を持って部屋へ乗り込んだとき、すでに遺体となっていた。凶器は使われなかった。`
+        break
+      case 'weapon_then_poison':
+        detail = `${wkName}がT2に${v}を${wk.weapon.name}で傷つけ立ち去った。瀕死の${v}のもとへその後${pkName}が現れ、毒（${pk.weapon.name}）を用いて止めを刺した。どちらが致命傷を与えたかは法医学的にも曖昧である。`
+        break
+      case 'poison_failed_weapon_killed':
+        detail = `${pkName}がT2より前に${v}に毒（${pk.weapon.name}）を盛ったが、量が足りず死に至らなかった。独立して${v}を狙っていた${wkName}がT2に${wk.weapon.name}で殺害した。${pkName}は自分の毒が効いたと信じているが、実際の死因は凶器による外傷である。`
+        break
+    }
     npcVictims[0] = { ...npcVictims[0], trueMurderDetail: detail }
   }
 
