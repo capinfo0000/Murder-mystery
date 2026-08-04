@@ -31,14 +31,12 @@ export default function VotingPage() {
   const isHost = game.hostId === uid
   const mySlot = game.players[uid]?.characterSlot
   const scenario = game.scenario!
-  const allSlots = Object.keys(scenario.roles) as CharacterSlot[]
-  const suspectSlots = mySlot ? allSlots.filter(s => s !== mySlot) : allSlots
+  const suspectSlots = Object.keys(scenario.roles) as CharacterSlot[]
   const myVote = game.votes?.[uid]
   const totalVoters = Object.values(game.players).filter(p => !p.isNPC).length
   const totalVoted = Object.values(game.votes ?? {}).length
 
   async function handleSubmit() {
-    if (!selectedSlot && !accuseAll) return
     const vote: VoteData = { targetSlot: selectedSlot, accuseAll }
     await submitVote(gameId!, uid, vote)
     setSubmitted(true)
@@ -74,12 +72,13 @@ export default function VotingPage() {
 
         {!submitted && !myVote ? (
           <>
-            {/* Suspect grid */}
+            {/* Suspect grid — all character slots including NPCs and self */}
             <div className="grid grid-cols-2 gap-2">
               {suspectSlots.map(slot => {
                 const char = CHARACTERS[slot]
                 if (!char) return null
                 const selected = selectedSlot === slot
+                const isSelf = slot === mySlot
                 return (
                   <button
                     key={slot}
@@ -90,13 +89,30 @@ export default function VotingPage() {
                         : 'border-purple-900 bg-[#1a0f2e] hover:border-purple-700'
                     }`}
                   >
-                    <div className="text-purple-500 text-xs">{slot}枠</div>
+                    <div className="text-purple-500 text-xs">
+                      {slot}枠{isSelf && <span className="ml-1 text-purple-600">（自分）</span>}
+                    </div>
                     <div className="text-purple-100 text-sm font-medium mt-0.5">{char.name}</div>
                     <div className="text-purple-500 text-xs mt-0.5">{char.role}</div>
                     {selected && <div className="text-red-400 text-xs mt-1">← 選択中</div>}
                   </button>
                 )
               })}
+            </div>
+
+            {/* No suspect option */}
+            <div
+              onClick={() => { setSelectedSlot(null); setAccuseAll(false) }}
+              className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                !selectedSlot && !accuseAll
+                  ? 'border-purple-600 bg-purple-900/20'
+                  : 'border-purple-900 bg-[#1a0f2e] hover:border-purple-700'
+              }`}
+            >
+              <div className="text-purple-300 text-sm font-medium">? 犯人不明</div>
+              <div className="text-purple-600 text-xs mt-0.5">
+                この中に犯人がいないと判断する場合に選択
+              </div>
             </div>
 
             {/* Accuse all option (complete innocents only) */}
@@ -116,22 +132,22 @@ export default function VotingPage() {
 
             <button
               onClick={handleSubmit}
-              disabled={!selectedSlot && !accuseAll}
-              className="w-full bg-red-700 hover:bg-red-600 disabled:opacity-40 text-white font-bold rounded-xl py-3 text-sm tracking-wide transition-colors"
+              className="w-full bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl py-3 text-sm tracking-wide transition-colors"
             >
-              この人物を告発する
+              {selectedSlot ? 'この人物を告発する' : accuseAll ? '全員を告発する' : '犯人不明で投票する'}
             </button>
           </>
         ) : (
           <div className="bg-[#1a0f2e] border border-green-800 rounded-xl p-4 text-center">
             <div className="text-green-400 text-lg mb-1">✓ 投票完了</div>
-            {myVote?.targetSlot && (
+            {myVote?.targetSlot ? (
               <p className="text-purple-300 text-sm">
                 {CHARACTERS[myVote.targetSlot]?.name ?? myVote.targetSlot} を告発しました
               </p>
-            )}
-            {myVote?.accuseAll && (
+            ) : myVote?.accuseAll ? (
               <p className="text-amber-300 text-sm">全員悪人告発を宣言しました</p>
+            ) : (
+              <p className="text-purple-400 text-sm">犯人不明で投票しました</p>
             )}
             <p className="text-purple-600 text-xs mt-2">他のプレイヤーの投票を待っています…</p>
           </div>
