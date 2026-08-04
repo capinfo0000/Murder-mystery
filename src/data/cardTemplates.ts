@@ -430,6 +430,43 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     category: 'victim', relatedSlot: null, baseIsTrue: false,
   },
 
+  // ───── 全員無実の示唆（外部犯時のみ真）─────
+  {
+    id: 'innocent_A',
+    content: 'T2の時刻、Aが書斎にいたことは複数の目撃証言で裏付けられている。遺言書に触れていたのは事実だが、それは犯行とは無関係だった。',
+    category: 'alibi', relatedSlot: 'A', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_B',
+    content: 'BのT2の行動は書庫の使用記録と照合できる。カルテを持ち出していたのは確かだが、その時刻に犯行現場にいた形跡はない。',
+    category: 'alibi', relatedSlot: 'B', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_C',
+    content: 'CはT2の時間帯、絵画室で修復作業を続けていたとみられる。名画のすり替えを試みていたが、当主の死とは直接関わっていない。',
+    category: 'alibi', relatedSlot: 'C', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_D',
+    content: 'Dが秘密通路を使っていたことは事実だが、T2の時刻に当主の部屋へ向かった証拠はない。通路内の足跡は別の方向を示していた。',
+    category: 'alibi', relatedSlot: 'D', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_E',
+    content: 'EはT2、金庫室に籠もって裏金の整理をしていたとみられる。金庫室の鍵の使用記録がその時刻を裏付けている。',
+    category: 'alibi', relatedSlot: 'E', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_F',
+    content: 'FがT2に隠し部屋にいたことは、残された毒草の葉片が証明している。部屋から当主の居室へ移動する時間はなかった。',
+    category: 'alibi', relatedSlot: 'F', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_G',
+    content: 'GはT2に書斎で権利証を探していた。書斎の乱れた形跡がその証拠だが、当主への接触はなかったと推測される。',
+    category: 'alibi', relatedSlot: 'G', baseIsTrue: false, condition: 'outside_killer',
+  },
+
   // ───── 動機（motive）─────
   {
     id: 'mo_001',

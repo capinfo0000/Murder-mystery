@@ -112,6 +112,7 @@ export function dealCards(
   assignedProfessions: Partial<Record<CharacterSlot, string>> = {},
   npcSurvivors: NpcSurvivor[] = [],
   npcVictims: NpcVictim[] = [],
+  outsideKiller = false,
 ): Record<string, EvidenceCard> {
   const killerSlots = killers.map(k => k.slot)
   const killerWeaponIds = killers.map(k => k.weapon.id)
@@ -123,7 +124,9 @@ export function dealCards(
     let isTrue = t.baseIsTrue
 
     if (t.condition) {
-      if (t.condition.startsWith('crime_scene:')) {
+      if (t.condition === 'outside_killer') {
+        isTrue = outsideKiller
+      } else if (t.condition.startsWith('crime_scene:')) {
         const loc = t.condition.replace('crime_scene:', '')
         isTrue = crimeLocations.some(l => l === loc)
       } else if (t.condition.startsWith('weapon:')) {
