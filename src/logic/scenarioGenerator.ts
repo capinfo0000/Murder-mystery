@@ -154,7 +154,7 @@ function buildChainLink(
     : ''
 
   const relayReceiveText = relayTo && relayToName
-    ? `さらに「${relayToName}に${relayMethod === 'anonymous_letter' ? '封書を届けろ' : relayMethod === 'blackmail_face' ? '直接接触せよ' : '匿名で連絡せよ'}」とも命じられた。あなたは言われた通り${relayToName}に接触した。${relayToName}はあなたが使者に過ぎない可能性も感じているかもしれないが、真の指示者が誰かはわからないはずだ。`
+    ? `さらに「${relayToName}に${relayMethod === 'anonymous_letter' ? '封書を届けろ' : relayMethod === 'blackmail_face' ? '直接接触せよ' : '匿名で連絡せよ'}」とも命じられた。あなたは言われた通り${relayToName}に接触した。`
     : ''
 
   let fromText: string
