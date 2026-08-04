@@ -25,7 +25,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function victimCount(playerCount: number, mode: GameMode): number {
-  if (mode === 'puzzle') return 0 // puzzle: everyone kills someone
+  if (mode === 'puzzle') return playerCount // everyone is both killer and victim
   const max = playerCount <= 5 ? 1 : playerCount <= 6 ? 2 : 2
   return Math.floor(Math.random() * max) + 1
 }
@@ -38,8 +38,8 @@ export function generateScenario(
   const shuffled = shuffle(slots)
 
   // ── victims ──────────────────────────────────────────────
-  const numVictims = mode === 'puzzle' ? 0 : victimCount(playerCount, mode)
-  const victimSlots = shuffled.slice(0, numVictims)
+  // puzzle mode: circular killing — everyone is both killer and victim
+  const victimSlots = mode === 'puzzle' ? [...slots] : shuffled.slice(0, victimCount(playerCount, mode))
   const victims: VictimInfo[] = victimSlots.map(slot => ({
     slot,
     background: pickRandom(VICTIM_BACKGROUNDS).detail,
