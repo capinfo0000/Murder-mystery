@@ -8,4 +8,6 @@ export const WEAPONS: Weapon[] = [
   { id: 'poison_wine',  name: '毒入りワイン',     disguisedAs: '食中毒',              isPoison: true },
   { id: 'strangling',   name: '絞殺',             disguisedAs: '自殺（首吊り）' },
   { id: 'drowning',     name: '溺死',             disguisedAs: '浴室での事故' },
+  { id: 'stair_trap',   name: '階段への細工',     disguisedAs: '転落事故死',          isEnvironmental: true },
+  { id: 'arson_setup',  name: '放火の仕掛け',     disguisedAs: '焼死（失火）',        isEnvironmental: true },
 ]

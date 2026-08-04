@@ -48,7 +48,8 @@ export interface Weapon {
   id: string
   name: string
   disguisedAs: string
-  isPoison?: boolean  // true for poison/drug weapons
+  isPoison?: boolean        // true for poison/drug weapons
+  isEnvironmental?: boolean // true for environmental traps (arson, stair tampering, etc.)
 }
 
 export interface VictimInfo {
@@ -74,20 +75,25 @@ export interface KillerInfo {
   victimName?: string         // set in normal/hard mode (NPC victim name)
   weapon: Weapon
   location: Location
-  method?: 'weapon' | 'poison'  // dual killer scenarios only
+  method?: 'weapon' | 'poison' | 'environmental'  // dual killer scenarios only
   isDualKiller?: boolean        // true when part of a dual-killer pair
 }
 
 export type DualKillerPattern =
-  | 'poison_then_weapon'        // 毒→凶器: 遅効性毒の後に凶器犯が止めを刺す
-  | 'weapon_found_dead'         // 凶器到着時に毒で既死: 凶器未使用
-  | 'weapon_then_poison'        // 凶器→毒: 凶器で傷を負わせ立ち去る→毒犯が止めを刺す
+  | 'poison_then_weapon'          // 毒→凶器: 遅効性毒の後に凶器犯が止めを刺す
+  | 'weapon_found_dead'           // 凶器到着時に毒で既死: 凶器未使用
+  | 'weapon_then_poison'          // 凶器→毒: 凶器で傷を負わせ立ち去る→毒犯が止めを刺す
   | 'poison_failed_weapon_killed' // 毒失敗→凶器: 毒の量が足りず、凶器犯が独立に殺害
+  | 'double_weapon_first_failed'  // 凶器犯2人: 先の攻撃が致命傷にならず後から別の凶器で止め
+  | 'double_weapon_overlap'       // 凶器犯2人: ほぼ同時に別々の凶器で攻撃、どちらが致命傷か不明
+  | 'environment_then_weapon'     // 罠→凶器: 環境的手段で負傷させた後、別人が凶器で止め
 
+// killers[0] = "first" dual killer (poison / environmental / first weapon attacker)
+// killers[1] = "second" dual killer (weapon / second weapon attacker)
 export interface DualKillerInfo {
   type: DualKillerPattern
-  poisonKillerSlot: CharacterSlot
-  weaponKillerSlot: CharacterSlot
+  poisonKillerSlot: CharacterSlot  // killers[0].slot; name kept for backward compat
+  weaponKillerSlot: CharacterSlot  // killers[1].slot; name kept for backward compat
   victimName: string
 }
 

@@ -156,7 +156,7 @@ export default function HandoutPage() {
                       ? `${myKillerInfo.victimSlot}枠 — ${CHARACTERS[myKillerInfo.victimSlot]?.name ?? '？'}`
                       : (myKillerInfo.victimName ?? '？')
                   } />
-                  <Row label={myKillerInfo.method === 'poison' ? '毒物' : '凶器'} value={myKillerInfo.weapon.name} />
+                  <Row label={myKillerInfo.method === 'poison' ? '毒物' : myKillerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={myKillerInfo.weapon.name} />
                   <Row label="場所" value={LOCATION_NAMES[myKillerInfo.location]} />
                   <Row label="偽装死因" value={myKillerInfo.weapon.disguisedAs} />
                   <Row label="時刻" value="T2（21:00〜22:00頃）" />
@@ -167,6 +167,9 @@ export default function HandoutPage() {
                       {(() => {
                         const v = myKillerInfo.victimName ?? '被害者'
                         const pat = scenario.dualKillerInfo?.type
+                        // First-attacker for double_weapon / environment patterns
+                        const isFirst = scenario.killers.findIndex(k => k.slot === mySlot) === 0
+
                         if (myKillerInfo.method === 'poison') {
                           if (pat === 'poison_failed_weapon_killed') {
                             return `あなたは毒を使ったが、${v}はその後も動き回っているように見えた。量が足りなかったのか、体質的に効かなかったのか——自分でも今夜起きたことへの確信が持てないまま討議に臨んでいる。`
@@ -175,6 +178,9 @@ export default function HandoutPage() {
                             return `T2、${v}の元へ向かうとすでに${v}は苦しんでいた。何があったかは確認できなかったが、毒を盛り立ち去った。自分が止めを刺したのかどうか、今もはっきりしない。`
                           }
                           return `あなたは毒を盛り、その場を立ち去った。遅効性のため${v}はすぐには倒れなかった。その後、遺体がどのような状態で発見されたかはあなたも知らない。`
+                        }
+                        if (myKillerInfo.method === 'environmental') {
+                          return `T2前に${LOCATION_NAMES[myKillerInfo.location]}へ${myKillerInfo.weapon.name}を仕掛けた。${v}が罠に落ち負傷したのを遠目に確認し、その場を去った。死亡は直接確認していない。しかし夜が明けてもたらされた報告には、罠だけでは説明できない傷も含まれていたという。`
                         }
                         // weapon killer
                         if (pat === 'weapon_found_dead') {
@@ -185,6 +191,18 @@ export default function HandoutPage() {
                         }
                         if (pat === 'poison_failed_weapon_killed') {
                           return `T2に${v}を凶器で仕留めた。完全に息絶えたのを確認して立ち去った。誰かが先に毒を盛っていたとは知る由もない。`
+                        }
+                        if (pat === 'double_weapon_first_failed') {
+                          if (isFirst) {
+                            return `T2に${myKillerInfo.weapon.name}で${v}を攻撃し、動かなくなったのを見て立ち去った。だが遺体には自分の凶器とは異なる傷が残されていた。誰かがあとから来たのか——自分の一撃で本当に死んだのか、確かめる術はない。`
+                          }
+                          return `T2、${v}のもとへ向かうとすでに${v}は倒れ、傷を負っていた。息がある——あなたは${myKillerInfo.weapon.name}で止めを刺した。誰が先に手を下したのかは知らない。`
+                        }
+                        if (pat === 'double_weapon_overlap') {
+                          return `T2、あなたは${myKillerInfo.weapon.name}で${v}を攻撃した。致命傷を与えたはずだ。だが後に、遺体には自分の凶器とは異なる傷も見つかったという。同じ夜に同じ相手を、別の誰かも狙っていたとはまったく知らなかった。`
+                        }
+                        if (pat === 'environment_then_weapon') {
+                          return `T2、${myKillerInfo.weapon.name}を手に${v}のもとへ向かうと、${v}はすでに傷を負い苦しんでいた。誰かが先に手を下したのかもしれない——あなたは構わず凶器で止めを刺した。罠が仕掛けられていたとは知らなかった。`
                         }
                         return `T2に${v}の元へ向かい、凶器で致命傷を与えた。${v}の様子に違和感があったかもしれないが、あなたは凶器による一撃しか知らない。`
                       })()}

@@ -12,7 +12,7 @@ import type {
 } from '../types/game'
 import { CHARACTERS, getSlotsForCount } from '../data/characters'
 import { WEAPONS } from '../data/weapons'
-import { CRIME_SCENE_LOCATIONS } from '../data/locations'
+import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
 import { VICTIM_BACKGROUNDS } from '../data/victimBackgrounds'
 import { EXTRA_NPCS } from '../data/extraNpcs'
 import { generateAlibis } from './alibiGenerator'
@@ -207,6 +207,9 @@ export function generateScenario(
         'weapon_found_dead',
         'weapon_then_poison',
         'poison_failed_weapon_killed',
+        'double_weapon_first_failed',
+        'double_weapon_overlap',
+        'environment_then_weapon',
       ]
       npcVictims = [
         {
@@ -260,12 +263,37 @@ export function generateScenario(
 
   // ── killers (with victim assignment) ─────────────────────
   const poisonWeapons = WEAPONS.filter(w => w.isPoison)
-  const physicalWeapons = WEAPONS.filter(w => !w.isPoison)
+  const physicalWeapons = WEAPONS.filter(w => !w.isPoison && !w.isEnvironmental)
+  const environmentalWeapons = WEAPONS.filter(w => w.isEnvironmental)
   const dualPattern = npcVictims[0]?.dualKillerPattern
 
   const sharedLocation = dualPattern ? pickRandom(CRIME_SCENE_LOCATIONS) : null
 
+  // Pre-build the dual pair so weapon[1] can avoid repeating weapon[0]
+  type DualPair = [KillerInfo, KillerInfo]
+  const preDual: DualPair | null = (() => {
+    if (!dualPattern) return null
+    const isEnv = dualPattern === 'environment_then_weapon'
+    const isDbl = dualPattern === 'double_weapon_first_failed' || dualPattern === 'double_weapon_overlap'
+    const method0: 'poison' | 'weapon' | 'environmental' =
+      isEnv ? 'environmental' : isDbl ? 'weapon' : 'poison'
+    const w0 = isEnv ? pickRandom(environmentalWeapons) :
+               method0 === 'poison' ? pickRandom(poisonWeapons) :
+               pickRandom(physicalWeapons)
+    const w1 = isDbl
+      ? pickRandom(physicalWeapons.filter(w => w.id !== w0.id))
+      : pickRandom(physicalWeapons)
+    const vName = npcVictims[0].role
+    return [
+      { slot: killerSlots[0], victimName: vName, weapon: w0, location: sharedLocation!, method: method0, isDualKiller: true },
+      { slot: killerSlots[1], victimName: vName, weapon: w1, location: sharedLocation!, method: 'weapon' as const, isDualKiller: true },
+    ]
+  })()
+
   const killers: KillerInfo[] = killerSlots.map((slot, i) => {
+    if (preDual && i === 0) return preDual[0]
+    if (preDual && i === 1) return preDual[1]
+
     let victimSlot: CharacterSlot | undefined
     let victimName: string | undefined
 
@@ -273,66 +301,51 @@ export function generateScenario(
       const idx = slots.indexOf(slot)
       victimSlot = slots[(idx + 1) % slots.length]
       victimName = CHARACTERS[victimSlot]?.name
-    } else if (dualPattern && i < 2) {
-      // Both share the first NPC victim
-      victimName = npcVictims[0].role
     } else {
-      // Normal: NPC index offset for dual (dual pair occupies index 0, solo killers from index 1)
+      // NPC index offset for dual (dual pair occupies index 0, solo killers from index 1)
       const npcIdx = dualPattern ? i - 1 : i
       victimName = npcVictims[npcIdx]?.role
-    }
-
-    if (dualPattern && i === 0) {
-      return {
-        slot,
-        victimName,
-        weapon: pickRandom(poisonWeapons),
-        location: sharedLocation!,
-        method: 'poison' as const,
-        isDualKiller: true,
-      }
-    }
-    if (dualPattern && i === 1) {
-      return {
-        slot,
-        victimName,
-        weapon: pickRandom(physicalWeapons),
-        location: sharedLocation!,
-        method: 'weapon' as const,
-        isDualKiller: true,
-      }
     }
 
     return {
       slot,
       victimSlot,
       victimName,
-      weapon: pickRandom(WEAPONS),
+      weapon: pickRandom(WEAPONS.filter(w => !w.isEnvironmental)),
       location: pickRandom(CRIME_SCENE_LOCATIONS),
     }
   })
 
   // Fill trueMurderDetail for dual killer shared victim
   if (dualPattern && npcVictims[0].dualKillerPattern) {
-    const pk = killers[0]  // poison killer
-    const wk = killers[1]  // weapon killer
-    const pkName = CHARACTERS[pk.slot].name
-    const wkName = CHARACTERS[wk.slot].name
+    const k1 = killers[0]
+    const k2 = killers[1]
+    const k1Name = CHARACTERS[k1.slot].name
+    const k2Name = CHARACTERS[k2.slot].name
     const v = npcVictims[0].name
 
     let detail: string
     switch (dualPattern) {
       case 'poison_then_weapon':
-        detail = `${pkName}がT2に遅効性の毒（${pk.weapon.name}）を使い立ち去った。苦しみながら部屋へ戻った${v}のところへ、${wkName}が${wk.weapon.name}を持って現れ止めを刺した。ふたりは互いの行動を知らなかった。`
+        detail = `${k1Name}がT2に遅効性の毒（${k1.weapon.name}）を使い立ち去った。苦しみながら部屋へ戻った${v}のところへ、${k2Name}が${k2.weapon.name}を持って現れ止めを刺した。ふたりは互いの行動を知らなかった。`
         break
       case 'weapon_found_dead':
-        detail = `${pkName}がT2に遅効性の毒（${pk.weapon.name}）で${v}を毒殺した。その後、${wkName}が凶器（${wk.weapon.name}）を持って部屋へ乗り込んだとき、すでに遺体となっていた。凶器は使われなかった。`
+        detail = `${k1Name}がT2に遅効性の毒（${k1.weapon.name}）で${v}を毒殺した。その後、${k2Name}が凶器（${k2.weapon.name}）を持って部屋へ乗り込んだとき、すでに遺体となっていた。凶器は使われなかった。`
         break
       case 'weapon_then_poison':
-        detail = `${wkName}がT2に${v}を${wk.weapon.name}で傷つけ立ち去った。瀕死の${v}のもとへその後${pkName}が現れ、毒（${pk.weapon.name}）を用いて止めを刺した。どちらが致命傷を与えたかは法医学的にも曖昧である。`
+        detail = `${k2Name}がT2に${v}を${k2.weapon.name}で傷つけ立ち去った。瀕死の${v}のもとへその後${k1Name}が現れ、毒（${k1.weapon.name}）を用いて止めを刺した。どちらが致命傷を与えたかは法医学的にも曖昧である。`
         break
       case 'poison_failed_weapon_killed':
-        detail = `${pkName}がT2より前に${v}に毒（${pk.weapon.name}）を盛ったが、量が足りず死に至らなかった。独立して${v}を狙っていた${wkName}がT2に${wk.weapon.name}で殺害した。${pkName}は自分の毒が効いたと信じているが、実際の死因は凶器による外傷である。`
+        detail = `${k1Name}がT2より前に${v}に毒（${k1.weapon.name}）を盛ったが、量が足りず死に至らなかった。独立して${v}を狙っていた${k2Name}がT2に${k2.weapon.name}で殺害した。${k1Name}は自分の毒が効いたと信じているが、実際の死因は凶器による外傷である。`
+        break
+      case 'double_weapon_first_failed':
+        detail = `${k1Name}がT2に${k1.weapon.name}で${v}を攻撃し、動かなくなったのを見て立ち去った。しかし${v}はまだ息があり、後から現れた${k2Name}が${k2.weapon.name}で致命傷を与えた。ふたりは互いの存在を知らない。`
+        break
+      case 'double_weapon_overlap':
+        detail = `${k1Name}と${k2Name}が、それぞれ独立に${v}を狙っていた。T2前後に両者がほぼ同時期に接触し、それぞれ別の凶器（${k1.weapon.name}と${k2.weapon.name}）で攻撃した。どちらの一撃が致命傷となったかは法医学的にも断定できない。`
+        break
+      case 'environment_then_weapon':
+        detail = `${k1Name}がT2より前に${LOCATION_NAMES[k1.location]}で${k1.weapon.name}を仕掛け、${v}が罠にかかり負傷した。その場を立ち去った後、事情を知らない${k2Name}が${k2.weapon.name}を手に現れ止めを刺した。ふたりは互いの計画を知らない。`
         break
     }
     npcVictims[0] = { ...npcVictims[0], trueMurderDetail: detail }

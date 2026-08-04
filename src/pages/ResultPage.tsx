@@ -1,9 +1,29 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { subscribeGame } from '../services/firebase'
-import type { GameState, CharacterSlot } from '../types/game'
+import type { GameState, CharacterSlot, DualKillerPattern } from '../types/game'
 import { CHARACTERS } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
+
+const DUAL_FIRST_LABEL: Record<DualKillerPattern, string> = {
+  poison_then_weapon:          '毒を盛った者',
+  weapon_found_dead:           '毒を盛った者',
+  weapon_then_poison:          '毒で止めを刺した者',
+  poison_failed_weapon_killed: '毒を盛った者（失敗）',
+  double_weapon_first_failed:  '先に攻撃した者',
+  double_weapon_overlap:       '攻撃者（一方）',
+  environment_then_weapon:     '罠を仕掛けた者',
+}
+
+const DUAL_SECOND_LABEL: Record<DualKillerPattern, string> = {
+  poison_then_weapon:          '凶器で止めを刺した者',
+  weapon_found_dead:           '凶器持参・未使用',
+  weapon_then_poison:          '先に凶器で傷つけた者',
+  poison_failed_weapon_killed: '凶器で独立に殺害した者',
+  double_weapon_first_failed:  '致命傷を与えた者',
+  double_weapon_overlap:       '攻撃者（もう一方）',
+  environment_then_weapon:     '凶器で止めを刺した者',
+}
 
 export default function ResultPage() {
   const { gameId } = useParams<{ gameId: string }>()
@@ -164,13 +184,10 @@ export default function ResultPage() {
                         {v.dualKillerPattern ? (
                           <>
                             <p className="text-red-400 text-xs">
-                              毒を盛った者: {CHARACTERS[v.killerSlot!]?.name}（{v.killerSlot}枠）
+                              {DUAL_FIRST_LABEL[v.dualKillerPattern]}: {CHARACTERS[v.killerSlot!]?.name}（{v.killerSlot}枠）
                             </p>
                             <p className="text-red-400 text-xs">
-                              {v.dualKillerPattern === 'poison_then_weapon'
-                                ? `止めを刺した者: ${CHARACTERS[v.secondKillerSlot!]?.name}（${v.secondKillerSlot}枠）`
-                                : `凶器持参・未使用: ${CHARACTERS[v.secondKillerSlot!]?.name}（${v.secondKillerSlot}枠）`
-                              }
+                              {DUAL_SECOND_LABEL[v.dualKillerPattern]}: {CHARACTERS[v.secondKillerSlot!]?.name}（{v.secondKillerSlot}枠）
                             </p>
                           </>
                         ) : v.killerSlot ? (
