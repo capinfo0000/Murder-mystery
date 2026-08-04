@@ -80,7 +80,7 @@ export default function VotingPage() {
                 <div className="w-2 h-2 rounded-full bg-red-400" />
                 <h3 className="text-red-300 text-sm font-medium">犯人候補</h3>
               </div>
-              <p className="text-purple-600 text-xs mb-3 pl-4">外部犯と思う場合は誰もチェックしない</p>
+              <p className="text-purple-600 text-xs mb-3 pl-4">自殺の場合は死亡者を選択・外部犯の場合は誰もチェックしない</p>
               <div className="grid grid-cols-2 gap-2">
                 {allSlots.map(slot => (
                   <CheckCard
