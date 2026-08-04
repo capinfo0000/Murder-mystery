@@ -30,14 +30,25 @@ export default function ResultPage() {
     <div className="min-h-screen bg-[#0f0a1a] pb-16">
       {/* Header */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-4 text-center">
-        <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
-          {result.mainKillerCaught ? '✓ 犯人逮捕成功' : '✗ 犯人逃走'}
-        </div>
-        <p className="text-purple-400 text-xs">
-          {result.mainKillerCaught
-            ? '真犯人への最多票が一致しました'
-            : '無実の人物への最多票が集まりました'}
-        </p>
+        {result.outsideKillerCase ? (
+          <>
+            <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
+              {result.mainKillerCaught ? '✓ 外部犯を見破った' : '✗ 外部犯を見破れず'}
+            </div>
+            <p className="text-purple-400 text-xs">組織の殺し屋による犯行 — 迷宮入り</p>
+          </>
+        ) : (
+          <>
+            <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
+              {result.mainKillerCaught ? '✓ 犯人逮捕成功' : '✗ 犯人逃走'}
+            </div>
+            <p className="text-purple-400 text-xs">
+              {result.mainKillerCaught
+                ? '真犯人への最多票が一致しました'
+                : '無実の人物への最多票が集まりました'}
+            </p>
+          </>
+        )}
       </div>
 
       {/* Tabs */}
@@ -105,21 +116,30 @@ export default function ResultPage() {
         {tab === 'truth' && scenario && (
           <div className="space-y-4">
             {/* Killers */}
-            <Section title="🔪 真犯人">
-              {scenario.killers.map(k => (
-                <div key={k.slot} className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 mb-2">
-                  <div className="text-red-300 font-medium text-sm mb-1">
-                    {CHARACTERS[k.slot]?.name} ({k.slot}枠)
-                  </div>
-                  <div className="text-red-200/70 text-xs space-y-0.5">
-                    <p>被害者: {k.victimSlot ? `${CHARACTERS[k.victimSlot]?.name}（${k.victimSlot}枠）` : k.victimName}</p>
-                    <p>凶器: {k.weapon.name}</p>
-                    <p>場所: {LOCATION_NAMES[k.location]}</p>
-                    <p>偽装: {k.weapon.disguisedAs}</p>
-                  </div>
+            {scenario.outsideKiller ? (
+              <Section title="🔫 真犯人">
+                <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-3">
+                  <div className="text-red-300 font-medium text-sm mb-1">組織の殺し屋（身元不明・逃走済み）</div>
+                  <p className="text-red-200/70 text-xs">犯罪組織から派遣されたプロの殺し屋が当主を暗殺し、目撃者を口封じした後に逃走した。プレイヤーの誰も殺人は犯していない。</p>
                 </div>
-              ))}
-            </Section>
+              </Section>
+            ) : (
+              <Section title="🔪 真犯人">
+                {scenario.killers.map(k => (
+                  <div key={k.slot} className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 mb-2">
+                    <div className="text-red-300 font-medium text-sm mb-1">
+                      {CHARACTERS[k.slot]?.name} ({k.slot}枠)
+                    </div>
+                    <div className="text-red-200/70 text-xs space-y-0.5">
+                      <p>被害者: {k.victimSlot ? `${CHARACTERS[k.victimSlot]?.name}（${k.victimSlot}枠）` : k.victimName}</p>
+                      <p>凶器: {k.weapon.name}</p>
+                      <p>場所: {LOCATION_NAMES[k.location]}</p>
+                      <p>偽装: {k.weapon.disguisedAs}</p>
+                    </div>
+                  </div>
+                ))}
+              </Section>
+            )}
 
             {/* NPC victim truth */}
             {scenario.npcVictims && scenario.npcVictims.length > 0 && (
@@ -139,9 +159,11 @@ export default function ResultPage() {
                     {v.isRelatedToCase && v.trueMurderDetail && (
                       <p className="text-red-300 text-xs mt-0.5 ml-0.5">真相: {v.trueMurderDetail}</p>
                     )}
-                    {v.isRelatedToCase && v.killerSlot && (
+                    {v.isRelatedToCase && (
                       <p className="text-red-400 text-xs mt-0.5 ml-0.5">
-                        犯人: {CHARACTERS[v.killerSlot]?.name}（{v.killerSlot}枠）
+                        {v.killerSlot
+                          ? `犯人: ${CHARACTERS[v.killerSlot]?.name}（${v.killerSlot}枠）`
+                          : scenario.outsideKiller ? '犯人: 組織の殺し屋' : ''}
                       </p>
                     )}
                   </div>

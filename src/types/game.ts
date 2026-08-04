@@ -81,6 +81,7 @@ export interface Scenario {
   alibis: Partial<Record<CharacterSlot, { T1: Location; T2: Location; T3: Location }>>
   secretActions: Partial<Record<CharacterSlot, string>>
   puzzleTargets?: Partial<Record<CharacterSlot, CharacterSlot>>
+  outsideKiller?: boolean      // true when a hired hitman (not any player) committed all murders
 }
 
 export interface EvidenceCard {
@@ -127,6 +128,7 @@ export interface ScoreBreakdown {
 
 export interface GameResult {
   mainKillerCaught: boolean
+  outsideKillerCase?: boolean  // true when the scenario was an outside killer
   scores: Record<string, ScoreBreakdown>
   winnerIds: string[]
   trueScenario: Scenario

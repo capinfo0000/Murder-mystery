@@ -309,11 +309,14 @@ export async function finalizeResult(gameId: string, hostId: string): Promise<vo
     }
   }
   const mv = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-  const mainKillerCaught = mv === mainKillerSlot
+  const outsideKillerCase = state.scenario?.outsideKiller === true
+  // For outside killer: correct when no player received the most votes (mv === null)
+  const mainKillerCaught = outsideKillerCase ? mv === null : mv === mainKillerSlot
 
   await update(ref(db), {
     [`games/${gameId}/result`]: {
       mainKillerCaught,
+      outsideKillerCase,
       scores,
       winnerIds,
       trueScenario: state.scenario,

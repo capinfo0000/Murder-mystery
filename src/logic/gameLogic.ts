@@ -31,10 +31,11 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
   if (!scenario) return {}
 
   const scores: Record<string, ScoreBreakdown> = {}
+  const isOutsideKiller = scenario.outsideKiller === true
   const mainKillerSlot = scenario.killers[0]?.slot ?? null
 
   const mv = mostVotedKillerSlot(votes)
-  const mainKillerCaught = mv === mainKillerSlot
+  const mainKillerCaught = !isOutsideKiller && mv === mainKillerSlot
 
   for (const [playerId, player] of Object.entries(players)) {
     if (player.isNPC || !player.characterSlot) continue
@@ -44,7 +45,11 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
 
     // 1. base score
     let base = 0
-    if (mainKillerCaught) {
+    if (isOutsideKiller) {
+      // Per-individual: correct answer is voting for nobody (empty killerSlots)
+      const votedOutside = (vote?.killerSlots ?? []).length === 0
+      base = votedOutside ? 5 : 1
+    } else if (mainKillerCaught) {
       base = role === 'innocent' ? 5 : 1
     } else {
       base = role === 'innocent' ? 1 : 5

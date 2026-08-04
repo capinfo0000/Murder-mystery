@@ -175,7 +175,10 @@ export async function finalizeResult(gameId: string, hostId: string): Promise<vo
     }
   }
   const mv = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-  state.result = { mainKillerCaught: mv === mainKillerSlot, scores, winnerIds, trueScenario: state.scenario! }
+  const outsideKillerCase = state.scenario?.outsideKiller === true
+  // For outside killer: correct when no player received the most votes (mv === null)
+  const mainKillerCaught = outsideKillerCase ? mv === null : mv === mainKillerSlot
+  state.result = { mainKillerCaught, outsideKillerCase, scores, winnerIds, trueScenario: state.scenario! }
   state.phase = 'result'
   notify(gameId)
 }

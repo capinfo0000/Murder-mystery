@@ -35,12 +35,18 @@ export function generateScenario(
 
   // ── killers ───────────────────────────────────────────────
   let killerSlots: CharacterSlot[]
+  let outsideKiller = false
   if (mode === 'puzzle') {
     killerSlots = [...slots]
   } else {
-    // fully random 1 to (n-1) killers — always at least 1 innocent
-    const numKillers = Math.floor(Math.random() * (slots.length - 1)) + 1
-    killerSlots = shuffledSlots.slice(0, numKillers)
+    // n equal options: 1..n-1 player killers + outside killer (each 1/n probability)
+    const roll = Math.floor(Math.random() * slots.length)
+    if (roll === slots.length - 1) {
+      killerSlots = []
+      outsideKiller = true
+    } else {
+      killerSlots = shuffledSlots.slice(0, roll + 1)
+    }
   }
 
   // ── roles ─────────────────────────────────────────────────
@@ -60,6 +66,29 @@ export function generateScenario(
       slot,
       background: pickRandom(VICTIM_BACKGROUNDS).detail,
     }))
+  } else if (outsideKiller) {
+    const shuffledNpcs = shuffle(EXTRA_NPCS)
+    // Hitman killed 2–4 NPCs; rest died naturally (noise)
+    const numMurderNpcs = Math.floor(Math.random() * 3) + 2
+    const murderNpcs = shuffledNpcs.slice(0, numMurderNpcs)
+    const naturalNpcs = shuffledNpcs.slice(numMurderNpcs, numMurderNpcs + Math.floor(Math.random() * 2) + 1)
+
+    npcVictims = [
+      ...murderNpcs.map(npc => ({
+        name: npc.role,
+        role: npc.role,
+        apparentCause: npc.disguisedMurderCause,
+        isRelatedToCase: true,
+        trueMurderDetail: npc.hitmanMurderDetail,
+        // killerSlot intentionally undefined — hitman, not a player
+      })),
+      ...naturalNpcs.map(npc => ({
+        name: npc.role,
+        role: npc.role,
+        apparentCause: npc.naturalDeathCause,
+        isRelatedToCase: false,
+      })),
+    ]
   } else {
     const shuffledNpcs = shuffle(EXTRA_NPCS)
     const numKillers = killerSlots.length
@@ -129,7 +158,7 @@ export function generateScenario(
     }
   }
 
-  return { victims, npcVictims, killers, roles, alibis, secretActions, puzzleTargets }
+  return { victims, npcVictims, killers, roles, alibis, secretActions, puzzleTargets, outsideKiller: outsideKiller || undefined }
 }
 
 export { getSlotsForCount }
