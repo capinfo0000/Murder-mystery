@@ -38,7 +38,7 @@ export async function createGame(
     id: gameId,
     hostId,
     playerCount: settings?.playerCount ?? 5,
-    mode: settings?.mode ?? 'normal',
+    mode: settings?.mode ?? (['normal', 'hard', 'puzzle'] as const)[Math.floor(Math.random() * 3)],
     phase: 'lobby',
     hasGM: settings?.hasGM ?? false,
     totalRounds: settings?.totalRounds ?? 3,

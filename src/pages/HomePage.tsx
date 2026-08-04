@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createGame, signIn } from '../services/firebase'
-import type { GameMode } from '../types/game'
-
 type Step = 'home' | 'settings'
 
 export default function HomePage() {
@@ -14,7 +12,6 @@ export default function HomePage() {
 
   // Settings
   const [playerCount, setPlayerCount] = useState(5)
-  const [mode, setMode] = useState<GameMode>('normal')
   const [hasGM, setHasGM] = useState(false)
   const [roundDurationMinutes, setRoundDurationMinutes] = useState(20)
   const [totalRounds, setTotalRounds] = useState(3)
@@ -24,7 +21,7 @@ export default function HomePage() {
     setError('')
     try {
       const uid = await signIn()
-      const gameId = await createGame(uid, { playerCount, mode, hasGM, roundDurationMinutes, totalRounds })
+      const gameId = await createGame(uid, { playerCount, hasGM, roundDurationMinutes, totalRounds })
       navigate(`/lobby/${gameId}?uid=${uid}`)
     } catch {
       setError('ゲームの作成に失敗しました')
@@ -75,31 +72,6 @@ export default function HomePage() {
                   }`}
                 >
                   {n}人
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Mode */}
-          <div>
-            <label className="text-purple-400 text-xs block mb-2">難易度モード</label>
-            <div className="grid grid-cols-3 gap-2">
-              {([
-                { key: 'normal', label: 'ノーマル', desc: '犯人1人' },
-                { key: 'hard',   label: 'ハード',   desc: '犯人複数' },
-                { key: 'puzzle', label: 'パズル',   desc: '全員犯人\n組み合わせ推理' },
-              ] as const).map(({ key: m, label, desc }) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={`py-2 px-1 rounded-lg text-sm font-medium transition-colors border flex flex-col items-center gap-0.5 ${
-                    mode === m
-                      ? 'bg-purple-700 border-purple-500 text-white'
-                      : 'bg-[#120a22] border-purple-800 text-purple-400 hover:border-purple-600'
-                  }`}
-                >
-                  <span>{label}</span>
-                  <span className={`text-xs font-normal whitespace-pre-line leading-tight ${mode === m ? 'text-purple-300' : 'text-purple-600'}`}>{desc}</span>
                 </button>
               ))}
             </div>
