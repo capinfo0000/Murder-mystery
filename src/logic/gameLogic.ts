@@ -16,18 +16,8 @@ function mostVotedKillerSlot(votes: Record<string, VoteData>): CharacterSlot | n
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as CharacterSlot
 }
 
-function getKillerVotesAgainst(
-  playerId: string,
-  characterSlot: CharacterSlot,
-  votes: Record<string, VoteData>
-): number {
-  return Object.entries(votes).filter(
-    ([voterId, v]) => voterId !== playerId && (v.killerSlots ?? []).includes(characterSlot)
-  ).length
-}
-
 export function computeScores(state: GameState): Record<string, ScoreBreakdown> {
-  const { scenario, votes, players } = state
+  const { scenario, votes, players, cards } = state
   if (!scenario) return {}
 
   const scores: Record<string, ScoreBreakdown> = {}
@@ -35,7 +25,8 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
   const mainKillerSlot = scenario.killers[0]?.slot ?? null
 
   const mv = mostVotedKillerSlot(votes)
-  const mainKillerCaught = !isOutsideKiller && mv === mainKillerSlot
+  // Group verdict: outside killer correct if majority voted nobody; normal correct if majority named the actual killer
+  const mainKillerCaught = isOutsideKiller ? mv === null : mv === mainKillerSlot
 
   for (const [playerId, player] of Object.entries(players)) {
     if (player.isNPC || !player.characterSlot) continue
@@ -43,22 +34,20 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
     const role = scenario.roles[slot] ?? 'innocent'
     const vote = votes[playerId]
 
-    // 1. base score
-    let base = 0
-    if (isOutsideKiller) {
-      // Per-individual: correct answer is voting for nobody (empty killerSlots)
-      const votedOutside = (vote?.killerSlots ?? []).length === 0
-      base = votedOutside ? 5 : 1
-    } else if (mainKillerCaught) {
+    // 1. base score — group verdict determines outcome; wrong majority → 0 for everyone
+    let base: number
+    if (mainKillerCaught) {
       base = role === 'innocent' ? 5 : 1
     } else {
-      base = role === 'innocent' ? 1 : 5
+      base = 0
     }
 
-    // 2. tachimawari bonus (+2) — has secret action and received 0 killer votes
+    // 2. tachimawari bonus (+2) — has secret action and no related card was publicly revealed
     const hasSecret = !!scenario.secretActions[slot]
-    const votesAgainst = getKillerVotesAgainst(playerId, slot, votes)
-    const tachimawari = hasSecret && votesAgainst === 0 ? 2 : 0
+    const secretExposed = Object.values(cards ?? {}).some(
+      c => c.relatedSlot === slot && c.sharedWith.includes('all')
+    )
+    const tachimawari = hasSecret && !secretExposed ? 2 : 0
 
     // 3. special bonuses
     let bonus = 0
