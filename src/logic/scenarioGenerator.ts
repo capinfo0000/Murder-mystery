@@ -180,7 +180,8 @@ function buildChainLink(
 
 function generateCooperationChain(killerSlots: CharacterSlot[]): CooperationChain | null {
   if (killerSlots.length < 2) return null
-  if (Math.random() < 0.35) return null  // 65% chance of chain
+  const chainThreshold = 0.01 + Math.random() * 0.89  // 1〜90% variable
+  if (Math.random() < (1 - chainThreshold)) return null
 
   const shuffled = shuffle(killerSlots)
   const mastermind = shuffled[0]
