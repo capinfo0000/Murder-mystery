@@ -1,7 +1,6 @@
 import type {
   CharacterSlot,
   GameState,
-  Player,
   ScoreBreakdown,
   VoteData,
 } from '../types/game'
