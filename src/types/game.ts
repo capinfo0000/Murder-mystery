@@ -57,6 +57,11 @@ export interface VictimInfo {
   background: string
 }
 
+// Non-playable NPC who survived and can testify
+export interface NpcSurvivor {
+  role: string
+}
+
 // Non-playable NPC who died during the story
 export interface NpcVictim {
   name: string
@@ -153,6 +158,7 @@ export interface Scenario {
   cooperationChain?: CooperationChain  // anonymous chain coordination between killers
   assignedProfessions?: Partial<Record<CharacterSlot, string>>  // past profession id per slot
   synopsis?: string  // auto-generated narrative summary shown to all players
+  npcSurvivors?: NpcSurvivor[]  // NPCs present in the manor who survived
 }
 
 export interface EvidenceCard {

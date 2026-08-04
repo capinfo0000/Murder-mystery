@@ -87,17 +87,26 @@ export default function HandoutPage() {
                 <p className="text-purple-200 text-sm leading-relaxed italic">{scenario.synopsis}</p>
               </Section>
             )}
-            {/* Public: all NPC deaths visible to every player */}
-            {scenario.npcVictims.length > 0 && (
-              <Section title="🕯 今夜の死亡者（全員既知）">
-                <p className="text-purple-500 text-xs mb-3">紫苑館で見つかった遺体。死因は報告書による。</p>
+            {/* Public: manor staff — dead and surviving */}
+            {(scenario.npcVictims.length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
+              <Section title="🕯 館の関係者（全員既知）">
+                <p className="text-purple-500 text-xs mb-3">紫苑館に関わる人物の状況。死因は報告書による。</p>
                 <div className="space-y-2">
                   {scenario.npcVictims.map((v, i) => (
-                    <div key={i} className="flex gap-3 text-sm">
-                      <span className="text-blue-300 font-medium w-20 shrink-0 truncate">{v.name}</span>
+                    <div key={`dead-${i}`} className="flex gap-3 text-sm">
+                      <span className="text-red-400/80 text-xs w-4 shrink-0 mt-0.5">✝</span>
                       <div className="min-w-0">
-                        <span className="text-purple-500 text-xs">{v.role}</span>
+                        <span className="text-blue-300 font-medium">{v.role}</span>
                         <p className="text-purple-300 text-xs mt-0.5">{v.apparentCause}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {(scenario.npcSurvivors ?? []).map((s, i) => (
+                    <div key={`alive-${i}`} className="flex gap-3 text-sm">
+                      <span className="text-green-500/60 text-xs w-4 shrink-0 mt-0.5">●</span>
+                      <div className="min-w-0">
+                        <span className="text-blue-300 font-medium">{s.role}</span>
+                        <span className="text-green-400/70 text-xs ml-2">生存</span>
                       </div>
                     </div>
                   ))}

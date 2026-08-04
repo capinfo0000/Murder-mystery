@@ -8,6 +8,7 @@ import type {
   DualKillerPattern,
   GameMode,
   KillerInfo,
+  NpcSurvivor,
   NpcVictim,
   PlayerConnection,
   Scenario,
@@ -513,6 +514,12 @@ export function generateScenario(
     assignedProfessions[slot] = prof.id
   }
 
+  // ── npc survivors (manor staff not selected as victims) ───────────────
+  const usedNpcRoles = new Set(npcVictims.map(v => v.role))
+  const npcSurvivors: NpcSurvivor[] = shuffle(
+    EXTRA_NPCS.filter(n => !usedNpcRoles.has(n.role))
+  ).slice(0, 3).map(n => ({ role: n.role }))
+
   // ── synopsis ──────────────────────────────────────────────────────────
   const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, cooperationChain, slots.length)
 
@@ -530,6 +537,7 @@ export function generateScenario(
     cooperationChain: cooperationChain ?? undefined,
     assignedProfessions,
     synopsis,
+    npcSurvivors,
   }
 }
 
