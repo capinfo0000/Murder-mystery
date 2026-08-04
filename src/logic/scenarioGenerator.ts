@@ -285,7 +285,7 @@ export function generateScenario(
   } else {
     const shuffledNpcs = shuffle(EXTRA_NPCS)
     const numKillers = killerSlots.length
-    const dualThreshold = 0.3 + Math.random() * 0.4  // 30〜70% variable
+    const dualThreshold = 0.01 + Math.random() * 0.89  // 1〜90% variable
     const dualActive = numKillers >= 2 && Math.random() < dualThreshold
 
     if (dualActive) {
