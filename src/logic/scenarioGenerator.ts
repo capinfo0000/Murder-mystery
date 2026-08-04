@@ -14,6 +14,7 @@ import type {
   VictimInfo,
 } from '../types/game'
 import { CHARACTERS, getSlotsForCount } from '../data/characters'
+import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { WEAPONS } from '../data/weapons'
 import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
 import { VICTIM_BACKGROUNDS } from '../data/victimBackgrounds'
@@ -487,6 +488,13 @@ export function generateScenario(
       ? generateCooperationChain(killerSlots)
       : undefined
 
+  // Shuffle professions and assign one per slot
+  const shuffledProfessions = shuffle([...PAST_PROFESSIONS])
+  const assignedProfessions: Partial<Record<CharacterSlot, string>> = {}
+  for (let i = 0; i < slots.length; i++) {
+    assignedProfessions[slots[i]] = shuffledProfessions[i % shuffledProfessions.length].id
+  }
+
   return {
     victims,
     npcVictims,
@@ -499,6 +507,7 @@ export function generateScenario(
     connections: connections.length > 0 ? connections : undefined,
     dualKillerInfo,
     cooperationChain: cooperationChain ?? undefined,
+    assignedProfessions,
   }
 }
 

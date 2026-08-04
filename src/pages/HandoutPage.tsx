@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { subscribeGame, advancePhase, setReady } from '../services/firebase'
 import type { GameState, CharacterSlot } from '../types/game'
 import { CHARACTERS } from '../data/characters'
+import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { LOCATION_NAMES } from '../data/locations'
 import AlibiMatrix from '../components/AlibiMatrix'
 import EvidenceCardView from '../components/EvidenceCard'
@@ -40,6 +41,9 @@ export default function HandoutPage() {
   const char = CHARACTERS[mySlot]
   const scenario = game.scenario!
   const myRole = scenario.roles[mySlot]
+  const myProfession = PAST_PROFESSIONS.find(
+    p => p.id === scenario.assignedProfessions?.[mySlot]
+  )
   const myKillerInfo = scenario.killers.find(k => k.slot === mySlot)
   const myAlibis = scenario.alibis[mySlot]
   const myCards = Object.values(game.cards || {}).filter(c => c.ownerId === uid)
@@ -99,8 +103,17 @@ export default function HandoutPage() {
               </Section>
             )}
             <Section title="背景">
-              <p className="text-purple-200 text-sm leading-relaxed">{char.background}</p>
+              <p className="text-purple-200 text-sm leading-relaxed">
+                {char.background}
+                {myProfession && <span className="text-purple-300"> {myProfession.observableHint}</span>}
+              </p>
             </Section>
+            {myProfession && (
+              <Section title="🕵 あなたの隠された過去（厳重に秘密）" accent="amber">
+                <p className="text-amber-300 text-xs font-medium mb-1">{myProfession.title}</p>
+                <p className="text-amber-100 text-sm leading-relaxed">{myProfession.secretDetail}</p>
+              </Section>
+            )}
             <Section title="あなただけの秘密（誰にも言わないこと）">
               <p className="text-amber-200 text-sm leading-relaxed">{char.secretAction}</p>
             </Section>

@@ -151,6 +151,7 @@ export interface Scenario {
   connections?: PlayerConnection[]  // optional inter-player secret arrangements
   dualKillerInfo?: DualKillerInfo  // set when two killers independently targeted the same victim
   cooperationChain?: CooperationChain  // anonymous chain coordination between killers
+  assignedProfessions?: Partial<Record<CharacterSlot, string>>  // past profession id per slot
 }
 
 export interface EvidenceCard {
