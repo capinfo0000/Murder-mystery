@@ -432,38 +432,33 @@ export const CARD_TEMPLATES: CardTemplate[] = [
 
   // ───── 組織についての情報（外部犯時のみ真）─────
   {
-    id: 'org_001',
-    content: '「組織」と呼ばれる国際的な犯罪集団が暗躍しているという情報がある。構成員は色を冠したコードネームで互いを呼び合い、上位の者ほど本名を知る者がいない。',
+    id: 'org_assassination',
+    content: '組織は「暗殺部門」を持つとされる——依頼があれば標的を問わず、跡形もなく消す。組織と金銭的なつながりを持つ者が増えれば増えるほど、「消される側」に回る可能性も高くなる。',
     category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
   },
   {
-    id: 'org_002',
-    content: '組織は口封じに一切の躊躇を見せない——証人・内通者・利用価値を失った者、誰であれ目障りになれば消される。地位も年齢も関係ない。それが組織の鉄則だ。',
+    id: 'org_drugs_weapons',
+    content: '組織の主要収益は麻薬密売と武器密輸だ。その資金を使って財閥を作り上げた者、組織の取引を仲介した者、資産を洗浄するために利用された者——どれも組織にとっては「駒」にすぎない。',
     category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
   },
   {
-    id: 'org_003',
-    content: '組織の資金源は麻薬売買・武器密輸・資産洗浄と多岐にわたるとされる。複数国の当局が内偵を続けているが、いまだ中枢には届いていない。逮捕された者は必ず口を閉ざしたまま死ぬ。',
+    id: 'org_fraud',
+    content: '組織は詐欺と書類偽造の専門家を抱えている。遺言書の改ざん、権利証の偽造、美術品の鑑定書すり替え——紙一枚で何億円もの財産を動かすことを組織はビジネスにしている。',
     category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
   },
   {
-    id: 'org_004',
-    content: '組織のメンバーは超一流の技術を持つとされる——毒物・偽装工作・証拠の完全消去。どれも痕跡を残さず実行できる専門家が揃っており、捜査当局すら手が出せない。',
+    id: 'org_poison',
+    content: '組織の毒物専門家は「自然死に見せかけた殺害」を得意とする。持病を悪化させる遅効性の毒、アレルギー反応を誘発する薬物——どれも解剖しても判別が難しいものばかりだ。',
     category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
   },
   {
-    id: 'org_005',
-    content: '「組織に近づいた者は最後には消される」——それが業界内での暗黙の了解だという。過去に組織との関係を公言した人物が相次いで「事故死」や「病死」を遂げている。',
+    id: 'org_blackmail',
+    content: '組織は脅迫と恐喝を支配の道具として使う。医療ミス・横領・不正取引——どんな秘密も組織の手にかかれば永遠の鎖になる。逆らえば証拠を公開され、従い続ければ際限なく搾り取られる。',
     category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
   },
   {
-    id: 'org_006',
-    content: 'ある内部告発者の証言によれば、組織が人間に対して取る手段は二択しかないという——「脅して支配する」か「消す」か。従えるうちは使い、反旗を翻せばそれまでだ。',
-    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
-  },
-  {
-    id: 'org_007',
-    content: '組織は標的を殺す前に必ず周囲を調べ上げる。目撃者・家族・関係者——誰が「危険な証人」になりうるかを事前に洗い出し、必要であれば同時に処理する。',
+    id: 'org_coverup',
+    content: '組織が動いた痕跡は必ず消される——犯行現場の物証、目撃者の証言、帳簿の記録。組織の証拠消去班が動けば、捜査官が何を調べても「何もなかった夜」が出来上がる。',
     category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
   },
 
