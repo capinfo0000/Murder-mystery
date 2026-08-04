@@ -80,7 +80,7 @@ export default function VotingPage() {
                 <div className="w-2 h-2 rounded-full bg-red-400" />
                 <h3 className="text-red-300 text-sm font-medium">犯人候補</h3>
               </div>
-              <p className="text-purple-600 text-xs mb-3 pl-4">不明・この中にいない場合は誰もチェックしない</p>
+              <p className="text-purple-600 text-xs mb-3 pl-4">外部犯と思う場合は誰もチェックしない</p>
               <div className="grid grid-cols-2 gap-2">
                 {allSlots.map(slot => (
                   <CheckCard
@@ -98,7 +98,7 @@ export default function VotingPage() {
               onClick={handleSubmit}
               className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold rounded-xl py-3 text-sm tracking-wide transition-colors"
             >
-              {killerSlots.length === 0 ? '不明で投票する' : '投票する'}
+              {killerSlots.length === 0 ? '外部犯で投票する' : '投票する'}
             </button>
           </>
         ) : (
@@ -112,7 +112,7 @@ export default function VotingPage() {
                 </p>
               </div>
             ) : (
-              <p className="text-purple-400 text-sm text-center">不明で投票しました</p>
+              <p className="text-purple-400 text-sm text-center">外部犯で投票しました</p>
             )}
             <p className="text-purple-600 text-xs text-center">他のプレイヤーの投票を待っています…</p>
           </div>
