@@ -37,19 +37,28 @@ export async function signIn(): Promise<string> {
 
 // ── game creation ───────────────────────────────────────────────────────────
 
-export async function createGame(hostId: string): Promise<string> {
+export async function createGame(
+  hostId: string,
+  settings?: {
+    playerCount?: number
+    mode?: import('../types/game').GameMode
+    hasGM?: boolean
+    roundDurationMinutes?: number
+    totalRounds?: number
+  }
+): Promise<string> {
   const gameId = Math.random().toString(36).slice(2, 8).toUpperCase()
   const gameRef = ref(db, `games/${gameId}`)
 
   await set(gameRef, {
     hostId,
-    playerCount: 5,
-    mode: 'normal',
+    playerCount: settings?.playerCount ?? 5,
+    mode: settings?.mode ?? 'normal',
     phase: 'lobby',
-    hasGM: false,
-    totalRounds: 3,
+    hasGM: settings?.hasGM ?? false,
+    totalRounds: settings?.totalRounds ?? 3,
     roundStartAt: null,
-    roundDurationMinutes: 20,
+    roundDurationMinutes: settings?.roundDurationMinutes ?? 20,
     secretTalkDurationMinutes: 10,
     players: {},
     scenario: null,
@@ -323,6 +332,10 @@ export function subscribeGame(
   return onValue(gameRef, snap => {
     callback(snap.val() as GameState | null)
   })
+}
+
+export async function renamePlayer(gameId: string, playerId: string, name: string): Promise<void> {
+  await set(ref(db, `games/${gameId}/players/${playerId}/name`), name)
 }
 
 export function markMessageRead(gameId: string, msgId: string): void {

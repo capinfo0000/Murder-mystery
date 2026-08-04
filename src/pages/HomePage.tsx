@@ -1,18 +1,30 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createGame, signIn } from '../services/firebase'
+import type { GameMode } from '../types/game'
+
+type Step = 'home' | 'settings'
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const [step, setStep] = useState<Step>('home')
   const [joinCode, setJoinCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Settings
+  const [playerCount, setPlayerCount] = useState(5)
+  const [mode, setMode] = useState<GameMode>('normal')
+  const [hasGM, setHasGM] = useState(false)
+  const [roundDurationMinutes, setRoundDurationMinutes] = useState(20)
+  const [totalRounds, setTotalRounds] = useState(3)
+
   async function handleCreate() {
     setLoading(true)
+    setError('')
     try {
       const uid = await signIn()
-      const gameId = await createGame(uid)
+      const gameId = await createGame(uid, { playerCount, mode, hasGM, roundDurationMinutes, totalRounds })
       navigate(`/lobby/${gameId}?uid=${uid}`)
     } catch {
       setError('ゲームの作成に失敗しました')
@@ -24,6 +36,7 @@ export default function HomePage() {
   async function handleJoin() {
     if (!joinCode.trim()) { setError('ゲームコードを入力してください'); return }
     setLoading(true)
+    setError('')
     try {
       const uid = await signIn()
       navigate(`/lobby/${joinCode.toUpperCase()}?uid=${uid}`)
@@ -32,6 +45,143 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (step === 'settings') {
+    return (
+      <div className="min-h-screen bg-[#0f0a1a] flex flex-col items-center justify-center px-4">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-purple-200 tracking-wider" style={{ fontFamily: 'serif' }}>
+            紫苑館の秘密
+          </h1>
+          <p className="text-purple-500 text-xs mt-1 tracking-widest">ゲーム設定</p>
+        </div>
+
+        <div className="w-full max-w-sm bg-[#1a0f2e] border border-purple-900 rounded-2xl p-6 shadow-xl space-y-5">
+
+          {/* Player count */}
+          <div>
+            <label className="text-purple-400 text-xs block mb-2">プレイヤー数</label>
+            <div className="grid grid-cols-4 gap-2">
+              {[4, 5, 6, 7].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setPlayerCount(n)}
+                  className={`py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    playerCount === n
+                      ? 'bg-purple-700 border-purple-500 text-white'
+                      : 'bg-[#120a22] border-purple-800 text-purple-400 hover:border-purple-600'
+                  }`}
+                >
+                  {n}人
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mode */}
+          <div>
+            <label className="text-purple-400 text-xs block mb-2">モード</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['normal', 'hard', 'puzzle'] as const).map(m => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    mode === m
+                      ? 'bg-purple-700 border-purple-500 text-white'
+                      : 'bg-[#120a22] border-purple-800 text-purple-400 hover:border-purple-600'
+                  }`}
+                >
+                  {m === 'normal' ? 'ノーマル' : m === 'hard' ? 'ハード' : 'パズル'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* GM */}
+          <div>
+            <label className="text-purple-400 text-xs block mb-2">ゲームマスター</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[false, true].map(v => (
+                <button
+                  key={String(v)}
+                  onClick={() => setHasGM(v)}
+                  className={`py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    hasGM === v
+                      ? 'bg-purple-700 border-purple-500 text-white'
+                      : 'bg-[#120a22] border-purple-800 text-purple-400 hover:border-purple-600'
+                  }`}
+                >
+                  {v ? 'GMあり' : 'GMなし'}
+                </button>
+              ))}
+            </div>
+            {!hasGM && (
+              <p className="text-purple-700 text-xs mt-1.5">GMなしは最低4人のプレイヤーが必要</p>
+            )}
+          </div>
+
+          {/* Discussion time */}
+          <div>
+            <label className="text-purple-400 text-xs block mb-2">討議時間（1ラウンド）</label>
+            <div className="grid grid-cols-5 gap-1.5">
+              {[10, 15, 20, 25, 30].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setRoundDurationMinutes(n)}
+                  className={`py-2 rounded-lg text-xs font-medium transition-colors border ${
+                    roundDurationMinutes === n
+                      ? 'bg-purple-700 border-purple-500 text-white'
+                      : 'bg-[#120a22] border-purple-800 text-purple-400 hover:border-purple-600'
+                  }`}
+                >
+                  {n}分
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Total rounds */}
+          <div>
+            <label className="text-purple-400 text-xs block mb-2">ラウンド数</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[2, 3, 4].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setTotalRounds(n)}
+                  className={`py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    totalRounds === n
+                      ? 'bg-purple-700 border-purple-500 text-white'
+                      : 'bg-[#120a22] border-purple-800 text-purple-400 hover:border-purple-600'
+                  }`}
+                >
+                  {n}ラウンド
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={() => { setStep('home'); setError('') }}
+              className="flex-1 bg-[#120a22] hover:bg-[#1a0f2e] border border-purple-800 text-purple-400 font-medium rounded-xl py-3 text-sm transition-colors"
+            >
+              戻る
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={loading}
+              className="flex-[2] bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm transition-colors"
+            >
+              {loading ? '作成中…' : 'ルームを作成'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -46,7 +196,7 @@ export default function HomePage() {
 
       <div className="w-full max-w-sm bg-[#1a0f2e] border border-purple-900 rounded-2xl p-6 shadow-xl">
         <button
-          onClick={handleCreate}
+          onClick={() => setStep('settings')}
           disabled={loading}
           className="w-full bg-purple-700 hover:bg-purple-600 active:bg-purple-800 disabled:opacity-50 text-white font-medium rounded-xl py-3 mb-4 transition-colors"
         >

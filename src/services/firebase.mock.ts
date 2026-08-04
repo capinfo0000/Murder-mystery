@@ -23,18 +23,27 @@ export async function signIn(): Promise<string> {
   return _uid
 }
 
-export async function createGame(hostId: string): Promise<string> {
+export async function createGame(
+  hostId: string,
+  settings?: {
+    playerCount?: number
+    mode?: import('../types/game').GameMode
+    hasGM?: boolean
+    roundDurationMinutes?: number
+    totalRounds?: number
+  }
+): Promise<string> {
   const gameId = Math.random().toString(36).slice(2, 8).toUpperCase()
   games[gameId] = {
     id: gameId,
     hostId,
-    playerCount: 5,
-    mode: 'normal',
+    playerCount: settings?.playerCount ?? 5,
+    mode: settings?.mode ?? 'normal',
     phase: 'lobby',
-    hasGM: false,
-    totalRounds: 3,
+    hasGM: settings?.hasGM ?? false,
+    totalRounds: settings?.totalRounds ?? 3,
     roundStartAt: null,
-    roundDurationMinutes: 20,
+    roundDurationMinutes: settings?.roundDurationMinutes ?? 20,
     secretTalkDurationMinutes: 10,
     players: {},
     scenario: null,
@@ -176,6 +185,13 @@ export function subscribeGame(gameId: string, callback: (state: GameState | null
   listeners[gameId].push(callback)
   setTimeout(() => callback(games[gameId] ?? null), 50)
   return () => { listeners[gameId] = listeners[gameId].filter(cb => cb !== callback) }
+}
+
+export async function renamePlayer(gameId: string, playerId: string, name: string): Promise<void> {
+  if (games[gameId]?.players[playerId]) {
+    games[gameId].players[playerId].name = name
+    notify(gameId)
+  }
 }
 
 export function markMessageRead(gameId: string, msgId: string): void {
