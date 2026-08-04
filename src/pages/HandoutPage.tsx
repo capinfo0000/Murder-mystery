@@ -114,6 +114,9 @@ export default function HandoutPage() {
                 lookout: '見張り番',
                 preparation: '準備の手伝い',
                 silence_deal: '口止め取引',
+                weapon_supply: '凶器・品物の調達',
+                victim_lure: '被害者の誘導',
+                map_provision: '見取り図の提供',
               }
               return (
                 <Section title="🤝 今夜の密約（あなただけが知ること）" accent="amber">
@@ -149,11 +152,23 @@ export default function HandoutPage() {
                       ? `${myKillerInfo.victimSlot}枠 — ${CHARACTERS[myKillerInfo.victimSlot]?.name ?? '？'}`
                       : (myKillerInfo.victimName ?? '？')
                   } />
-                  <Row label="凶器" value={myKillerInfo.weapon.name} />
-                  <Row label="凶行場所" value={LOCATION_NAMES[myKillerInfo.location]} />
+                  <Row label={myKillerInfo.method === 'poison' ? '毒物' : '凶器'} value={myKillerInfo.weapon.name} />
+                  <Row label="場所" value={LOCATION_NAMES[myKillerInfo.location]} />
                   <Row label="偽装死因" value={myKillerInfo.weapon.disguisedAs} />
                   <Row label="時刻" value="T2（21:00〜22:00頃）" />
                 </div>
+                {myKillerInfo.isDualKiller && (
+                  <div className="mt-3 pt-3 border-t border-red-900/40">
+                    <p className="text-red-200/80 text-xs leading-relaxed">
+                      {myKillerInfo.method === 'poison'
+                        ? `あなたは毒を盛り、その場を立ち去った。遅効性のため${myKillerInfo.victimName ?? '被害者'}はすぐには倒れなかった。その後、遺体がどのような状態で発見されたかはあなたも知らない。`
+                        : scenario.dualKillerInfo?.type === 'weapon_found_dead'
+                          ? `T2、凶器を手に${myKillerInfo.victimName ?? '被害者'}の部屋へ踏み込んだとき、すでに${myKillerInfo.victimName ?? '被害者'}は床に倒れており、脈はなかった。誰かに先を越されたのだと悟り、動揺しながらその場を後にした。凶器はそのまま持ち帰った。`
+                          : `T2に${myKillerInfo.victimName ?? '被害者'}の元へ向かい、凶器で致命傷を与えた。${myKillerInfo.victimName ?? '被害者'}の様子にどこか違和感があったかもしれないが、あなたは凶器による一撃しか知らない。`
+                      }
+                    </p>
+                  </div>
+                )}
               </Section>
             )}
             <Section title="あなたが知る関係図">

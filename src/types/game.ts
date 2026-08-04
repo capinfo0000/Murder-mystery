@@ -48,6 +48,7 @@ export interface Weapon {
   id: string
   name: string
   disguisedAs: string
+  isPoison?: boolean  // true for poison/drug weapons
 }
 
 export interface VictimInfo {
@@ -62,7 +63,9 @@ export interface NpcVictim {
   apparentCause: string      // shown during game (may disguise murder as natural death)
   isRelatedToCase: boolean   // truth: was this actually murder?
   trueMurderDetail?: string  // revealed at result when isRelatedToCase=true
-  killerSlot?: CharacterSlot // which player killed them
+  killerSlot?: CharacterSlot // which player killed them (poison killer for dual scenarios)
+  dualKillerPattern?: 'poison_then_weapon' | 'weapon_found_dead'
+  secondKillerSlot?: CharacterSlot  // weapon killer in dual scenarios
 }
 
 export interface KillerInfo {
@@ -71,9 +74,24 @@ export interface KillerInfo {
   victimName?: string         // set in normal/hard mode (NPC victim name)
   weapon: Weapon
   location: Location
+  method?: 'weapon' | 'poison'  // dual killer scenarios only
+  isDualKiller?: boolean        // true when part of a dual-killer pair
 }
 
-export type ConnectionType = 'lookout' | 'preparation' | 'silence_deal'
+export interface DualKillerInfo {
+  type: 'poison_then_weapon' | 'weapon_found_dead'
+  poisonKillerSlot: CharacterSlot
+  weaponKillerSlot: CharacterSlot
+  victimName: string
+}
+
+export type ConnectionType =
+  | 'lookout'
+  | 'preparation'
+  | 'silence_deal'
+  | 'weapon_supply'   // 凶器・毒物の調達を依頼
+  | 'victim_lure'     // 被害者を特定場所へ誘導
+  | 'map_provision'   // 館の見取り図・通路情報を提供
 
 export interface PlayerConnection {
   fromSlot: CharacterSlot   // the player with leverage / who benefits
@@ -93,6 +111,7 @@ export interface Scenario {
   puzzleTargets?: Partial<Record<CharacterSlot, CharacterSlot>>
   outsideKiller?: boolean      // true when a hired hitman (not any player) committed all murders
   connections?: PlayerConnection[]  // optional inter-player secret arrangements
+  dualKillerInfo?: DualKillerInfo  // set when two killers independently targeted the same victim
 }
 
 export interface EvidenceCard {

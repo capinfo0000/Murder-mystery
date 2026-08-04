@@ -148,7 +148,7 @@ export default function ResultPage() {
                   <div key={i} className="py-2 border-b border-purple-900/30 last:border-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-xs px-1.5 py-0.5 rounded border ${v.isRelatedToCase ? 'bg-red-900/30 text-red-300 border-red-800' : 'bg-purple-900/30 text-purple-400 border-purple-800'}`}>
-                        {v.isRelatedToCase ? '他殺' : '自然死'}
+                        {v.isRelatedToCase ? (v.dualKillerPattern ? '二重犯行' : '他殺') : '自然死'}
                       </span>
                       <span className="text-purple-200 text-sm font-medium">{v.name}</span>
                       <span className="text-purple-600 text-xs">{v.role}</span>
@@ -160,11 +160,27 @@ export default function ResultPage() {
                       <p className="text-red-300 text-xs mt-0.5 ml-0.5">真相: {v.trueMurderDetail}</p>
                     )}
                     {v.isRelatedToCase && (
-                      <p className="text-red-400 text-xs mt-0.5 ml-0.5">
-                        {v.killerSlot
-                          ? `犯人: ${CHARACTERS[v.killerSlot]?.name}（${v.killerSlot}枠）`
-                          : scenario.outsideKiller ? '犯人: 組織の殺し屋' : ''}
-                      </p>
+                      <div className="mt-0.5 ml-0.5 space-y-0.5">
+                        {v.dualKillerPattern ? (
+                          <>
+                            <p className="text-red-400 text-xs">
+                              毒を盛った者: {CHARACTERS[v.killerSlot!]?.name}（{v.killerSlot}枠）
+                            </p>
+                            <p className="text-red-400 text-xs">
+                              {v.dualKillerPattern === 'poison_then_weapon'
+                                ? `止めを刺した者: ${CHARACTERS[v.secondKillerSlot!]?.name}（${v.secondKillerSlot}枠）`
+                                : `凶器持参・未使用: ${CHARACTERS[v.secondKillerSlot!]?.name}（${v.secondKillerSlot}枠）`
+                              }
+                            </p>
+                          </>
+                        ) : v.killerSlot ? (
+                          <p className="text-red-400 text-xs">
+                            犯人: {CHARACTERS[v.killerSlot]?.name}（{v.killerSlot}枠）
+                          </p>
+                        ) : scenario.outsideKiller ? (
+                          <p className="text-red-400 text-xs">犯人: 組織の殺し屋</p>
+                        ) : null}
+                      </div>
                     )}
                   </div>
                 ))}
