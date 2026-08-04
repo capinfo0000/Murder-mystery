@@ -399,6 +399,36 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     content: '被害者の携帯電話の通話記録から、登録のない番号への定期的な発信が確認された。番号の契約者は「存在しない人物」だった。（注: 記録の信憑性は未確認）',
     category: 'victim', relatedSlot: null, baseIsTrue: false,
   },
+  {
+    id: 'vi_fear_001',
+    content: '被害者は事件の一週間前から食事を取り分けてもらい、自ら先に一口確認してから全員に出すよう指示していたという。使用人は「毒を疑っているようだった」と証言している。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_002',
+    content: '被害者は就寝前に必ず書斎の鍵を二重に確認し、窓の施錠を自分で確かめてから床についていた。ここ数ヶ月で始まった習慣だという。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_003',
+    content: '被害者は事件前夜、顧問弁護士に「もし自分に何かあれば、この封筒を開けてほしい」と手紙を預けていた。弁護士はその存在を認めたが、内容の開示を拒んでいる。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_004',
+    content: '被害者は「自分の命はもう長くないかもしれない」と側近に打ち明けていたという。病気の診断ではなく、「人間に殺される」という意味だったと側近は語る。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_005',
+    content: '被害者の日記には「今夜もまた見張られている気がする」という記述が三週間にわたって繰り返されていた。妄想か、根拠のある恐怖か。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_006',
+    content: '被害者は最近になって護身用の護符を肌身離さず持つようになっていたが、事件当夜に限ってそれが部屋に残されていた。なぜ外したのかは不明だ。',
+    category: 'victim', relatedSlot: null, baseIsTrue: false,
+  },
 
   // ───── 動機（motive）─────
   {
