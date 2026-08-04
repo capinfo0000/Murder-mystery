@@ -73,6 +73,16 @@ export interface KillerInfo {
   location: Location
 }
 
+export type ConnectionType = 'lookout' | 'preparation' | 'silence_deal'
+
+export interface PlayerConnection {
+  fromSlot: CharacterSlot   // the player with leverage / who benefits
+  toSlot: CharacterSlot     // the player who provides help
+  type: ConnectionType
+  fromText: string          // shown only to fromSlot
+  toText: string            // shown only to toSlot
+}
+
 export interface Scenario {
   victims: VictimInfo[]        // player victims (puzzle mode only)
   npcVictims: NpcVictim[]      // NPC deaths: murder victims + natural death noise
@@ -82,6 +92,7 @@ export interface Scenario {
   secretActions: Partial<Record<CharacterSlot, string>>
   puzzleTargets?: Partial<Record<CharacterSlot, CharacterSlot>>
   outsideKiller?: boolean      // true when a hired hitman (not any player) committed all murders
+  connections?: PlayerConnection[]  // optional inter-player secret arrangements
 }
 
 export interface EvidenceCard {

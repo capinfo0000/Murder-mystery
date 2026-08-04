@@ -1,8 +1,10 @@
 import type {
   CharacterSlot,
+  ConnectionType,
   GameMode,
   KillerInfo,
   NpcVictim,
+  PlayerConnection,
   Scenario,
   VictimInfo,
 } from '../types/game'
@@ -24,6 +26,58 @@ function shuffle<T>(arr: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]]
   }
   return a
+}
+
+function connFromText(type: ConnectionType, toName: string): string {
+  if (type === 'lookout') {
+    return `${toName}に今夜T2の見張りを頼んだ。自分が秘密行動を実行している間、廊下を見張ってもらった。${toName}は何があったかは知らないが、誰かが近づいたら知らせるよう言われている。`
+  }
+  if (type === 'preparation') {
+    return `${toName}に今夜の準備の一部を手伝ってもらった。具体的な用途は告げず、道具の手配と受け渡しだけを依頼した。`
+  }
+  // silence_deal
+  return `${toName}はあなたのある秘密を偶然知ってしまった。黙っていてもらう代わりに、今夜の討議で証言を調整するよう頼んだ。${toName}はこの取引に同意している。`
+}
+
+function connToText(type: ConnectionType, fromName: string): string {
+  if (type === 'lookout') {
+    return `${fromName}に頼まれ、T2の間、廊下で見張りに立った。何があったかは問われていないが、誰かが近づいたら合図するよう言われた。T2にそこにいた理由の説明として使えるかもしれない。`
+  }
+  if (type === 'preparation') {
+    return `${fromName}に頼まれ、今夜の準備を手伝った。内容の詳細は聞かされていないが、言われた通りに道具を用意して渡した。`
+  }
+  // silence_deal
+  return `偶然、${fromName}の秘密を目撃してしまった。${fromName}から「黙っていてほしい。その代わり、討議で話す内容を少し調整してほしい」と頼まれ、この取引に応じることにした。`
+}
+
+function generateConnections(slots: CharacterSlot[]): PlayerConnection[] {
+  if (slots.length < 2 || Math.random() < 0.5) return []
+  const count = Math.random() < 0.7 ? 1 : 2
+  const result: PlayerConnection[] = []
+  const used = new Set<string>()
+  const shuffled = shuffle(slots)
+  const types: ConnectionType[] = ['lookout', 'preparation', 'silence_deal']
+
+  for (let i = 0; i < count; i++) {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const from = shuffled[Math.floor(Math.random() * shuffled.length)]
+      const to = shuffled[Math.floor(Math.random() * shuffled.length)]
+      if (from === to) continue
+      const key = from < to ? `${from}-${to}` : `${to}-${from}`
+      if (used.has(key)) continue
+      used.add(key)
+      const type = types[Math.floor(Math.random() * types.length)]
+      result.push({
+        fromSlot: from,
+        toSlot: to,
+        type,
+        fromText: connFromText(type, CHARACTERS[to].name),
+        toText: connToText(type, CHARACTERS[from].name),
+      })
+      break
+    }
+  }
+  return result
 }
 
 export function generateScenario(
@@ -158,7 +212,19 @@ export function generateScenario(
     }
   }
 
-  return { victims, npcVictims, killers, roles, alibis, secretActions, puzzleTargets, outsideKiller: outsideKiller || undefined }
+  const connections = generateConnections(slots)
+
+  return {
+    victims,
+    npcVictims,
+    killers,
+    roles,
+    alibis,
+    secretActions,
+    puzzleTargets,
+    outsideKiller: outsideKiller || undefined,
+    connections: connections.length > 0 ? connections : undefined,
+  }
 }
 
 export { getSlotsForCount }

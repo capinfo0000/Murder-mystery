@@ -104,6 +104,43 @@ export default function HandoutPage() {
             <Section title="あなただけの秘密（誰にも言わないこと）">
               <p className="text-amber-200 text-sm leading-relaxed">{char.secretAction}</p>
             </Section>
+            {/* Inter-player connections — only visible to the relevant players */}
+            {(() => {
+              const myConns = (scenario.connections ?? []).filter(
+                c => c.fromSlot === mySlot || c.toSlot === mySlot
+              )
+              if (myConns.length === 0) return null
+              const typeLabel: Record<string, string> = {
+                lookout: '見張り番',
+                preparation: '準備の手伝い',
+                silence_deal: '口止め取引',
+              }
+              return (
+                <Section title="🤝 今夜の密約（あなただけが知ること）" accent="amber">
+                  <div className="space-y-4">
+                    {myConns.map((conn, i) => {
+                      const isFrom = conn.fromSlot === mySlot
+                      const otherSlot = isFrom ? conn.toSlot : conn.fromSlot
+                      const otherChar = CHARACTERS[otherSlot]
+                      const text = isFrom ? conn.fromText : conn.toText
+                      return (
+                        <div key={i} className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-0.5 rounded border border-amber-700 bg-amber-900/30 text-amber-300">
+                              {typeLabel[conn.type]}
+                            </span>
+                            <span className="text-purple-400 text-xs">
+                              {otherChar.name}（{otherSlot}枠）
+                            </span>
+                          </div>
+                          <p className="text-amber-100 text-sm leading-relaxed">{text}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Section>
+              )
+            })()}
             {myRole === 'killer' && myKillerInfo && (
               <Section title="🔪 あなたが行った凶行（厳重に秘密）" accent="red">
                 <div className="space-y-2 text-sm">
@@ -195,8 +232,8 @@ export default function HandoutPage() {
 }
 
 function Section({ title, children, accent = 'purple' }: { title: string; children: React.ReactNode; accent?: string }) {
-  const border = accent === 'red' ? 'border-red-900' : 'border-purple-900'
-  const titleColor = accent === 'red' ? 'text-red-300' : 'text-purple-300'
+  const border = accent === 'red' ? 'border-red-900' : accent === 'amber' ? 'border-amber-900' : 'border-purple-900'
+  const titleColor = accent === 'red' ? 'text-red-300' : accent === 'amber' ? 'text-amber-300' : 'text-purple-300'
   return (
     <div className={`bg-[#1a0f2e] border ${border} rounded-xl p-4`}>
       <h3 className={`${titleColor} text-xs font-medium mb-2 tracking-wide`}>{title}</h3>
