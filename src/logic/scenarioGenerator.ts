@@ -36,7 +36,7 @@ function connFromText(type: ConnectionType, toName: string): string {
     return `${toName}に今夜の準備の一部を手伝ってもらった。具体的な用途は告げず、道具の手配と受け渡しだけを依頼した。`
   }
   // silence_deal
-  return `${toName}はあなたのある秘密を偶然知ってしまった。黙っていてもらう代わりに、今夜の討議で証言を調整するよう頼んだ。${toName}はこの取引に同意している。`
+  return `T2の頃、あなたは偶然にも${toName}の秘密の行動を目撃してしまった。本人も気づいていた——目が合った瞬間、${toName}の顔が青ざめるのがわかった。その後、ふたりきりになった際、あなたは静かに切り出した。「見てしまったことは、誰にも言わない。ただ、今夜の話し合いで少しだけ協力してほしい」。${toName}は長い沈黙の後、うなずいた。`
 }
 
 function connToText(type: ConnectionType, fromName: string): string {
@@ -47,7 +47,7 @@ function connToText(type: ConnectionType, fromName: string): string {
     return `${fromName}に頼まれ、今夜の準備を手伝った。内容の詳細は聞かされていないが、言われた通りに道具を用意して渡した。`
   }
   // silence_deal
-  return `偶然、${fromName}の秘密を目撃してしまった。${fromName}から「黙っていてほしい。その代わり、討議で話す内容を少し調整してほしい」と頼まれ、この取引に応じることにした。`
+  return `T2の頃、${fromName}と目が合った。あの瞬間、見られたと悟った。その後、${fromName}が静かに近づいてきた。「あのことは、誰にも話さない。ただ、今夜の話し合いで少しだけ協力してほしい」。断ることもできたが——できなかった。あなたは無言でうなずいた。`
 }
 
 function generateConnections(slots: CharacterSlot[]): PlayerConnection[] {
