@@ -102,7 +102,6 @@ export interface Player {
 
 export interface VoteData {
   killerSlots: CharacterSlot[]
-  victimSlots: CharacterSlot[]
   puzzleAnswer?: Record<CharacterSlot, CharacterSlot>
   submittedAt?: number
 }
