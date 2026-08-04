@@ -777,6 +777,43 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     content: '絵画の偽作鑑定には特殊な蛍光灯照射検査が必要で、肉眼では本物と見分けがつかないケースが多い。',
     category: 'technical', relatedSlot: 'C', baseIsTrue: true,
   },
+
+  // ── 自殺を検討していた描写 ──────────────────────────────────────────────────
+  {
+    id: 'sui_A',
+    content: '書斎の引き出しから、書きかけの手紙が見つかった。弟・蓮への遺書と思われるが、途中で止められている。「赤字が全て明るみに出たとき、俺はもう——」と続く文章は最後まで書かれていない。',
+    category: 'psychology', relatedSlot: 'A', baseIsTrue: true,
+  },
+  {
+    id: 'sui_B',
+    content: '白川の診療鞄の奥に、自分の名前で書かれた処方箋の下書きが折りたたまれていた。薬剤名は致死量を超えた睡眠薬だ。日付は三週間前——処方は実行されなかった。',
+    category: 'psychology', relatedSlot: 'B', baseIsTrue: true,
+  },
+  {
+    id: 'sui_C',
+    content: '氷室の手帳の端に、乱れた筆跡でひと言だけ書かれた箇所がある。「もう終わりにすべきかもしれない」——日付のないそのメモに、何の文脈もない。',
+    category: 'psychology', relatedSlot: 'C', baseIsTrue: true,
+  },
+  {
+    id: 'sui_D',
+    content: '小夜の私物の中に、和紙に書かれた短い文章があった。「長い間、お世話になりました」——それだけが書かれた、差出人も宛先もない紙切れ。日付は一年前だ。',
+    category: 'psychology', relatedSlot: 'D', baseIsTrue: true,
+  },
+  {
+    id: 'sui_E',
+    content: '執事長の日誌に異様な一節がある。「この館に骨を埋めるつもりだったが、最後は自分の意志で幕を引きたい——そう考え始めたのはいつ頃からだろうか。」',
+    category: 'psychology', relatedSlot: 'E', baseIsTrue: true,
+  },
+  {
+    id: 'sui_F',
+    content: '館を追い出された後、神条蓮は数か月間消息不明だった。後に本人が漏らしたところによれば「海の見える崖の上で何日も過ごした」という。何をするつもりだったかは、あえて誰も聞かなかった。',
+    category: 'psychology', relatedSlot: 'F', baseIsTrue: true,
+  },
+  {
+    id: 'sui_G',
+    content: '未亡人の荷物の中に、ラベルを剥がした未開封の薬瓶が一本あった。中身は不明だが、その瓶の形と褪せた色には見覚えのある者が館に一人いる。',
+    category: 'psychology', relatedSlot: 'G', baseIsTrue: true,
+  },
 ]
 
 export function getTemplateById(id: string): CardTemplate | undefined {
