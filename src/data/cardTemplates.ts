@@ -369,6 +369,36 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     content: '被害者は毎晩、就寝前に同じ銘柄のワインを1杯飲む習慣があった。使用人なら誰でも知っていた。',
     category: 'victim', relatedSlot: null, baseIsTrue: true,
   },
+  {
+    id: 'vi_org_001',
+    content: '被害者の金庫に、国内外の複数の架空名義口座への送金記録が残されていた。総額は数十億円に上る。送金先の法人はいずれも実体のない幽霊会社だった。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_002',
+    content: '被害者の手帳の最終ページに、暗号化された連絡先リストが挟まれていた。記号と数字だけで構成されており、人名は一切記されていない。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_003',
+    content: '使用人の証言によれば、被害者は月に一度、「顔も名前も名乗らない訪問者」を深夜に書斎へ迎えていたという。その後、被害者は必ず不機嫌になっていた。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_004',
+    content: '被害者の書斎の隠し引き出しから、「債務確認書」と題された文書が発見された。差出人の記名はなく、被害者の署名のみがある。記載された金額は法外な額だった。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_005',
+    content: '被害者はここ数年で急激に財を成したとされるが、その事業の詳細は一切公開されていない。「本業は別にある」と被害者自身が酒席で漏らしたことがあるという証言がある。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_006',
+    content: '被害者の携帯電話の通話記録から、登録のない番号への定期的な発信が確認された。番号の契約者は「存在しない人物」だった。（注: 記録の信憑性は未確認）',
+    category: 'victim', relatedSlot: null, baseIsTrue: false,
+  },
 
   // ───── 動機（motive）─────
   {
