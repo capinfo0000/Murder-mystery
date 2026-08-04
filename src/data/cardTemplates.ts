@@ -432,6 +432,101 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     category: 'motive', relatedSlot: 'D', baseIsTrue: true,
   },
 
+  // ───── 過去職業ヒント（background / physical / alibi）─────
+  // 各キャラの隠れた過去を示唆するカード。直接明記せず断片として散りばめる。
+  {
+    id: 'bg_015',
+    content: '神条薫はかつてヨーロッパに5年滞在していた。帰国後も骨董品に触れるとき、特有の角度から光を当てて確認する癖があると複数の人物が証言している。',
+    category: 'background', relatedSlot: 'A', baseIsTrue: true,
+  },
+  {
+    id: 'ph_019',
+    content: '書斎のゴミ箱に、同じ文字を繰り返し練習した反故紙が数枚捨てられていた。署名の練習のようにも見える。',
+    category: 'physical', relatedSlot: 'A', baseIsTrue: true,
+  },
+  {
+    id: 'bg_016',
+    content: '白川医師が医師免許を取得したのは35歳のときだという。それ以前の10年間のキャリアについては一切語らず、話題を変えようとする。',
+    category: 'background', relatedSlot: 'B', baseIsTrue: true,
+  },
+  {
+    id: 'al_015',
+    content: '白川は夕食の席で、処方箋に載っていない薬品名を流暢に並べていた。同席した者は「あれは臨床医の知識ではない」と感じたという。',
+    category: 'alibi', relatedSlot: 'B', baseIsTrue: true,
+  },
+  {
+    id: 'bg_017',
+    content: '氷室涼子は酒の席で「若い頃は芸能関係の仕事をしていた」と笑いながら漏らしたことがある。詳細は語らなかった。',
+    category: 'background', relatedSlot: 'C', baseIsTrue: true,
+  },
+  {
+    id: 'ph_020',
+    content: '氷室の荷物の中に、絵画修復とは無関係の特殊メイク用品と、人毛を使ったウィッグが収められていた。',
+    category: 'physical', relatedSlot: 'C', baseIsTrue: true,
+  },
+  {
+    id: 'al_016',
+    content: '小夜は古い南京錠を手に取り、一瞬眺めただけで音もなく開けてしまった。見ていた若いメイドを驚かせたが、小夜本人は何も言わなかった。',
+    category: 'alibi', relatedSlot: 'D', baseIsTrue: true,
+  },
+  {
+    id: 'bg_018',
+    content: '館に来る前の小夜の経歴を知る者は誰もいない。採用時の身元保証人も今では連絡が取れなくなっている。',
+    category: 'background', relatedSlot: 'D', baseIsTrue: true,
+  },
+  {
+    id: 'al_017',
+    content: '黒部はワインを一口含んだだけで産地と収穫年を言い当てた。驚いて尋ねた者に「以前の仕事の名残です」とだけ答えた。',
+    category: 'alibi', relatedSlot: 'E', baseIsTrue: true,
+  },
+  {
+    id: 'bg_019',
+    content: '黒部が神条家に仕える前、都内のどこかの一流ホテルにいたという噂がある。本人は否定も肯定もしない。',
+    category: 'background', relatedSlot: 'E', baseIsTrue: true,
+  },
+  {
+    id: 'al_018',
+    content: '蓮がロープの結び目を確かめるとき、庭師とは思えない鮮やかな手つきだった。まるで舞台や演技で慣れ親しんだような身のこなしだった。',
+    category: 'alibi', relatedSlot: 'F', baseIsTrue: true,
+  },
+  {
+    id: 'bg_020',
+    content: '神条蓮が家を出てからの数年間、一切の消息が途絶えていた。帰国後に「各地を転々とした」と言うだけで、詳細は決して語らない。',
+    category: 'background', relatedSlot: 'F', baseIsTrue: true,
+  },
+  {
+    id: 'al_019',
+    content: '綾小路麗華は自分の出身地について、昨日と今日で微妙に違う説明をしていた。気づいた者が問い詰めると自然に話題を変えた。',
+    category: 'alibi', relatedSlot: 'G', baseIsTrue: true,
+  },
+  {
+    id: 'ph_021',
+    content: '麗華の客間のゴミ箱に、用途不明の封蝋の欠片と、異なるインクで書かれた数枚の下書きが捨てられていた。',
+    category: 'physical', relatedSlot: 'G', baseIsTrue: true,
+  },
+
+  // ───── 過去職業ミスリード（別キャラへの疑惑誘導）─────
+  {
+    id: 'bg_021',
+    content: '黒部はかつて劇団に所属していたことがあるという噂がある。変装が得意だと言う者もいる。（確認は取れていない）',
+    category: 'background', relatedSlot: 'E', baseIsTrue: false,
+  },
+  {
+    id: 'ph_022',
+    content: 'Fの庭仕事用の道具箱に、場違いなマジック用トランプが混入していた。（植物の押し花を挟む台紙に使っていた）',
+    category: 'physical', relatedSlot: 'F', baseIsTrue: false,
+  },
+  {
+    id: 'bg_022',
+    content: 'Aは若い頃に美術学校に通っていたという話がある。絵画の模写を繰り返していたと同期生が証言した。（Cへの疑惑を強める可能性あり）',
+    category: 'background', relatedSlot: 'A', baseIsTrue: false,
+  },
+  {
+    id: 'ph_023',
+    content: 'BのカバンにE向けと思われる未開封の酒瓶が入っていた。ラベルに手書きの文字がある。（実際は贈り物用だった）',
+    category: 'physical', relatedSlot: 'B', baseIsTrue: false,
+  },
+
   // ───── 技術情報（technical）─────
   {
     id: 'te_001',
