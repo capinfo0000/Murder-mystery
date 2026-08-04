@@ -112,7 +112,7 @@ export default function ResultPage() {
                     {CHARACTERS[k.slot]?.name} ({k.slot}枠)
                   </div>
                   <div className="text-red-200/70 text-xs space-y-0.5">
-                    <p>被害者: {CHARACTERS[k.victimSlot]?.name}</p>
+                    <p>被害者: {k.victimSlot ? `${CHARACTERS[k.victimSlot]?.name}（${k.victimSlot}枠）` : k.victimName}</p>
                     <p>凶器: {k.weapon.name}</p>
                     <p>場所: {LOCATION_NAMES[k.location]}</p>
                     <p>偽装: {k.weapon.disguisedAs}</p>
@@ -120,6 +120,34 @@ export default function ResultPage() {
                 </div>
               ))}
             </Section>
+
+            {/* NPC victim truth */}
+            {scenario.npcVictims && scenario.npcVictims.length > 0 && (
+              <Section title="🕯 死亡者の真実">
+                {scenario.npcVictims.map((v, i) => (
+                  <div key={i} className="py-2 border-b border-purple-900/30 last:border-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs px-1.5 py-0.5 rounded border ${v.isRelatedToCase ? 'bg-red-900/30 text-red-300 border-red-800' : 'bg-purple-900/30 text-purple-400 border-purple-800'}`}>
+                        {v.isRelatedToCase ? '他殺' : '自然死'}
+                      </span>
+                      <span className="text-purple-200 text-sm font-medium">{v.name}</span>
+                      <span className="text-purple-600 text-xs">{v.role}</span>
+                    </div>
+                    <p className="text-purple-400 text-xs ml-0.5">
+                      報告書: {v.apparentCause}
+                    </p>
+                    {v.isRelatedToCase && v.trueMurderDetail && (
+                      <p className="text-red-300 text-xs mt-0.5 ml-0.5">真相: {v.trueMurderDetail}</p>
+                    )}
+                    {v.isRelatedToCase && v.killerSlot && (
+                      <p className="text-red-400 text-xs mt-0.5 ml-0.5">
+                        犯人: {CHARACTERS[v.killerSlot]?.name}（{v.killerSlot}枠）
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </Section>
+            )}
 
             {/* All secret actions */}
             <Section title="全員の秘密行動">

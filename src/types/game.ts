@@ -55,15 +55,27 @@ export interface VictimInfo {
   background: string
 }
 
+// Non-playable NPC who died during the story
+export interface NpcVictim {
+  name: string
+  role: string
+  apparentCause: string      // shown during game (may disguise murder as natural death)
+  isRelatedToCase: boolean   // truth: was this actually murder?
+  trueMurderDetail?: string  // revealed at result when isRelatedToCase=true
+  killerSlot?: CharacterSlot // which player killed them
+}
+
 export interface KillerInfo {
   slot: CharacterSlot
-  victimSlot: CharacterSlot
+  victimSlot?: CharacterSlot  // set only in puzzle mode (player victim)
+  victimName?: string         // set in normal/hard mode (NPC victim name)
   weapon: Weapon
   location: Location
 }
 
 export interface Scenario {
-  victims: VictimInfo[]
+  victims: VictimInfo[]        // player victims (puzzle mode only)
+  npcVictims: NpcVictim[]      // NPC deaths: murder victims + natural death noise
   killers: KillerInfo[]
   roles: Partial<Record<CharacterSlot, 'killer' | 'innocent'>>
   alibis: Partial<Record<CharacterSlot, { T1: Location; T2: Location; T3: Location }>>

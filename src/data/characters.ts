@@ -55,9 +55,9 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   D: {
     slot: 'D',
     name: '小夜',
-    role: 'メイド',
+    role: 'メイド長',
     background:
-      '神条家に幼少期から仕える無口なメイド。長年の陰湿な虐待への復讐心を胸に秘めている。館の裏通路を熟知している唯一の存在。',
+      '神条家に幼少期から仕える無口なメイド長。若いメイドたちを束ねながら、長年の陰湿な虐待への復讐心を胸に秘めている。館の裏通路を熟知している唯一の存在。',
     secretAction:
       '館の秘密通路を使い、主人や客人の部屋を覗き見して情報を収集していた。',
     t2Location: 'secret_passage',
@@ -72,9 +72,9 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   E: {
     slot: 'E',
     name: '黒部 達也',
-    role: '執事 / 支配人',
+    role: '執事長 / 支配人',
     background:
-      '神条家を長年支える老執事。実は被害者の悪事の片棒を担いでおり、その報酬として裏金を受け取っていた。',
+      '神条家を長年支える老執事長。館の全スタッフを統括する実力者だが、実は被害者の悪事の片棒を担いでおり、その報酬として裏金を受け取っていた。',
     secretAction:
       '金庫室から自分への「手切れ金」として預けられていた裏金を持ち出そうとしていた。',
     t2Location: 'safe_room',

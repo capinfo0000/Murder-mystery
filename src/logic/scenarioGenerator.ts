@@ -2,6 +2,7 @@ import type {
   CharacterSlot,
   GameMode,
   KillerInfo,
+  NpcVictim,
   Scenario,
   VictimInfo,
 } from '../types/game'
@@ -9,6 +10,7 @@ import { CHARACTERS, getSlotsForCount } from '../data/characters'
 import { WEAPONS } from '../data/weapons'
 import { CRIME_SCENE_LOCATIONS } from '../data/locations'
 import { VICTIM_BACKGROUNDS } from '../data/victimBackgrounds'
+import { EXTRA_NPCS } from '../data/extraNpcs'
 import { generateAlibis } from './alibiGenerator'
 
 function pickRandom<T>(arr: T[]): T {
@@ -24,70 +26,90 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-function victimCount(playerCount: number, mode: GameMode): number {
-  if (mode === 'puzzle') return playerCount // everyone is both killer and victim
-  const max = playerCount <= 5 ? 1 : playerCount <= 6 ? 2 : 2
-  return Math.floor(Math.random() * max) + 1
-}
-
 export function generateScenario(
   playerCount: number,
   mode: GameMode
 ): Scenario {
   const slots = getSlotsForCount(playerCount)
-  const shuffled = shuffle(slots)
-
-  // ── victims ──────────────────────────────────────────────
-  // puzzle mode: circular killing — everyone is both killer and victim
-  const victimSlots = mode === 'puzzle' ? [...slots] : shuffled.slice(0, victimCount(playerCount, mode))
-  const victims: VictimInfo[] = victimSlots.map(slot => ({
-    slot,
-    background: pickRandom(VICTIM_BACKGROUNDS).detail,
-  }))
-
-  const nonVictimSlots = slots.filter(s => !victimSlots.includes(s))
+  const shuffledSlots = shuffle(slots)
 
   // ── killers ───────────────────────────────────────────────
   let killerSlots: CharacterSlot[]
   if (mode === 'puzzle') {
-    // everyone kills someone in a cycle
     killerSlots = [...slots]
-  } else if (mode === 'hard') {
-    const numKillers = Math.min(
-      Math.floor(Math.random() * 2) + 2,
-      nonVictimSlots.length - 1
-    )
-    killerSlots = shuffle(nonVictimSlots).slice(0, numKillers)
   } else {
-    killerSlots = [pickRandom(nonVictimSlots)]
+    // fully random 1 to (n-1) killers — always at least 1 innocent
+    const numKillers = Math.floor(Math.random() * (slots.length - 1)) + 1
+    killerSlots = shuffledSlots.slice(0, numKillers)
   }
-
-  // innocent slots — kept for reference (not directly used in generation)
-  const _innocentSlots = nonVictimSlots.filter(s => !killerSlots.includes(s))
-  void _innocentSlots
-
-  const killers: KillerInfo[] = killerSlots.map(slot => {
-    let targetVictim: CharacterSlot
-    if (mode === 'puzzle') {
-      // each killer targets the next slot in cycle
-      const idx = slots.indexOf(slot)
-      targetVictim = slots[(idx + 1) % slots.length]
-    } else {
-      targetVictim = pickRandom(victimSlots)
-    }
-    return {
-      slot,
-      victimSlot: targetVictim,
-      weapon: pickRandom(WEAPONS),
-      location: pickRandom(CRIME_SCENE_LOCATIONS),
-    }
-  })
 
   // ── roles ─────────────────────────────────────────────────
   const roles = {} as Partial<Record<CharacterSlot, 'killer' | 'innocent'>>
   for (const s of slots) {
     roles[s] = killerSlots.includes(s) ? 'killer' : 'innocent'
   }
+
+  // ── victims ───────────────────────────────────────────────
+  // puzzle mode: every player kills the next in a cycle (all are victims too)
+  // non-puzzle: no player characters die — only NPCs
+  let victims: VictimInfo[] = []
+  let npcVictims: NpcVictim[] = []
+
+  if (mode === 'puzzle') {
+    victims = slots.map(slot => ({
+      slot,
+      background: pickRandom(VICTIM_BACKGROUNDS).detail,
+    }))
+  } else {
+    const shuffledNpcs = shuffle(EXTRA_NPCS)
+    const numKillers = killerSlots.length
+
+    // Each killer murders exactly one NPC (1-to-1 assignment)
+    const murderNpcs = shuffledNpcs.slice(0, numKillers)
+    const naturalNpcs = shuffledNpcs.slice(numKillers, numKillers + Math.floor(Math.random() * 2) + 1)
+
+    npcVictims = [
+      ...murderNpcs.map((npc, i) => ({
+        name: npc.name,
+        role: npc.role,
+        apparentCause: npc.disguisedMurderCause,
+        isRelatedToCase: true,
+        trueMurderDetail: npc.trueMurderDetail,
+        killerSlot: killerSlots[i],
+      })),
+      ...naturalNpcs.map(npc => ({
+        name: npc.name,
+        role: npc.role,
+        apparentCause: npc.naturalDeathCause,
+        isRelatedToCase: false,
+      })),
+    ]
+  }
+
+  // ── killers (with victim assignment) ─────────────────────
+  const killers: KillerInfo[] = killerSlots.map((slot, i) => {
+    let victimSlot: CharacterSlot | undefined
+    let victimName: string | undefined
+
+    if (mode === 'puzzle') {
+      // circular: kill next in cycle
+      const idx = slots.indexOf(slot)
+      victimSlot = slots[(idx + 1) % slots.length]
+      victimName = CHARACTERS[victimSlot]?.name
+    } else {
+      // NPC victim (index matches killer index)
+      const npc = npcVictims[i]
+      victimName = npc.name
+    }
+
+    return {
+      slot,
+      victimSlot,
+      victimName,
+      weapon: pickRandom(WEAPONS),
+      location: pickRandom(CRIME_SCENE_LOCATIONS),
+    }
+  })
 
   // ── alibis ────────────────────────────────────────────────
   const alibis = generateAlibis(slots)
@@ -103,11 +125,11 @@ export function generateScenario(
   if (mode === 'puzzle') {
     puzzleTargets = {} as Record<CharacterSlot, CharacterSlot>
     for (const k of killers) {
-      puzzleTargets[k.slot] = k.victimSlot
+      if (k.victimSlot) puzzleTargets[k.slot] = k.victimSlot
     }
   }
 
-  return { victims, killers, roles, alibis, secretActions, puzzleTargets }
+  return { victims, npcVictims, killers, roles, alibis, secretActions, puzzleTargets }
 }
 
 export { getSlotsForCount }

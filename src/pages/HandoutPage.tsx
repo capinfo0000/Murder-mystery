@@ -81,6 +81,23 @@ export default function HandoutPage() {
         {/* CHARACTER tab */}
         {tab === 'character' && (
           <div className="space-y-4">
+            {/* Public: all NPC deaths visible to every player */}
+            {scenario.npcVictims.length > 0 && (
+              <Section title="🕯 今夜の死亡者（全員既知）">
+                <p className="text-purple-500 text-xs mb-3">紫苑館で見つかった遺体。死因は報告書による。</p>
+                <div className="space-y-2">
+                  {scenario.npcVictims.map((v, i) => (
+                    <div key={i} className="flex gap-3 text-sm">
+                      <span className="text-blue-300 font-medium w-20 shrink-0 truncate">{v.name}</span>
+                      <div className="min-w-0">
+                        <span className="text-purple-500 text-xs">{v.role}</span>
+                        <p className="text-purple-300 text-xs mt-0.5">{v.apparentCause}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
             <Section title="背景">
               <p className="text-purple-200 text-sm leading-relaxed">{char.background}</p>
             </Section>
@@ -90,7 +107,11 @@ export default function HandoutPage() {
             {myRole === 'killer' && myKillerInfo && (
               <Section title="🔪 あなたが行った凶行（厳重に秘密）" accent="red">
                 <div className="space-y-2 text-sm">
-                  <Row label="被害者" value={`${myKillerInfo.victimSlot}枠 — ${CHARACTERS[myKillerInfo.victimSlot]?.name ?? '？'}`} />
+                  <Row label="被害者" value={
+                    myKillerInfo.victimSlot
+                      ? `${myKillerInfo.victimSlot}枠 — ${CHARACTERS[myKillerInfo.victimSlot]?.name ?? '？'}`
+                      : (myKillerInfo.victimName ?? '？')
+                  } />
                   <Row label="凶器" value={myKillerInfo.weapon.name} />
                   <Row label="凶行場所" value={LOCATION_NAMES[myKillerInfo.location]} />
                   <Row label="偽装死因" value={myKillerInfo.weapon.disguisedAs} />
