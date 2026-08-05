@@ -52,7 +52,7 @@ export default function LobbyPage() {
   const allReady = playingHumans.every(([, p]) => p.isReady)
 
   const isDebug = game.playerCount < 4
-  const canStart = isDebug ? !!myPlayer : (allReady && humanCount >= 4)
+  const canStart = isDebug || (allReady && humanCount >= 4)
   const startLabel = canStart ? 'ゲーム開始'
     : humanCount < 4 ? `あと${4 - humanCount}人必要`
     : 'プレイヤーの準備完了を待っています…'
