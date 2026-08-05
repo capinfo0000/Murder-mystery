@@ -165,7 +165,8 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   for (const [cardId, card] of Object.entries(cards)) {
     cardUpdates[cardId] = card
   }
-  updates[`games/${gameId}/scenario`] = scenario
+  // Firebase rejects undefined values — strip them via JSON round-trip
+  updates[`games/${gameId}/scenario`] = JSON.parse(JSON.stringify(scenario))
   updates[`games/${gameId}/phase`] = 'handout'
   await update(ref(db), updates)
   await set(ref(db, `games/${gameId}/cards`), cardUpdates)
