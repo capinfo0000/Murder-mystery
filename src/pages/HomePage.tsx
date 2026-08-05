@@ -60,7 +60,7 @@ export default function HomePage() {
           <div>
             <label className="text-purple-400 text-xs block mb-1">プレイヤー数</label>
             <p className="text-purple-700 text-xs mb-2">GMは含まない人数</p>
-            <div className="grid grid-cols-4 gap-2 mb-1">
+            <div className="grid grid-cols-4 gap-2 mb-2">
               {[4, 5, 6, 7].map(n => (
                 <button
                   key={n}
@@ -75,21 +75,16 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map(n => (
-                <button
-                  key={n}
-                  onClick={() => setPlayerCount(n)}
-                  className={`py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-                    playerCount === n
-                      ? 'bg-purple-900 border-purple-600 text-purple-300'
-                      : 'bg-[#0d0820] border-purple-900 text-purple-700 hover:border-purple-800'
-                  }`}
-                >
-                  {n}人
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setPlayerCount(playerCount < 4 ? 4 : 1)}
+              className={`w-full py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                playerCount < 4
+                  ? 'bg-purple-900 border-purple-600 text-purple-300'
+                  : 'bg-[#0d0820] border-purple-900 text-purple-700 hover:border-purple-800'
+              }`}
+            >
+              {playerCount < 4 ? 'デバッグモード: ON' : 'デバッグモード'}
+            </button>
           </div>
 
           {/* GM */}
