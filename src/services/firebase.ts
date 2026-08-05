@@ -10,7 +10,7 @@ import {
 } from 'firebase/database'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { v4 as uuid } from 'uuid'
-import type { EvidenceCard, GamePhase, GameState, VoteData, CharacterSlot } from '../types/game'
+import type { EvidenceCard, GamePhase, GameState, VoteData } from '../types/game'
 import { generateScenario } from '../logic/scenarioGenerator'
 import { dealCards } from '../logic/cardDealer'
 import { computeScores, determineWinners, determineMainKillerCaught } from '../logic/gameLogic'
@@ -134,14 +134,11 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   const shuffledSlots = [...slots].sort(() => Math.random() - 0.5)
   const playerIds = Object.keys(allPlayers)
 
-  const slotAssignments: Record<string, CharacterSlot> = {}
-  playerIds.forEach((pid, i) => {
-    slotAssignments[pid] = shuffledSlots[i]
-  })
-
   const updates: Record<string, unknown> = {}
   playerIds.forEach((pid, i) => {
-    updates[`games/${gameId}/players/${pid}/characterSlot`] = shuffledSlots[i]
+    if (shuffledSlots[i] !== undefined) {
+      updates[`games/${gameId}/players/${pid}/characterSlot`] = shuffledSlots[i]
+    }
   })
 
   // generate scenario

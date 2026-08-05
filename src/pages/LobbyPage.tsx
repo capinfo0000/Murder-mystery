@@ -12,6 +12,7 @@ export default function LobbyPage() {
   const [game, setGame] = useState<GameState | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
+  const [startError, setStartError] = useState('')
   const joiningRef = useRef(false)
 
   useEffect(() => {
@@ -52,8 +53,9 @@ export default function LobbyPage() {
   const allReady = playingHumans.every(([, p]) => p.isReady)
 
   const isDebug = game.playerCount < 4
-  const canStart = isDebug || (allReady && humanCount >= 4)
+  const canStart = (isDebug && !!myPlayer) || (!isDebug && allReady && humanCount >= 4)
   const startLabel = canStart ? 'ゲーム開始'
+    : isDebug && !myPlayer ? '参加中…'
     : humanCount < 4 ? `あと${4 - humanCount}人必要`
     : 'プレイヤーの準備完了を待っています…'
 
@@ -159,13 +161,23 @@ export default function LobbyPage() {
 
         {/* Start button (host only) */}
         {isHost && (
-          <button
-            onClick={() => startGame(gameId!, uid)}
-            disabled={!canStart}
-            className="w-full bg-purple-700 hover:bg-purple-600 disabled:opacity-40 text-white font-medium rounded-xl py-3 text-sm transition-colors"
-          >
-            {startLabel}
-          </button>
+          <>
+            <button
+              onClick={async () => {
+                setStartError('')
+                try {
+                  await startGame(gameId!, uid)
+                } catch (e) {
+                  setStartError(e instanceof Error ? e.message : 'ゲーム開始に失敗しました')
+                }
+              }}
+              disabled={!canStart}
+              className="w-full bg-purple-700 hover:bg-purple-600 disabled:opacity-40 text-white font-medium rounded-xl py-3 text-sm transition-colors"
+            >
+              {startLabel}
+            </button>
+            {startError && <p className="text-red-400 text-xs text-center mt-2">{startError}</p>}
+          </>
         )}
 
         {!isHost && myPlayer?.isReady && (
