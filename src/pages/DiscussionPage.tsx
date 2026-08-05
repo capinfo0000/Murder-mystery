@@ -3,7 +3,8 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   subscribeGame, advancePhase, shareCardWithAll, drawFromDeck,
 } from '../services/firebase'
-import type { GameState, GamePhase } from '../types/game'
+import type { GameState, GamePhase, CharacterSlot } from '../types/game'
+import { CHARACTERS } from '../data/characters'
 import EvidenceCardView from '../components/EvidenceCard'
 import DeckPanel from '../components/DeckPanel'
 import SecretMessagePanel from '../components/SecretMessagePanel'
@@ -33,6 +34,7 @@ export default function DiscussionPage() {
   const [tab, setTab] = useState<'public' | 'hand' | 'deck' | 'secret'>('public')
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [showMap, setShowMap] = useState(false)
+  const [activeViewSlot, setActiveViewSlot] = useState<CharacterSlot | null>(null)
 
   useEffect(() => {
     if (!gameId) return
@@ -91,7 +93,15 @@ export default function DiscussionPage() {
 
   const isHost = game.hostId === uid
   const myPlayer = game.players[uid]
-  const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === uid)
+  const isDebug = game.playerCount < 4
+  const scenario = game.scenario
+  const allSlots = scenario ? Object.keys(scenario.roles) as CharacterSlot[] : []
+  const mySlot = myPlayer?.characterSlot
+  const viewSlot: CharacterSlot | null = (isDebug && activeViewSlot) ? activeViewSlot : (mySlot ?? null)
+  const viewUid = viewSlot
+    ? (Object.entries(game.players).find(([, p]) => p.characterSlot === viewSlot)?.[0] ?? uid)
+    : uid
+  const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === viewUid)
   const publicCards = Object.values(game.cards ?? {}).filter(c => c.sharedWith.includes('all'))
   const deckCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === 'deck')
   const hasDrawn = !!myPlayer?.hasDrawn
@@ -148,6 +158,27 @@ export default function DiscussionPage() {
           </button>
         ))}
       </div>
+
+      {/* Debug character switcher */}
+      {isDebug && allSlots.length > 0 && (
+        <div className="bg-[#0d0820] border-b border-purple-900/50 px-4 py-2">
+          <div className="flex gap-1.5 max-w-md mx-auto overflow-x-auto">
+            {allSlots.map(slot => (
+              <button
+                key={slot}
+                onClick={() => setActiveViewSlot(slot === mySlot ? null : slot)}
+                className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                  viewSlot === slot
+                    ? 'bg-purple-700 border-purple-500 text-white'
+                    : 'bg-[#1a0f2e] border-purple-800 text-purple-500 hover:border-purple-600 hover:text-purple-300'
+                }`}
+              >
+                {slot}枠 {CHARACTERS[slot]?.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-md mx-auto px-4 py-4 space-y-3">
         {/* PUBLIC */}

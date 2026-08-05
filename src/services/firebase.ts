@@ -118,9 +118,11 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   const humanPlayers = Object.entries(playersMap).filter(([, p]) => !p.isNPC)
   const humanCount = humanPlayers.length
   const totalCount = state.playerCount
-  const npcCount = Math.max(0, totalCount - humanCount)
+  const isDebug = totalCount < 4
+  const needed = Math.max(0, totalCount - humanCount)
+  const npcCount = isDebug ? needed : Math.min(needed, 3)
 
-  // fill missing slots with NPCs to reach the configured player count
+  // fill missing slots with NPCs (debug: all slots, production: max 3)
   const existingNPCs = Object.keys(playersMap).filter(id => playersMap[id].isNPC).length
   for (let i = existingNPCs; i < npcCount; i++) {
     await joinGame(gameId, `npc_${uuid().slice(0, 6)}`, `NPC${i + 1}`, true)
