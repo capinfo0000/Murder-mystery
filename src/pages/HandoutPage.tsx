@@ -132,7 +132,11 @@ export default function HandoutPage() {
             {/* Synopsis — shown to all players */}
             {scenario.synopsis && (
               <Section title="📜 あらすじ">
-                <p className="text-purple-200 text-sm leading-relaxed italic">{scenario.synopsis}</p>
+                <div className="space-y-3">
+                  {scenario.synopsis.split('\n\n').map((para, i) => (
+                    <p key={i} className="text-purple-200 text-sm leading-relaxed">{para}</p>
+                  ))}
+                </div>
               </Section>
             )}
             {/* Main victim profile — shown to all players */}

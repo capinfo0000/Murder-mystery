@@ -579,12 +579,19 @@ function generateSynopsis(
 ): string {
   const apparentCause = killers[0]?.weapon.disguisedAs ?? '突然死（死因不明）'
 
-  // NPC deaths shown with apparent cause only — no hint about who (or what) killed them
   const npcLine = npcVictims.length > 0
-    ? `同じ夜、${npcVictims.map(v => `${v.role}が${v.apparentCause}`).join('、')}という報告も上がっている。`
+    ? `同じ夜、館内では${npcVictims.map(v => `${v.role}が${v.apparentCause}`).join('、')}という報告も相次いだ。`
     : ''
 
-  return `嵐の気配が漂う夜、紫苑館の当主・神条源太郎が自室で「${apparentCause}」の状態で発見された。${npcLine}この夜、館に集う${playerCount}名それぞれが、誰にも打ち明けられない秘密を抱えていた——。`
+  return [
+    '現代日本。中部山間の深い森に抱かれた西洋館「紫苑館」——神条財閥総帥・神条 源太郎が半世紀をかけて築き、秘密を積み重ねてきた館である。',
+
+    '今夜この館に、選ばれた顔ぶれが集まっていた。名目は「遺産整理と事業継承に関する最終確認」。高齢を隠せなくなった源太郎が、家族・主治医・顧問・使用人を一堂に召集し、沈黙の圧力とともに自らの意志を示そうとした夜だった。招かれた者たちはそれぞれ、源太郎との間に解決されていない何かを抱えている——恩義、恨み、秘密、欲。',
+
+    `嵐が迫るなか電話回線が途絶えた夜明け前、源太郎が自室で「${apparentCause}」の状態で発見された。${npcLine}`,
+
+    `外部への連絡手段を絶たれたこの館に閉じ込められた${playerCount}名——それぞれが胸に秘密を抱えるなか、何が起きたのかを解き明かさなければならない。`,
+  ].join('\n\n')
 }
 
 export { getSlotsForCount }
