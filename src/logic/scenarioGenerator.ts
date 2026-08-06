@@ -570,7 +570,7 @@ export function generateScenario(
 }
 
 function generateSynopsis(
-  killers: KillerInfo[],
+  _killers: KillerInfo[],
   npcVictims: NpcVictim[],
   _outsideKiller: boolean,
   _suicide: boolean,
