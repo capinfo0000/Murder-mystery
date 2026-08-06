@@ -276,6 +276,19 @@ export function generateScenario(
   let victims: VictimInfo[] = []
   let npcVictims: NpcVictim[] = []
 
+  // helper: build a NpcVictim from an EXTRA_NPCS entry (guarantees location/time fields)
+  type ExtraNpc = (typeof EXTRA_NPCS)[number]
+  const mkNpc = (npc: ExtraNpc, murder: boolean, extra: Partial<NpcVictim> = {}): NpcVictim => ({
+    name: npc.role,
+    role: npc.role,
+    apparentCause: murder ? npc.disguisedMurderCause : npc.naturalDeathCause,
+    deathLocation: npc.deathLocation,
+    deathTime: npc.deathTime,
+    causeHint: npc.causeHint,
+    isRelatedToCase: murder,
+    ...extra,
+  })
+
   if (mode === 'puzzle') {
     victims = slots.map(slot => ({
       slot,
@@ -285,12 +298,7 @@ export function generateScenario(
     // 当主が自ら命を絶った夜 — 関係者は誰も殺されていない（0〜2件の自然死がノイズとして混入）
     const shuffledNpcs = shuffle(EXTRA_NPCS)
     const naturalNpcs = shuffledNpcs.slice(0, Math.floor(Math.random() * 3))
-    npcVictims = naturalNpcs.map(npc => ({
-      name: npc.role,
-      role: npc.role,
-      apparentCause: npc.naturalDeathCause,
-      isRelatedToCase: false,
-    }))
+    npcVictims = naturalNpcs.map(npc => mkNpc(npc, false))
   } else if (outsideKiller) {
     const shuffledNpcs = shuffle(EXTRA_NPCS)
     // Hitman killed 2–4 NPCs; rest died naturally (noise)
@@ -299,20 +307,9 @@ export function generateScenario(
     const naturalNpcs = shuffledNpcs.slice(numMurderNpcs, numMurderNpcs + Math.floor(Math.random() * 3))
 
     npcVictims = [
-      ...murderNpcs.map(npc => ({
-        name: npc.role,
-        role: npc.role,
-        apparentCause: npc.disguisedMurderCause,
-        isRelatedToCase: true,
-        trueMurderDetail: npc.hitmanMurderDetail,
-        // killerSlot intentionally undefined — hitman, not a player
-      })),
-      ...naturalNpcs.map(npc => ({
-        name: npc.role,
-        role: npc.role,
-        apparentCause: npc.naturalDeathCause,
-        isRelatedToCase: false,
-      })),
+      // killerSlot intentionally undefined — hitman, not a player
+      ...murderNpcs.map(npc => mkNpc(npc, true, { trueMurderDetail: npc.hitmanMurderDetail })),
+      ...naturalNpcs.map(npc => mkNpc(npc, false)),
     ]
   } else {
     const shuffledNpcs = shuffle(EXTRA_NPCS)
@@ -341,30 +338,17 @@ export function generateScenario(
       const chosenDualPattern = pickRandom(PATTERNS_BY_CATEGORY[chosenCategory])
 
       npcVictims = [
-        {
-          name: sharedNpc.role,
-          role: sharedNpc.role,
-          apparentCause: sharedNpc.disguisedMurderCause,
-          isRelatedToCase: true,
+        mkNpc(sharedNpc, true, {
           trueMurderDetail: undefined,  // filled after killers are built
           killerSlot: killerSlots[0],
           secondKillerSlot: killerSlots[1],
           dualKillerPattern: chosenDualPattern,
-        },
-        ...soloNpcs.map((npc, i) => ({
-          name: npc.role,
-          role: npc.role,
-          apparentCause: npc.disguisedMurderCause,
-          isRelatedToCase: true as const,
+        }),
+        ...soloNpcs.map((npc, i) => mkNpc(npc, true, {
           trueMurderDetail: npc.trueMurderDetail,
           killerSlot: killerSlots[i + 2],
         })),
-        ...naturalNpcs.map(npc => ({
-          name: npc.role,
-          role: npc.role,
-          apparentCause: npc.naturalDeathCause,
-          isRelatedToCase: false as const,
-        })),
+        ...naturalNpcs.map(npc => mkNpc(npc, false)),
       ]
     } else {
       // Normal: each killer gets their own NPC
@@ -372,20 +356,11 @@ export function generateScenario(
       const naturalNpcs = shuffledNpcs.slice(numKillers, numKillers + Math.floor(Math.random() * 3))
 
       npcVictims = [
-        ...murderNpcs.map((npc, i) => ({
-          name: npc.role,
-          role: npc.role,
-          apparentCause: npc.disguisedMurderCause,
-          isRelatedToCase: true as const,
+        ...murderNpcs.map((npc, i) => mkNpc(npc, true, {
           trueMurderDetail: npc.trueMurderDetail,
           killerSlot: killerSlots[i],
         })),
-        ...naturalNpcs.map(npc => ({
-          name: npc.role,
-          role: npc.role,
-          apparentCause: npc.naturalDeathCause,
-          isRelatedToCase: false as const,
-        })),
+        ...naturalNpcs.map(npc => mkNpc(npc, false)),
       ]
     }
   }

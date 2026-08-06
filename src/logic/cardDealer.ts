@@ -102,6 +102,27 @@ function generateNpcTestimonyCards(
   return cards
 }
 
+// Coroner-style cause-of-death findings, gradually revealed via cards.
+// Murdered NPCs carry a suspicious anomaly (true clue → foul play);
+// natural deaths yield a clean finding (true → genuinely accidental/illness).
+function generateNpcCauseCards(npcVictims: NpcVictim[]): EvidenceCard[] {
+  const cards: EvidenceCard[] = []
+  for (const v of npcVictims) {
+    if (v.isRelatedToCase) {
+      const content = v.causeHint
+        ? `【検死所見】${v.role}（${v.deathLocation}で発見）。${v.causeHint}`
+        : `【検死所見】${v.role}（${v.deathLocation}で発見）の遺体には、公式の死因では説明しづらい不審な点が残されていた。`
+      cards.push(makeCard(content, 'victim', null, true))
+    } else {
+      cards.push(makeCard(
+        `【検死所見】${v.role}（${v.deathLocation}で発見）。死因は「${v.apparentCause}」で、争った跡や不審な点は確認されなかった。事故・病死とみて矛盾はない。`,
+        'victim', null, true,
+      ))
+    }
+  }
+  return cards
+}
+
 export function dealCards(
   playerIds: string[],
   slots: CharacterSlot[],
@@ -172,8 +193,10 @@ export function dealCards(
 
   // NPC testimony cards
   const npcCards = generateNpcTestimonyCards(npcSurvivors, npcVictims, killers, slots, assignedProfessions)
+  // NPC cause-of-death finding cards (gradual death-cause reveal)
+  const npcCauseCards = generateNpcCauseCards(npcVictims)
 
-  const shuffled = shuffle([...resolved, ...professionCards, ...npcCards])
+  const shuffled = shuffle([...resolved, ...professionCards, ...npcCards, ...npcCauseCards])
   const totalNeeded = playerIds.length * cardsPerPlayer + deckSize
   const pool = shuffled.slice(0, Math.min(totalNeeded, shuffled.length))
 
