@@ -256,7 +256,7 @@ export default function HandoutPage() {
                               {typeLabel[conn.type]}
                             </span>
                             <span className="text-purple-400 text-xs">
-                              {otherChar.name}（{otherSlot}枠）
+                              {otherChar.name}
                             </span>
                           </div>
                           <p className="text-amber-100 text-sm leading-relaxed">{text}</p>
@@ -307,7 +307,7 @@ export default function HandoutPage() {
                 <div className="space-y-2 text-sm">
                   <Row label="被害者" value={
                     myKillerInfo.victimSlot
-                      ? `${myKillerInfo.victimSlot}枠 — ${CHARACTERS[myKillerInfo.victimSlot]?.name ?? '？'}`
+                      ? (CHARACTERS[myKillerInfo.victimSlot]?.name ?? '？')
                       : (myKillerInfo.victimName ?? '？')
                   } />
                   <Row label={myKillerInfo.method === 'poison' ? '毒物' : myKillerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={myKillerInfo.weapon.name} />
@@ -370,8 +370,8 @@ export default function HandoutPage() {
                 <div className="space-y-2">
                   {relationships.map(([slot, desc]) => (
                     <div key={slot} className="flex gap-2">
-                      <span className="text-purple-500 text-xs w-16 shrink-0">
-                        {CHARACTERS[slot]?.name ?? slot}枠
+                      <span className="text-purple-500 text-xs w-20 shrink-0">
+                        {CHARACTERS[slot]?.name ?? slot}
                       </span>
                       <span className="text-purple-300 text-sm">{desc}</span>
                     </div>
