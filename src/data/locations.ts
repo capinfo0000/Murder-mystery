@@ -11,6 +11,7 @@ export const LOCATION_NAMES: Record<Location, string> = {
   secret_passage: '秘密通路',
   safe_room: '金庫室',
   hidden_room: '隠し部屋',
+  master_bedroom: '主寝室',
 }
 
 export const CRIME_SCENE_LOCATIONS: Location[] = [
@@ -23,4 +24,6 @@ export const CRIME_SCENE_LOCATIONS: Location[] = [
   'guest_room',
 ]
 
-export const ALL_LOCATIONS: Location[] = Object.keys(LOCATION_NAMES) as Location[]
+// 主寝室は当主の私室のため、一般プレイヤーのアリバイ地点プールには含めない
+export const ALL_LOCATIONS: Location[] = (Object.keys(LOCATION_NAMES) as Location[])
+  .filter(l => l !== 'master_bedroom')

@@ -8,6 +8,7 @@ import type {
   DualKillerPattern,
   GameMode,
   KillerInfo,
+  Location,
   NpcSurvivor,
   NpcVictim,
   PlayerConnection,
@@ -351,14 +352,15 @@ export function generateScenario(
         ...naturalNpcs.map(npc => mkNpc(npc, false)),
       ]
     } else {
-      // Normal: each killer gets their own NPC
-      const murderNpcs = shuffledNpcs.slice(0, numKillers)
-      const naturalNpcs = shuffledNpcs.slice(numKillers, numKillers + Math.floor(Math.random() * 3))
+      // 当主殺しは killers[0] のみ。追加の犯人は「口封じ」で目撃したNPCを殺害する
+      const npcKillerSlots = killerSlots.slice(1)
+      const murderNpcs = shuffledNpcs.slice(0, npcKillerSlots.length)
+      const naturalNpcs = shuffledNpcs.slice(npcKillerSlots.length, npcKillerSlots.length + Math.floor(Math.random() * 3))
 
       npcVictims = [
         ...murderNpcs.map((npc, i) => mkNpc(npc, true, {
           trueMurderDetail: npc.trueMurderDetail,
-          killerSlot: killerSlots[i],
+          killerSlot: npcKillerSlots[i],
         })),
         ...naturalNpcs.map(npc => mkNpc(npc, false)),
       ]
@@ -371,7 +373,8 @@ export function generateScenario(
   const environmentalWeapons = WEAPONS.filter(w => w.isEnvironmental)
   const dualPattern = npcVictims[0]?.dualKillerPattern
 
-  const sharedLocation = dualPattern ? pickRandom(CRIME_SCENE_LOCATIONS) : null
+  // 二重犯行も当主殺し。凶行場所は遺体発見場所（主寝室）に統一
+  const sharedLocation: Location | null = dualPattern ? 'master_bedroom' : null
 
   // Pre-build the dual pair so weapon[1] can avoid repeating weapon[0]
   type DualPair = [KillerInfo, KillerInfo]
@@ -394,19 +397,35 @@ export function generateScenario(
     ]
   })()
 
+  // 口封じでNPCを殺した犯人（slot→NPC役職）。二重犯行の当主殺し(dualKillerPattern付き)は除外
+  const npcKillMap: Partial<Record<CharacterSlot, string>> = {}
+  for (const v of npcVictims) {
+    if (v.isRelatedToCase && v.killerSlot && !v.dualKillerPattern) {
+      npcKillMap[v.killerSlot] = v.role
+    }
+  }
+
   const killers: KillerInfo[] = killerSlots.map((slot, i) => {
     if (preDual && i === 0) return preDual[0]
     if (preDual && i === 1) return preDual[1]
 
     let victimSlot: CharacterSlot | undefined
     let victimName: string | undefined
+    let location: typeof CRIME_SCENE_LOCATIONS[number] | 'master_bedroom'
 
     if (mode === 'puzzle') {
       const idx = slots.indexOf(slot)
       victimSlot = slots[(idx + 1) % slots.length]
       victimName = CHARACTERS[victimSlot]?.name
+      location = pickRandom(CRIME_SCENE_LOCATIONS)
+    } else if (npcKillMap[slot]) {
+      // 口封じ犯：目撃したNPCを別室で殺害
+      victimName = npcKillMap[slot]
+      location = pickRandom(CRIME_SCENE_LOCATIONS)
     } else {
+      // 当主殺し：遺体が発見された自室で殺害
       victimName = MAIN_VICTIM.name
+      location = 'master_bedroom'
     }
 
     return {
@@ -414,7 +433,7 @@ export function generateScenario(
       victimSlot,
       victimName,
       weapon: pickRandom(WEAPONS.filter(w => !w.isEnvironmental)),
-      location: pickRandom(CRIME_SCENE_LOCATIONS),
+      location,
     }
   })
 
@@ -563,7 +582,7 @@ function generateSynopsis(
 
     '数週間前、源太郎は親族・側近・館の関係者に一方的な連絡を入れた。「今月中に紫苑館まで来るように」——理由は告げられなかった。源太郎がこのような招集をかけること自体が異例であり、呼ばれた者たちはそれぞれ思惑を巡らせながら館へと足を向けた。こうして今夜この館には、家族として呼び寄せられた者、定期的な用件でここを訪れていた者、依頼を受けて館内の仕事を進めていた者、そして長年ここに住み込んで仕えてきた者たちが、それぞれの立場で同じ屋根の下に集うことになった。',
 
-    '夕刻から雨が強まり、夜半には暴風雨となった。山間の細い道路は崖崩れで寸断され、電話回線も夜半過ぎに途絶えた。最後に外部と連絡が取れたのは夜の十時——それ以降、紫苑館は外の世界から完全に孤立した。',
+    '夕刻から雨が強まり、その夜のうちに暴風雨となった。山間の細い道路は崖崩れで寸断され、電話回線も途絶える。嵐は幾晩も居座り、館は数日にわたって外の世界から完全に切り離された。この孤立のあいだに、館ではいくつもの死が続くことになる。',
   ]
 
   let lastParagraph: string
@@ -603,9 +622,9 @@ function generateSynopsis(
       `事件直前、${n}が源太郎の部屋の方向をじっと見つめていたのを目撃されている。`,
     ]
     const hint = redHerrings[Math.floor(Math.random() * redHerrings.length)]
-    lastParagraph = `そして夜明け前、源太郎が自室で息絶えているのが発見された。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`
+    lastParagraph = `そして最初の夜明け前、源太郎が自室で息絶えているのが発見された。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
   } else {
-    lastParagraph = `そして夜明け前、源太郎が自室で息絶えているのが発見された。室内に争った形跡はなく、扉の鍵は内側からかかっていた——それでいて、遺体の状況には自然死とは言い切れない不自然さがあった。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`
+    lastParagraph = `そして最初の夜明け前、源太郎が自室で息絶えているのが発見された。室内に争った形跡はなく、目立った外傷も見当たらない——それでいて、自然な病死とは言い切れない不審さが残った。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
   }
 
   return [...commonParagraphs, lastParagraph].join('\n\n')

@@ -32,6 +32,7 @@ export type Location =
   | 'secret_passage' // 秘密通路
   | 'safe_room'   // 金庫室
   | 'hidden_room' // 隠し部屋
+  | 'master_bedroom' // 主寝室（当主の自室・遺体発見場所）
 
 export interface CharacterDef {
   slot: CharacterSlot
