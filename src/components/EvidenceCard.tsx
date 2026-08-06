@@ -64,19 +64,19 @@ export default function EvidenceCardView({
       >
         {/* accent strip */}
         <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: accent }} />
-        <div className="flex flex-col flex-1 min-h-0 p-2.5">
-          <div className="flex items-center justify-between gap-1 mb-1.5">
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${colorClass}`}>{label}</span>
-            {isPublic && <span className="text-[9px] text-green-400 shrink-0">公開</span>}
+        <div className="flex flex-col flex-1 min-h-0 p-3">
+          <div className="flex items-center justify-between gap-1 mb-2">
+            <span className={`text-[11px] px-2 py-0.5 rounded-full border ${colorClass}`}>{label}</span>
+            {isPublic && <span className="text-[10px] text-green-400 shrink-0">公開</span>}
           </div>
-          <p className="text-[11px] text-purple-200 leading-snug flex-1 min-h-0 overflow-hidden line-clamp-6">
+          <p className="text-[13px] text-purple-200 leading-snug flex-1 min-h-0 overflow-hidden line-clamp-5 break-words">
             {card.content}
           </p>
-          <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-purple-900/60">
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-purple-900/60">
             {characterName ? (
-              <span className="text-[9px] text-purple-500 truncate">関係: {characterName}</span>
+              <span className="text-[10px] text-purple-500 truncate">関係: {characterName}</span>
             ) : <span />}
-            <span className="text-purple-600 text-[9px] shrink-0">詳細 ›</span>
+            <span className="text-purple-600 text-[10px] shrink-0">詳細 ›</span>
           </div>
         </div>
       </button>
@@ -98,7 +98,7 @@ export default function EvidenceCardView({
                 {characterName && <span className="text-xs text-purple-500">関係: {characterName}</span>}
                 {isPublic && <span className="text-xs text-green-400">公開済み</span>}
               </div>
-              <p className="text-sm text-purple-100 leading-relaxed">{card.content}</p>
+              <p className="text-[15px] text-purple-100 leading-relaxed break-words">{card.content}</p>
 
               {showActions && !isPublic && (onShareAll || onSecretSend) && (
                 <div className="flex gap-2 mt-4">
