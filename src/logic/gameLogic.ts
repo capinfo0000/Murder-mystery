@@ -112,7 +112,7 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
     // 2. tachimawari bonus (+2) — none of the player's related cards publicly revealed
     const hasSecret = !!scenario.secretActions[slot]
     const secretExposed = Object.values(cards ?? {}).some(
-      c => c.relatedSlot === slot && c.sharedWith.includes('all')
+      c => c.relatedSlot === slot && (c.sharedWith ?? []).includes('all')
     )
     const tachimawari = hasSecret && !secretExposed ? 2 : 0
 

@@ -102,7 +102,7 @@ export default function DiscussionPage() {
     ? (Object.entries(game.players).find(([, p]) => p.characterSlot === viewSlot)?.[0] ?? uid)
     : uid
   const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === viewUid)
-  const publicCards = Object.values(game.cards ?? {}).filter(c => c.sharedWith.includes('all'))
+  const publicCards = Object.values(game.cards ?? {}).filter(c => (c.sharedWith ?? []).includes('all'))
   const deckCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === 'deck')
   const hasDrawn = !!myPlayer?.hasDrawn
 
