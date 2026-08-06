@@ -577,10 +577,8 @@ function generateSynopsis(
   _cooperationChain: CooperationChain | undefined | null,
   playerCount: number,
 ): string {
-  const apparentCause = killers[0]?.weapon.disguisedAs ?? '突然死（死因不明）'
-
   const npcLine = npcVictims.length > 0
-    ? `同じ夜、館内では${npcVictims.map(v => `${v.role}が${v.apparentCause}`).join('、')}という報告も相次いだ。`
+    ? `同じ夜、館の中でさらに複数の人物が変死しているのが発見された。`
     : ''
 
   return [
@@ -590,7 +588,7 @@ function generateSynopsis(
 
     '夕刻から雨が強まり、夜半には暴風雨となった。山間の細い道路は崖崩れで寸断され、電話回線も夜半過ぎに途絶えた。最後に外部と連絡が取れたのは夜の十時——それ以降、紫苑館は外の世界から完全に孤立した。',
 
-    `そして夜明け前、源太郎が自室で「${apparentCause}」の状態で発見された。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`,
+    `そして夜明け前、源太郎が自室で変わり果てた姿で発見された。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`,
   ].join('\n\n')
 }
 
