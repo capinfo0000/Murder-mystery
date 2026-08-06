@@ -15,7 +15,7 @@
 
             // hasDrawn は false → true への一方向のみ（再ドロー不可）
             "hasDrawn": {
-              ".write": "auth != null && auth.uid === $playerId && !data.val()"
+              ".write": "auth != null && auth.uid === $playerId && data.val() != true"
             }
           }
         },
