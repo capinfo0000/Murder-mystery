@@ -14,13 +14,20 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
+// カード本文中の枠記号（A〜G）をキャラクター名に置換する。
+// 前後がラテン英数字でない単独のA〜Gのみ対象（B1・2F等の誤置換を避ける）。
+function resolveNames(text: string): string {
+  return text.replace(/(^|[^A-Za-z0-9])([A-G])(?![A-Za-z0-9])/g,
+    (_m, pre: string, letter: string) => pre + (CHARACTERS[letter as CharacterSlot]?.name ?? letter))
+}
+
 function makeCard(
   content: string,
   category: CardCategory,
   relatedSlot: CharacterSlot | null,
   isTrue: boolean,
 ): EvidenceCard {
-  return { id: uuid(), content, category, relatedSlot, isTrue, ownerId: 'deck', sharedWith: [] }
+  return { id: uuid(), content: resolveNames(content), category, relatedSlot, isTrue, ownerId: 'deck', sharedWith: [] }
 }
 
 function generateNpcTestimonyCards(
@@ -108,16 +115,18 @@ function generateNpcTestimonyCards(
 function generateNpcCauseCards(npcVictims: NpcVictim[]): EvidenceCard[] {
   const cards: EvidenceCard[] = []
   for (const v of npcVictims) {
+    const where = v.deathLocation ? `${v.deathLocation}で発見` : '発見'
+    const finding = v.causeFinding ?? `死因は「${v.apparentCause}」とされた。`
     if (v.isRelatedToCase) {
-      const content = v.causeHint
-        ? `【検死所見】${v.role}（${v.deathLocation}で発見）。${v.causeHint}`
-        : `【検死所見】${v.role}（${v.deathLocation}で発見）の遺体には、公式の死因では説明しづらい不審な点が残されていた。`
-      cards.push(makeCard(content, 'victim', null, true))
+      // 1枚目: 検死の公式所見（＝偽装。単体では事故・病死に見える → ミスリード）
+      cards.push(makeCard(`【検死所見】${v.role}（${where}）。${finding}`, 'victim', null, false))
+      // 2枚目: 所見と矛盾する事実（真の手がかり）。2枚を突き合わせて初めて他殺と分かる
+      if (v.causeContradiction) {
+        cards.push(makeCard(`【関係者の証言・記録】${v.role}について——${v.causeContradiction}`, 'psychology', null, true))
+      }
     } else {
-      cards.push(makeCard(
-        `【検死所見】${v.role}（${v.deathLocation}で発見）。死因は「${v.apparentCause}」で、争った跡や不審な点は確認されなかった。事故・病死とみて矛盾はない。`,
-        'victim', null, true,
-      ))
+      // 自然死: 所見のみ（真）。矛盾する事実は存在しない
+      cards.push(makeCard(`【検死所見】${v.role}（${where}）。${finding}争った跡や不審な点は確認されず、事故・病死とみて矛盾はない。`, 'victim', null, true))
     }
   }
   return cards
@@ -157,6 +166,7 @@ export function dealCards(
   const victimSlots = victims.map(v => v.slot)
 
   // resolve each template into a card with a concrete isTrue value
+  const decisiveIds = new Set<string>()  // 決定的な真の手がかり（必ず手札へ）
   const resolved: EvidenceCard[] = CARD_TEMPLATES.map(t => {
     let isTrue = t.baseIsTrue
 
@@ -177,9 +187,12 @@ export function dealCards(
     if (t.relatedSlot && killerSlots.includes(t.relatedSlot) && t.baseIsTrue) isTrue = true
     if (t.relatedSlot && victimSlots.includes(t.relatedSlot) && t.category === 'victim') isTrue = t.baseIsTrue
 
+    const id = uuid()
+    const decisive = isTrue && (!!t.condition || (!!t.relatedSlot && killerSlots.includes(t.relatedSlot)))
+    if (decisive) decisiveIds.add(id)
     return {
-      id: uuid(),
-      content: t.content,
+      id,
+      content: resolveNames(t.content),
       category: t.category,
       relatedSlot: t.relatedSlot,
       isTrue,
@@ -213,12 +226,31 @@ export function dealCards(
   // secret passage / hidden room discovery hints
   const secretRouteCards = generateSecretRouteCards()
 
-  const shuffled = shuffle([...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards])
-  const totalNeeded = playerIds.length * cardsPerPlayer + deckSize
-  const pool = shuffled.slice(0, Math.min(totalNeeded, shuffled.length))
+  // 決定的な真の手がかり（条件成立カード・犯人関連・NPC証言の真・死因の矛盾）
+  const keyIds = new Set<string>(decisiveIds)
+  for (const c of npcCards) if (c.isTrue) keyIds.add(c.id)
+  for (const c of npcCauseCards) if (c.isTrue && c.category === 'psychology') keyIds.add(c.id)
+
+  const allCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards]
+  const handCapacity = playerIds.length * cardsPerPlayer
+  const totalNeeded = handCapacity + deckSize
+
+  const keyCards = allCards.filter(c => keyIds.has(c.id))
+  const restCards = allCards.filter(c => !keyIds.has(c.id))
+
+  // フェアプレイ担保：決定的な真の手がかりを最低数、必ず手札領域に配る（山札に埋もれさせない）
+  const guaranteeN = Math.min(keyCards.length, handCapacity, Math.max(1, Math.ceil(playerIds.length / 2)))
+  const guaranteed = shuffle(keyCards).slice(0, guaranteeN)
+  const guaranteedSet = new Set(guaranteed.map(c => c.id))
+  const leftover = shuffle([...restCards, ...keyCards.filter(c => !guaranteedSet.has(c.id))])
+
+  const handFillCount = Math.max(0, handCapacity - guaranteed.length)
+  const handFill = leftover.slice(0, handFillCount)
+  const deckFill = leftover.slice(handFillCount)
+  const hands = shuffle([...guaranteed, ...handFill])       // 手札領域（決定的手がかりを内包）
+  const pool = [...hands, ...deckFill].slice(0, totalNeeded)
 
   const cards: Record<string, EvidenceCard> = {}
-
   pool.forEach((card, i) => {
     const playerIndex = Math.floor(i / cardsPerPlayer)
     if (playerIndex < playerIds.length) card.ownerId = playerIds[playerIndex]

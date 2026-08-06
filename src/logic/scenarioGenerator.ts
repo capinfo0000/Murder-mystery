@@ -285,7 +285,8 @@ export function generateScenario(
     apparentCause: murder ? npc.disguisedMurderCause : npc.naturalDeathCause,
     deathLocation: npc.deathLocation,
     deathTime: npc.deathTime,
-    causeHint: npc.causeHint,
+    causeFinding: npc.causeFinding,
+    causeContradiction: npc.causeContradiction,
     isRelatedToCase: murder,
     ...extra,
   })
