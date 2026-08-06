@@ -17,7 +17,8 @@ export default function HandoutPage() {
 
   const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
-  const [screen, setScreen] = useState<'common' | 'announce' | 'individual'>('common')
+  const [screen, setScreen] = useState<'common' | 'individual'>('common')
+  const [showAnnounce, setShowAnnounce] = useState(false)
   const [tab, setTab] = useState<'character' | 'alibi' | 'cards'>('character')
   const [showMap, setShowMap] = useState(false)
   const [activeViewSlot, setActiveViewSlot] = useState<CharacterSlot | null>(null)
@@ -105,41 +106,36 @@ export default function HandoutPage() {
             </Section>
           )}
         </div>
+        {showAnnounce && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-6">
+            <div className="bg-[#1a0f2e] border border-purple-700 rounded-2xl p-6 max-w-sm w-full text-center">
+              <div className="text-3xl mb-3">🔒</div>
+              <h3 className="text-purple-100 font-bold text-base mb-3" style={{ fontFamily: 'serif' }}>
+                ここからは個別情報です
+              </h3>
+              <p className="text-purple-300 text-sm leading-relaxed mb-5">
+                スマホを他のプレイヤーから遠ざけてください。<br />
+                他のプレイヤーには絶対に見せないでください。
+              </p>
+              <button
+                onClick={() => { setShowAnnounce(false); setScreen('individual') }}
+                className="w-full bg-purple-700 hover:bg-purple-600 text-white font-medium rounded-xl py-3 text-sm"
+              >
+                わかった →
+              </button>
+            </div>
+          </div>
+        )}
         <div className="fixed bottom-0 left-0 right-0 bg-[#1a0f2e] border-t border-purple-900 px-4 py-3">
           <div className="max-w-md mx-auto">
             <button
-              onClick={() => setScreen('announce')}
+              onClick={() => setShowAnnounce(true)}
               className="w-full bg-purple-700 hover:bg-purple-600 text-white font-medium rounded-xl py-3 text-sm"
             >
               個別情報へ進む →
             </button>
           </div>
         </div>
-      </div>
-    )
-  }
-
-  // ── ANNOUNCE SCREEN ────────────────────────────────────────────────────────
-  if (screen === 'announce') {
-    return (
-      <div className="min-h-screen bg-[#0a0614] flex flex-col items-center justify-center px-6 text-center">
-        <div className="mb-6 text-5xl">🔒</div>
-        <h2 className="text-purple-100 font-bold text-xl mb-4" style={{ fontFamily: 'serif' }}>
-          ここからは個別情報です
-        </h2>
-        <p className="text-purple-300 text-sm leading-relaxed mb-2">
-          スマホを他のプレイヤーから遠ざけてください。
-        </p>
-        <p className="text-purple-300 text-sm leading-relaxed mb-10">
-          これ以降の情報は<span className="text-amber-300 font-medium">あなただけ</span>のものです。<br />
-          他のプレイヤーには絶対に見せないでください。
-        </p>
-        <button
-          onClick={() => setScreen('individual')}
-          className="bg-purple-700 hover:bg-purple-600 text-white font-medium rounded-xl py-3 px-10 text-sm"
-        >
-          わかった →
-        </button>
       </div>
     )
   }
