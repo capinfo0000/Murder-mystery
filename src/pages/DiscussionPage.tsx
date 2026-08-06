@@ -4,7 +4,7 @@ import {
   subscribeGame, advancePhase, shareCardWithAll, drawFromDeck,
 } from '../services/firebase'
 import type { GameState, GamePhase, CharacterSlot } from '../types/game'
-import { CHARACTERS } from '../data/characters'
+import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
 import EvidenceCardView from '../components/EvidenceCard'
 import DeckPanel from '../components/DeckPanel'
@@ -312,7 +312,6 @@ function ProfileModal({
         {/* header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-purple-900 bg-[#1a0f2e] shrink-0">
           <div>
-            <span className="text-purple-400 text-xs">{slot}枠</span>
             <h3 className="text-purple-100 font-bold text-base leading-tight" style={{ fontFamily: 'serif' }}>{char.name}</h3>
             <span className="text-purple-500 text-xs">{char.role}</span>
           </div>
@@ -325,6 +324,51 @@ function ProfileModal({
         </div>
 
         <div className="overflow-y-auto px-4 py-4 space-y-4">
+          {/* ── 共通情報（全員共通） ── */}
+          {scenario.synopsis && (
+            <PSection title="あらすじ（全員共通）">
+              <div className="space-y-3">
+                {scenario.synopsis.split('\n\n').map((para, i) => (
+                  <p key={i} className="text-purple-200 text-sm leading-relaxed">{para}</p>
+                ))}
+              </div>
+            </PSection>
+          )}
+          <PSection title={`被害者: ${MAIN_VICTIM.name}（${MAIN_VICTIM.role}）`}>
+            <p className="text-purple-200 text-sm leading-relaxed">{MAIN_VICTIM.background}</p>
+          </PSection>
+          {((scenario.npcVictims ?? []).length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
+            <PSection title="館の関係者（全員既知）">
+              <div className="space-y-2">
+                {(scenario.npcVictims ?? []).map((v, i) => (
+                  <div key={`d-${i}`} className="flex gap-3 text-sm">
+                    <span className="text-red-400/80 text-xs w-4 shrink-0 mt-0.5">✝</span>
+                    <div className="min-w-0">
+                      <span className="text-blue-300 font-medium">{v.role}</span>
+                      <div className="text-purple-400 text-xs mt-0.5">
+                        <p>推定死亡場所: <span className="text-purple-200">{v.deathLocation}</span></p>
+                        <p>推定死亡時刻: <span className="text-purple-200">{v.deathTime}</span></p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {(scenario.npcSurvivors ?? []).map((s, i) => (
+                  <div key={`a-${i}`} className="flex gap-3 text-sm">
+                    <span className="text-green-500/60 text-xs w-4 shrink-0 mt-0.5">●</span>
+                    <div className="min-w-0">
+                      <span className="text-blue-300 font-medium">{s.role}</span>
+                      <span className="text-green-400/70 text-xs ml-2">生存（証言可能）</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </PSection>
+          )}
+
+          <div className="border-t border-purple-900/60 pt-1 text-center">
+            <span className="text-purple-600 text-[10px] tracking-widest">── ここからあなただけの情報 ──</span>
+          </div>
+
           <PSection title="背景">
             <p className="text-purple-200 text-sm leading-relaxed">{char.background}</p>
           </PSection>
@@ -343,7 +387,7 @@ function ProfileModal({
                     <div key={i} className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <span className="text-xs px-2 py-0.5 rounded border border-amber-700 bg-amber-900/30 text-amber-300">{connTypeLabel[conn.type]}</span>
-                        <span className="text-purple-400 text-xs">{CHARACTERS[otherSlot]?.name}（{otherSlot}枠）</span>
+                        <span className="text-purple-400 text-xs">{CHARACTERS[otherSlot]?.name}</span>
                       </div>
                       <p className="text-amber-100 text-sm leading-relaxed">{text}</p>
                     </div>
@@ -378,7 +422,7 @@ function ProfileModal({
           {role === 'killer' && killerInfo && (
             <PSection title="あなたが行った凶行（厳重に秘密）" accent="red">
               <div className="space-y-2 text-sm">
-                <PRow label="被害者" value={killerInfo.victimSlot ? `${killerInfo.victimSlot}枠 — ${CHARACTERS[killerInfo.victimSlot]?.name ?? '？'}` : (killerInfo.victimName ?? '？')} />
+                <PRow label="被害者" value={killerInfo.victimSlot ? (CHARACTERS[killerInfo.victimSlot]?.name ?? '？') : (killerInfo.victimName ?? '？')} />
                 <PRow label={killerInfo.method === 'poison' ? '毒物' : killerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={killerInfo.weapon.name} />
                 <PRow label="場所" value={LOCATION_NAMES[killerInfo.location]} />
                 <PRow label="偽装死因" value={killerInfo.weapon.disguisedAs} />
@@ -400,7 +444,7 @@ function ProfileModal({
               <div className="space-y-2">
                 {relationships.map(([s, desc]) => (
                   <div key={s} className="flex gap-2">
-                    <span className="text-purple-500 text-xs w-16 shrink-0">{CHARACTERS[s]?.name ?? s}枠</span>
+                    <span className="text-purple-500 text-xs w-20 shrink-0">{CHARACTERS[s]?.name ?? s}</span>
                     <span className="text-purple-300 text-sm">{desc}</span>
                   </div>
                 ))}

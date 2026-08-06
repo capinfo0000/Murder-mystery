@@ -55,8 +55,8 @@ function generateNpcTestimonyCards(
       const innocentSlot = innocentSlots[i % innocentSlots.length]
       const innocentName = CHARACTERS[innocentSlot].name
       const falseVariants = [
-        `${npc.role}は「${innocentName}が夜中に何度も廊下を行き来していた」と話しているが、見間違いの可能性もある。`,
-        `${npc.role}によれば、T2頃に${innocentName}が落ち着かない様子で部屋の外をのぞいていたという。詳細は曖昧だ。`,
+        `${npc.role}は「${innocentName}が夜中に何度も廊下を行き来していた」と証言している。`,
+        `${npc.role}によれば、T2頃に${innocentName}が落ち着かない様子で部屋の外をのぞいていたのを見たという。`,
       ]
       cards.push(makeCard(falseVariants[i % falseVariants.length], 'alibi', innocentSlot, false))
     } else {

@@ -279,8 +279,8 @@ export default function ResultPage() {
                 }`}
               >
                 <div className="flex items-start gap-2">
-                  <span className={`shrink-0 mt-0.5 ${card.isTrue ? 'text-green-400' : 'text-red-400'}`}>
-                    {card.isTrue ? '✓ 真実' : '✗ 嘘'}
+                  <span className={`shrink-0 mt-0.5 ${card.isTrue ? 'text-green-400' : 'text-amber-400'}`}>
+                    {card.isTrue ? '✓ 真実' : '△ ミスリード'}
                   </span>
                   <span className="text-purple-200 leading-relaxed">{card.content}</span>
                 </div>
