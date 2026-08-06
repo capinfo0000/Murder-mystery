@@ -567,7 +567,7 @@ function generateSynopsis(
   _killers: KillerInfo[],
   npcVictims: NpcVictim[],
   _outsideKiller: boolean,
-  suicide: boolean,
+  _suicide: boolean,
   _cooperationChain: CooperationChain | undefined | null,
   slots: CharacterSlot[],
 ): string {
@@ -585,11 +585,12 @@ function generateSynopsis(
     '夕刻から雨が強まり、その夜のうちに暴風雨となった。山間の細い道路は崖崩れで寸断され、電話回線も途絶える。嵐は幾晩も居座り、館は数日にわたって外の世界から完全に切り離された。この孤立のあいだに、館ではいくつもの死が続くことになる。',
   ]
 
-  let lastParagraph: string
-  if (suicide) {
-    const suspect = CHARACTERS[slots[Math.floor(Math.random() * slots.length)]]
-    const n = suspect.name
-    const redHerrings = [
+  // 全シナリオ共通で「特定人物を疑わせる一文」を入れる。
+  // 自殺回だけの特徴にすると「名指しの疑い＝自殺」というメタ情報が漏れるため、
+  // 他殺・外部犯・自殺のいずれでも同じ体裁で疑いを提示する（=ネタバレ防止）。
+  const suspect = CHARACTERS[slots[Math.floor(Math.random() * slots.length)]]
+  const n = suspect.name
+  const redHerrings = [
       `${n}が深夜に源太郎の部屋付近を出入りするのを目撃した者がいる。`,
       `前夜、${n}と源太郎が言い争うような声が聞こえたという証言がある。`,
       `発見直前、${n}が廊下を急ぎ足で立ち去るのを見た者がいた。`,
@@ -621,11 +622,8 @@ function generateSynopsis(
       `${n}が源太郎に恨みを抱く動機を持っていると、ひそかに噂されている。`,
       `事件直前、${n}が源太郎の部屋の方向をじっと見つめていたのを目撃されている。`,
     ]
-    const hint = redHerrings[Math.floor(Math.random() * redHerrings.length)]
-    lastParagraph = `そして最初の夜明け前、源太郎が自室で息絶えているのが発見された。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
-  } else {
-    lastParagraph = `そして最初の夜明け前、源太郎が自室で息絶えているのが発見された。室内に争った形跡はなく、目立った外傷も見当たらない——それでいて、自然な病死とは言い切れない不審さが残った。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
-  }
+  const hint = redHerrings[Math.floor(Math.random() * redHerrings.length)]
+  const lastParagraph = `そして最初の夜明け前、源太郎が自室で息絶えているのが発見された。室内に争った形跡はなく、目立った外傷も見当たらない——それでいて、自然な病死とは言い切れない不審さが残った。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
 
   return [...commonParagraphs, lastParagraph].join('\n\n')
 }
