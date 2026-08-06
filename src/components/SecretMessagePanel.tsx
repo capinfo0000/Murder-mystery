@@ -90,7 +90,7 @@ export default function SecretMessagePanel({ game, gameId, uid, myCards }: Props
                   {msg.note && (
                     <p className="text-purple-400 text-xs mb-2 italic">"{msg.note}"</p>
                   )}
-                  <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2">
                     {sentCards.map(card => (
                       <EvidenceCardView key={card.id} card={card} showActions={false} />
                     ))}

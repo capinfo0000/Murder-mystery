@@ -402,9 +402,11 @@ export default function HandoutPage() {
             {myCards.length === 0 ? (
               <p className="text-purple-600 text-sm text-center py-8">カードがありません</p>
             ) : (
-              myCards.map(card => (
-                <EvidenceCardView key={card.id} card={card} showActions={false} />
-              ))
+              <div className="grid grid-cols-2 gap-3">
+                {myCards.map(card => (
+                  <EvidenceCardView key={card.id} card={card} showActions={false} />
+                ))}
+              </div>
             )}
           </div>
         )}
