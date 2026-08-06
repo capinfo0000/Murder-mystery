@@ -123,6 +123,21 @@ function generateNpcCauseCards(npcVictims: NpcVictim[]): EvidenceCard[] {
   return cards
 }
 
+// 秘密通路・隠し部屋を「発見した」体裁のヒントカード（マップには載せず、カードで徐々に判明）
+function generateSecretRouteCards(): EvidenceCard[] {
+  const routes = [
+    '書斎の本棚のひとつが横にずれ、その奥に人ひとり通れる隠し通路の入口があった。図書室の方へ通じているようだ。',
+    '図書室の暖炉の奥が空洞になっており、地下へ下りる細い隠し階段が隠されていた。',
+    '絵画室の壁にかかる一枚の絵の裏に、正規の間取り図には無い扉が見つかった。その先は暗い通路が続いている。',
+    '地下室の石壁の一部が回転扉になっており、押すと窓のない小部屋（隠し部屋）に出た。',
+    '主寝室のクローゼットの背板が外れ、細い通路が廊下の外へと伸びていた。知る者は少ないという。',
+    '館の古い設計図が見つかった。公式の図面には無い通路が数本、赤い線で書き加えられている。',
+    '廊下の突き当たりの羽目板に不自然な継ぎ目があり、押すと通路が現れた。ごく最近、誰かが通った形跡がある。',
+    '温室の裏から地下へ抜ける小さな隠し扉が見つかった。土で汚れた足跡がその先へ続いていた。',
+  ]
+  return shuffle(routes).slice(0, 3).map(r => makeCard(r, 'technical', null, true))
+}
+
 export function dealCards(
   playerIds: string[],
   slots: CharacterSlot[],
@@ -195,8 +210,10 @@ export function dealCards(
   const npcCards = generateNpcTestimonyCards(npcSurvivors, npcVictims, killers, slots, assignedProfessions)
   // NPC cause-of-death finding cards (gradual death-cause reveal)
   const npcCauseCards = generateNpcCauseCards(npcVictims)
+  // secret passage / hidden room discovery hints
+  const secretRouteCards = generateSecretRouteCards()
 
-  const shuffled = shuffle([...resolved, ...professionCards, ...npcCards, ...npcCauseCards])
+  const shuffled = shuffle([...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards])
   const totalNeeded = playerIds.length * cardsPerPlayer + deckSize
   const pool = shuffled.slice(0, Math.min(totalNeeded, shuffled.length))
 

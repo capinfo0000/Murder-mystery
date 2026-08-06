@@ -6,13 +6,13 @@ const PIN_COORDS: Record<string, { x: number; y: number }> = {
   '調理場': { x: 251, y: 326 },
   '大階段の下': { x: 239, y: 436 },
   '使用人棟の自室': { x: 300, y: 58 },
-  '裏庭の物置小屋': { x: 89, y: 484 },
-  '書斎脇の小部屋': { x: 158, y: 330 },
+  '裏庭の物置小屋': { x: 55, y: 492 },
+  '書斎脇の小部屋': { x: 158, y: 326 },
   '使用人用食堂': { x: 174, y: 411 },
   '二階 主寝室付近の廊下': { x: 140, y: 120 },
-  '車庫（ガレージ）': { x: 286, y: 484 },
+  '車庫（ガレージ）': { x: 286, y: 492 },
   '自室': { x: 300, y: 92 },
-  '地下へ続く廊下': { x: 149, y: 648 },
+  '地下へ続く廊下': { x: 150, y: 660 },
 }
 
 // grayscale investigation-diagram palette
@@ -113,13 +113,22 @@ export default function ManorMap({
               <Door hx={52} hy={130} r={13} a0={0} sweep={1} />
 
               {/* ══════════ 1F ══════════ */}
-              <text x="10" y="268" fontSize="11" fill={C.label} fontWeight="bold">1F ｜ 玄関・主要階・庭</text>
-              <rect x="8" y="280" width="328" height="248" fill="#eeeeea" stroke={C.wall} strokeWidth="4" rx="2" />
+              <text x="10" y="268" fontSize="11" fill={C.label} fontWeight="bold">1F ｜ 玄関・主要階</text>
+
+              {/* 屋外の敷地（建物の外・破線で敷地境界） */}
+              <rect x="8" y="456" width="328" height="70" fill={C.garden} stroke={C.gardenStroke} strokeWidth="1.4" strokeDasharray="7,4" rx="2" />
+              <text x="150" y="474" fontSize="9" fill="#4c6a3c" textAnchor="middle" fontWeight="bold">庭・敷地（屋外）</text>
+              {/* 屋外の建物（離れ）はグレーの塊で表現 */}
+              <Room x={20} y={480} w={72} h={40} name="物置小屋" fill="#c9c9c3" stroke={C.roomStroke} />
+              <Room x={246} y={480} w={80} h={40} name="車庫" fill="#c9c9c3" stroke={C.roomStroke} />
+              <text x="160" y="504" fontSize="8" fill="#4c6a3c" textAnchor="middle">裏庭</text>
+
+              {/* 建物本体（1F）— 外壁の中が屋内 */}
+              <rect x="8" y="280" width="328" height="168" fill="#eeeeea" stroke={C.wall} strokeWidth="4" rx="2" />
               <rect x="14" y="360" width="258" height="18" fill={C.corridor} />
               <text x="143" y="373" fontSize="8" fill={C.faint} textAnchor="middle" letterSpacing="1">廊 下</text>
 
-              <Room x={278} y={294} w={52} h={150} name="玄関" sub="ホール" floor="1F" fill={C.cool} stroke={C.coolStroke} />
-              <Room x={278} y={448} w={52} h={40} name="ポーチ" floor="1F" fill={C.cool} stroke={C.coolStroke} />
+              <Room x={278} y={294} w={52} h={148} name="玄関" sub="ホール" floor="1F" fill={C.cool} stroke={C.coolStroke} />
 
               <Room x={14} y={294} w={58} h={62} name="図書室" floor="1F" />
               <Room x={76} y={294} w={58} h={62} name="書斎" floor="1F" />
@@ -132,9 +141,9 @@ export default function ManorMap({
               <Room x={146} y={382} w={56} h={58} name="使用人食堂" floor="1F" />
               <StairBox x={206} y={382} w={66} h={58} label="大階段" dest="↑2F ↓B1" />
 
-              <Room x={14} y={446} w={150} h={76} name="裏庭・物置小屋" floor="屋外" fill={C.garden} stroke={C.gardenStroke} />
-              <Room x={168} y={446} w={70} h={76} name="庭" floor="屋外" fill={C.garden} stroke={C.gardenStroke} />
-              <Room x={242} y={446} w={88} h={76} name="車庫" floor="屋外" />
+              {/* ポーチ（玄関前・屋外の張り出し） */}
+              <rect x="278" y="456" width="52" height="30" fill={C.cool} stroke={C.coolStroke} strokeWidth="1.6" rx="1.5" />
+              <text x="304" y="475" fontSize="9" fill={C.text} textAnchor="middle" fontWeight="bold">ポーチ</text>
 
               <Win x1={8} y1={306} x2={8} y2={326} />
               <Win x1={30} y1={280} x2={54} y2={280} />
@@ -150,17 +159,15 @@ export default function ManorMap({
               {/* ══════════ B1 ══════════ */}
               <text x="10" y="548" fontSize="11" fill={C.label} fontWeight="bold">B1 ｜ 地下階</text>
               <rect x="8" y="558" width="328" height="150" fill="#eeeeea" stroke={C.wall} strokeWidth="4" rx="2" />
-              <rect x="14" y="638" width="270" height="20" fill={C.corridor} />
-              <text x="149" y="651" fontSize="8" fill={C.faint} textAnchor="middle" letterSpacing="1">地下へ続く廊下</text>
+              <rect x="14" y="650" width="316" height="20" fill={C.corridor} />
+              <text x="150" y="663" fontSize="8" fill={C.faint} textAnchor="middle" letterSpacing="1">地下へ続く廊下</text>
 
-              <Room x={14} y={572} w={94} h={62} name="地下室" floor="B1" />
-              <Room x={112} y={572} w={94} h={62} name="金庫室" floor="B1" />
-              <Room x={210} y={572} w={74} h={62} name="隠し部屋" floor="B1" fill="#e0d5db" stroke="#a0417a" dashed italic />
-              <StairBox x={288} y={572} w={42} h={62} label="階段" dest="↑1F" small />
-              <Room x={14} y={662} w={270} h={38} name="秘密通路" sub="各階へ通じる" floor="" fill="#dcd6e2" stroke="#7e4fb0" dashed italic />
+              <Room x={14} y={572} w={128} h={70} name="地下室" floor="B1" />
+              <Room x={148} y={572} w={124} h={70} name="金庫室" floor="B1" />
+              <StairBox x={278} y={572} w={52} h={70} label="階段" dest="↑1F" small />
 
-              <Door hx={61} hy={638} r={12} a0={180} sweep={1} />
-              <Door hx={159} hy={638} r={12} a0={180} sweep={1} />
+              <Door hx={78} hy={650} r={12} a0={180} sweep={1} />
+              <Door hx={210} hy={650} r={12} a0={180} sweep={1} />
 
               {/* ══════════ markers ══════════ */}
               <Pin x={152} y={71} kind="main" />
@@ -195,12 +202,10 @@ export default function ManorMap({
 
           {/* legend */}
           <div className="px-4 py-3 border-t flex flex-wrap gap-x-3 gap-y-1.5" style={{ borderColor: C.border, backgroundColor: '#dedeD8' }}>
-            <LegendItem color={C.roomStroke} fill={C.room} label="部屋" />
+            <LegendItem color={C.roomStroke} fill={C.room} label="部屋（屋内）" />
             <LegendItem color={C.greenStroke} fill={C.green} label="温室" />
             <LegendItem color={C.coolStroke} fill={C.cool} label="玄関・浴室" />
-            <LegendItem color={C.gardenStroke} fill={C.garden} label="屋外・庭" />
-            <LegendItem color="#7e4fb0" fill="#dcd6e2" dashed label="秘密通路" />
-            <LegendItem color="#a0417a" fill="#e0d5db" dashed label="隠し部屋" />
+            <LegendItem color={C.gardenStroke} fill={C.garden} dashed label="屋外・庭（敷地）" />
             <div className="flex items-center gap-1.5">
               <svg width="18" height="10"><line x1="1" y1="5" x2="17" y2="5" stroke="#5aa0d0" strokeWidth="3" /></svg>
               <span className="text-xs" style={{ color: C.text }}>窓</span>
