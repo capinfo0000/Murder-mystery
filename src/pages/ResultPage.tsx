@@ -165,7 +165,7 @@ export default function ResultPage() {
               </Section>
             ) : (
               <Section title="🔪 真犯人">
-                {scenario.killers.map(k => (
+                {(scenario.killers ?? []).map(k => (
                   <div key={k.slot} className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 mb-2">
                     <div className="text-red-300 font-medium text-sm mb-1">
                       {CHARACTERS[k.slot]?.name} ({k.slot}枠)
@@ -182,9 +182,9 @@ export default function ResultPage() {
             )}
 
             {/* NPC victim truth */}
-            {scenario.npcVictims && scenario.npcVictims.length > 0 && (
+            {(scenario.npcVictims ?? []).length > 0 && (
               <Section title="🕯 死亡者の真実">
-                {scenario.npcVictims.map((v, i) => (
+                {(scenario.npcVictims ?? []).map((v, i) => (
                   <div key={i} className="py-2 border-b border-purple-900/30 last:border-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-xs px-1.5 py-0.5 rounded border ${v.isRelatedToCase ? 'bg-red-900/30 text-red-300 border-red-800' : 'bg-purple-900/30 text-purple-400 border-purple-800'}`}>

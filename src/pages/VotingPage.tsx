@@ -32,7 +32,7 @@ export default function VotingPage() {
   const isHost = game.hostId === uid
   const scenario = game.scenario!
   const allSlots = Object.keys(scenario.roles) as CharacterSlot[]
-  const victimSlots = scenario.victims.map(v => v.slot)
+  const victimSlots = (scenario.victims ?? []).map(v => v.slot)
   const myVote = game.votes?.[uid]
   const totalVoters = Object.values(game.players).filter(p => !p.isNPC).length
   const totalVoted = Object.values(game.votes ?? {}).length

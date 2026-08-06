@@ -48,12 +48,12 @@ export default function HandoutPage() {
 
   const char = CHARACTERS[viewSlot]
   const myRole = scenario.roles[viewSlot]
-  const myKillerInfo = scenario.killers.find(k => k.slot === viewSlot)
+  const myKillerInfo = (scenario.killers ?? []).find(k => k.slot === viewSlot)
   const myAlibis = scenario.alibis[viewSlot]
-  const myCards = Object.values(game.cards || {}).filter(c => c.ownerId === viewUid)
+  const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === viewUid)
   const isHost = game.hostId === uid
 
-  const allReady = Object.values(game.players).filter(p => !p.isNPC).every(p => p.isReady)
+  const allReady = Object.values(game.players ?? {}).filter(p => !p.isNPC).every(p => p.isReady)
 
   // Relationship list from character definition
   const relationships = Object.entries(char.relationships ?? {}) as [CharacterSlot, string][]
@@ -141,11 +141,11 @@ export default function HandoutPage() {
             </Section>
 
             {/* Public: manor staff — dead and surviving */}
-            {(scenario.npcVictims.length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
+            {((scenario.npcVictims ?? []).length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
               <Section title="🕯 館の関係者（全員既知）">
                 <p className="text-purple-500 text-xs mb-3">紫苑館に関わる人物の状況。死因は報告書による。</p>
                 <div className="space-y-2">
-                  {scenario.npcVictims.map((v, i) => (
+                  {(scenario.npcVictims ?? []).map((v, i) => (
                     <div key={`dead-${i}`} className="flex gap-3 text-sm">
                       <span className="text-red-400/80 text-xs w-4 shrink-0 mt-0.5">✝</span>
                       <div className="min-w-0">
@@ -272,7 +272,7 @@ export default function HandoutPage() {
                         const v = myKillerInfo.victimName ?? '被害者'
                         const pat = scenario.dualKillerInfo?.type
                         // First-attacker for double_weapon / environment patterns
-                        const isFirst = scenario.killers.findIndex(k => k.slot === viewSlot) === 0
+                        const isFirst = (scenario.killers ?? []).findIndex(k => k.slot === viewSlot) === 0
 
                         if (myKillerInfo.method === 'poison') {
                           if (pat === 'poison_failed_weapon_killed') {
