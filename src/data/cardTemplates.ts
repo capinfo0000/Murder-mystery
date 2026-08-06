@@ -499,6 +499,28 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     category: 'alibi', relatedSlot: 'G', baseIsTrue: false, condition: 'outside_killer',
   },
 
+  // ───── 自殺の示唆（自殺時のみ真・他シナリオではミスリード）─────
+  {
+    id: 'sui_note',
+    content: '源太郎の私室の便箋に、書きかけの走り書きが残されていた。『もう、これ以上は——』そこで途切れている。',
+    category: 'victim', relatedSlot: null, baseIsTrue: false, condition: 'suicide',
+  },
+  {
+    id: 'sui_cornered',
+    content: '源太郎は数日前、古い友人に「もう逃げ場はない。自分で始末をつけるしかないのかもしれない」と電話で漏らしていたという。',
+    category: 'victim', relatedSlot: null, baseIsTrue: false, condition: 'suicide',
+  },
+  {
+    id: 'sui_hesitation',
+    content: '源太郎の手の内側に、ためらったような浅い傷が複数あった。他者につけられたにしては角度が不自然だと検死担当は言う。',
+    category: 'physical', relatedSlot: null, baseIsTrue: false, condition: 'suicide',
+  },
+  {
+    id: 'sui_only_prints',
+    content: '源太郎の私室は内側から施錠され、窓にも出入りの細工の跡はなかった。室内から検出された指紋は、本人のものだけだった。',
+    category: 'physical', relatedSlot: null, baseIsTrue: false, condition: 'suicide',
+  },
+
   // ───── 動機（motive）─────
   {
     id: 'mo_001',

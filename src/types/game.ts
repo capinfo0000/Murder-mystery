@@ -70,7 +70,8 @@ export interface NpcVictim {
   apparentCause: string      // official recorded cause (may disguise murder as natural death)
   deathLocation: string      // estimated place of death — shown to all players
   deathTime: string          // estimated time of death — shown to all players
-  causeHint?: string         // coroner finding revealed gradually via cards (murder anomaly)
+  causeFinding?: string      // 検死の公式所見（偽装・単体では事故/病死に見える）
+  causeContradiction?: string // 所見と突き合わせて他殺と分かる矛盾した事実
   isRelatedToCase: boolean   // truth: was this actually murder?
   trueMurderDetail?: string  // revealed at result when isRelatedToCase=true
   killerSlot?: CharacterSlot // which player killed them (poison killer for dual scenarios)
