@@ -131,7 +131,11 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   // assign character slots
   const allPlayers = (await get(ref(db, `games/${gameId}/players`))).val() as GameState['players']
   const slots = getSlotsForCount(totalCount)
-  const shuffledSlots = [...slots].sort(() => Math.random() - 0.5)
+  const shuffledSlots = [...slots]
+  for (let i = shuffledSlots.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledSlots[i], shuffledSlots[j]] = [shuffledSlots[j], shuffledSlots[i]]
+  }
   const playerIds = Object.keys(allPlayers)
 
   const updates: Record<string, unknown> = {}
