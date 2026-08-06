@@ -39,7 +39,7 @@ export default function EvidenceCardView({
 }: Props) {
   const [expanded, setExpanded] = useState(false)
   const colorClass = CATEGORY_COLORS[card.category] ?? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
-  const isPublic = card.sharedWith.includes('all')
+  const isPublic = (card.sharedWith ?? []).includes('all')
   const characterName = card.relatedSlot ? CHARACTERS[card.relatedSlot]?.name : null
 
   return (

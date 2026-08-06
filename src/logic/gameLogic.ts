@@ -47,7 +47,7 @@ export function determineMainKillerCaught(state: GameState): boolean {
     return totalVoters > 0 && emptyCount * 2 > totalVoters
   }
 
-  const allKillerSlots = (scenario.killers ?? []).map(k => k.slot)
+  const allKillerSlots = scenario.killers.map(k => k.slot)
   if (allKillerSlots.length === 0) return false
   const caught = caughtSlots(allKillerSlots, iVotes)
   return caught.length === allKillerSlots.length
@@ -67,7 +67,7 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
   const totalIVoters = allIVotes.length
 
   // Per-killer caught status
-  const allKillerSlots = (scenario.killers ?? []).map(k => k.slot)
+  const allKillerSlots = scenario.killers.map(k => k.slot)
   const caught = (isOutsideKiller || isSuicide) ? [] : caughtSlots(allKillerSlots, iVotes)
   const allCaught = !isOutsideKiller && !isSuicide && allKillerSlots.length > 0 && caught.length === allKillerSlots.length
   const numCaught = caught.length
@@ -112,7 +112,7 @@ export function computeScores(state: GameState): Record<string, ScoreBreakdown> 
     // 2. tachimawari bonus (+2) — none of the player's related cards publicly revealed
     const hasSecret = !!scenario.secretActions[slot]
     const secretExposed = Object.values(cards ?? {}).some(
-      c => c.relatedSlot === slot && c.sharedWith.includes('all')
+      c => c.relatedSlot === slot && (c.sharedWith ?? []).includes('all')
     )
     const tachimawari = hasSecret && !secretExposed ? 2 : 0
 

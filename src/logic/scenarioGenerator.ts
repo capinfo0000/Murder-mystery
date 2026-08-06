@@ -548,7 +548,7 @@ export function generateScenario(
   ).slice(0, 3).map(n => ({ role: n.role }))
 
   // ── synopsis ──────────────────────────────────────────────────────────
-  const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, suicide, cooperationChain, slots.length)
+  const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, suicide, cooperationChain, slots)
 
   return {
     victims,
@@ -570,28 +570,70 @@ export function generateScenario(
 }
 
 function generateSynopsis(
-  killers: KillerInfo[],
+  _killers: KillerInfo[],
   npcVictims: NpcVictim[],
   _outsideKiller: boolean,
-  _suicide: boolean,
+  suicide: boolean,
   _cooperationChain: CooperationChain | undefined | null,
-  playerCount: number,
+  slots: CharacterSlot[],
 ): string {
-  const apparentCause = killers[0]?.weapon.disguisedAs ?? '突然死（死因不明）'
+  const playerCount = slots.length
 
   const npcLine = npcVictims.length > 0
-    ? `同じ夜、館内では${npcVictims.map(v => `${v.role}が${v.apparentCause}`).join('、')}という報告も相次いだ。`
+    ? `同じ夜、館の中でさらに複数の人物が変死しているのが発見された。`
     : ''
 
-  return [
+  const commonParagraphs = [
     '現代日本。中部山間の深い森に抱かれた石造りの西洋館「紫苑館」——神条財閥総帥・神条 源太郎が昭和期に建て、半世紀以上にわたって使い続けてきた別邸である。東京の本邸とは異なり、来客を厳選することで知られるこの館には、源太郎が認めた者だけが足を踏み入れることができた。',
 
     '数週間前、源太郎は親族・側近・館の関係者に一方的な連絡を入れた。「今月中に紫苑館まで来るように」——理由は告げられなかった。源太郎がこのような招集をかけること自体が異例であり、呼ばれた者たちはそれぞれ思惑を巡らせながら館へと足を向けた。こうして今夜この館には、家族として呼び寄せられた者、定期的な用件でここを訪れていた者、依頼を受けて館内の仕事を進めていた者、そして長年ここに住み込んで仕えてきた者たちが、それぞれの立場で同じ屋根の下に集うことになった。',
 
     '夕刻から雨が強まり、夜半には暴風雨となった。山間の細い道路は崖崩れで寸断され、電話回線も夜半過ぎに途絶えた。最後に外部と連絡が取れたのは夜の十時——それ以降、紫苑館は外の世界から完全に孤立した。',
+  ]
 
-    `そして夜明け前、源太郎が自室で「${apparentCause}」の状態で発見された。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`,
-  ].join('\n\n')
+  let lastParagraph: string
+  if (suicide) {
+    const suspect = CHARACTERS[slots[Math.floor(Math.random() * slots.length)]]
+    const n = suspect.name
+    const redHerrings = [
+      `${n}が深夜に源太郎の部屋付近を出入りするのを目撃した者がいる。`,
+      `前夜、${n}と源太郎が言い争うような声が聞こえたという証言がある。`,
+      `発見直前、${n}が廊下を急ぎ足で立ち去るのを見た者がいた。`,
+      `源太郎の部屋の前に、${n}のものと思しき品が残されていた。`,
+      `${n}が事件のあった時間帯、なぜか自室にいなかったという証言がある。`,
+      `源太郎の机の上に、${n}宛ての破り捨てられた手紙の切れ端があった。`,
+      `${n}の袖口に、拭い切れなかった赤い染みが残っていたのを見た者がいる。`,
+      `夜半、${n}が誰かと押し殺した声で口論しているのを使用人が耳にした。`,
+      `${n}が事件前夜、「もう我慢の限界だ」と漏らしていたという。`,
+      `源太郎の部屋の鍵が、なぜか${n}の部屋の近くで見つかった。`,
+      `${n}が夜中に手を震わせながら水を飲んでいたのを目撃されている。`,
+      `事件直後、${n}だけが妙に取り乱していたと複数の者が証言している。`,
+      `${n}が源太郎から多額の借金をしていたという噂が館内に流れている。`,
+      `源太郎の遺体のそばに、${n}が普段身につけている品の一部が落ちていた。`,
+      `${n}が事件の数日前、館の見取り図を熱心に眺めていたという。`,
+      `深夜、${n}の部屋の灯りだけが明け方近くまで消えなかった。`,
+      `${n}が源太郎に「あなたさえいなければ」と言い放ったのを聞いた者がいる。`,
+      `事件当夜、${n}の靴だけが泥と雨で濡れていたのを不審に思った者がいた。`,
+      `${n}が最近、源太郎の日課や就寝時刻を頻繁に尋ねていたという証言がある。`,
+      `源太郎の部屋の窓の外に、${n}の足跡らしきものが残されていた。`,
+      `${n}が事件前、誰にも言わずに何かを庭の隅に埋めていたのを見た者がいる。`,
+      `${n}が源太郎の飲み物に近づく機会を持っていた唯一の人物だと囁かれている。`,
+      `事件の朝、${n}の手が小刻みに震えていたのを気づいた者がいた。`,
+      `${n}が前夜、「今夜ですべてが終わる」と独り言のように呟いていたという。`,
+      `源太郎が最後に会っていたのは${n}だったのではないか、という証言がある。`,
+      `${n}が事件後、真っ先に源太郎の書斎の書類を確認しようとしていた。`,
+      `${n}の手帳に、源太郎の名前が何度も乱暴に書き殴られていたという。`,
+      `${n}が事件当夜だけ、いつもと違う裏階段を使っていたのを見た者がいる。`,
+      `${n}が源太郎に恨みを抱く動機を持っていると、ひそかに噂されている。`,
+      `事件直前、${n}が源太郎の部屋の方向をじっと見つめていたのを目撃されている。`,
+    ]
+    const hint = redHerrings[Math.floor(Math.random() * redHerrings.length)]
+    lastParagraph = `そして夜明け前、源太郎が自室で息絶えているのが発見された。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`
+  } else {
+    lastParagraph = `そして夜明け前、源太郎が自室で息絶えているのが発見された。室内に争った形跡はなく、扉の鍵は内側からかかっていた——それでいて、遺体の状況には自然死とは言い切れない不自然さがあった。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`
+  }
+
+  return [...commonParagraphs, lastParagraph].join('\n\n')
 }
 
 export { getSlotsForCount }

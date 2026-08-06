@@ -143,28 +143,28 @@ export default function ResultPage() {
         {tab === 'truth' && scenario && (
           <div className="space-y-4">
             {/* Main victim profile */}
-            <Section title={`💀 被害者: ${MAIN_VICTIM.name}`}>
+            <Section title={`被害者: ${MAIN_VICTIM.name}`}>
               <div className="text-purple-400 text-xs mb-1">{MAIN_VICTIM.role}</div>
               <p className="text-purple-200 text-xs leading-relaxed">{MAIN_VICTIM.background}</p>
             </Section>
 
             {/* Killers */}
             {scenario.suicide ? (
-              <Section title="💊 真相：自殺">
+              <Section title="真相：自殺">
                 <div className="bg-amber-950/30 border border-amber-900/50 rounded-lg p-3">
                   <div className="text-amber-300 font-medium text-sm mb-1">神条源太郎（自死）</div>
                   <p className="text-amber-200/70 text-xs">裏社会の組織が自分を消しに来ることを悟った当主は、追い詰められた末に自ら命を絶った。プレイヤーの誰も殺人は犯していない。館に集う者たちはそれぞれの秘密行動に追われ、当主の最後の苦悩を知らなかった。</p>
                 </div>
               </Section>
             ) : scenario.outsideKiller ? (
-              <Section title="🔫 真犯人">
+              <Section title="真犯人">
                 <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-3">
                   <div className="text-red-300 font-medium text-sm mb-1">組織の殺し屋（身元不明・逃走済み）</div>
                   <p className="text-red-200/70 text-xs">犯罪組織から派遣されたプロの殺し屋が当主を暗殺し、目撃者を口封じした後に逃走した。プレイヤーの誰も殺人は犯していない。</p>
                 </div>
               </Section>
             ) : (
-              <Section title="🔪 真犯人">
+              <Section title="真犯人">
                 {(scenario.killers ?? []).map(k => (
                   <div key={k.slot} className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 mb-2">
                     <div className="text-red-300 font-medium text-sm mb-1">
@@ -182,9 +182,9 @@ export default function ResultPage() {
             )}
 
             {/* NPC victim truth */}
-            {(scenario.npcVictims ?? []).length > 0 && (
-              <Section title="🕯 死亡者の真実">
-                {(scenario.npcVictims ?? []).map((v, i) => (
+            {scenario.npcVictims && scenario.npcVictims.length > 0 && (
+              <Section title="死亡者の真実">
+                {scenario.npcVictims.map((v, i) => (
                   <div key={i} className="py-2 border-b border-purple-900/30 last:border-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-xs px-1.5 py-0.5 rounded border ${v.isRelatedToCase ? 'bg-red-900/30 text-red-300 border-red-800' : 'bg-purple-900/30 text-purple-400 border-purple-800'}`}>
