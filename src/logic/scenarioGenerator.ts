@@ -250,6 +250,60 @@ const CAT_DISCOVERY: Record<DeathCat, (loc: string) => string> = {
 // natural を厚めに（穏やかな発見＝古典的な館ミステリーの手触り）
 const DEATH_CATS: DeathCat[] = ['natural', 'natural', 'natural', 'fall', 'hang', 'fire']
 
+// 手口カテゴリごとの「物音・におい」と「物的痕跡」（凶器と一致する手がかり）
+const CAT_SOUND: Record<DeathCat, (loc: string) => string> = {
+  natural: loc => `事件のあった時間帯、${loc}の方から争う物音は聞こえなかった。ただ、源太郎が誰かと短く言葉を交わす声だけがした、という証言がある。`,
+  fall: loc => `事件のあった時間帯、${loc}の方から、重いものが落ちるような鈍い音がした、という証言がある。`,
+  hang: loc => `事件のあった時間帯、${loc}の方から、くぐもった短い呻き声のようなものを聞いた、という証言がある。`,
+  fire: loc => `事件のあった時間帯、${loc}の方から何かを引きずる音がし、しばらくして焦げ臭さが漂ってきた、という証言がある。`,
+}
+const CAT_TRACE: Record<DeathCat, (loc: string) => string> = {
+  natural: loc => `${loc}の源太郎の傍らに、飲みかけの杯が残されていた。底にわずかな沈殿物がある。`,
+  fall: loc => `${loc}の手すりと床に、いちど拭き取ろうとした血の跡が残っていた。`,
+  hang: loc => `${loc}の床に、吊るす前に何かを引きずったような擦れた跡が残っていた。`,
+  fire: loc => `${loc}の火元付近から、不自然に強い燃焼促進剤のにおいが検出された。`,
+}
+
+// コナン風トリック。cats='any' は全カテゴリで使える。{n}=犯人名, {loc}=犯行場所
+const TRICKS: { name: string; cats: 'any' | DeathCat[]; build: (loc: string) => { appearance: string; flaw: string; note: string } }[] = [
+  {
+    name: '録音による生存偽装トリック',
+    cats: 'any',
+    build: loc => ({
+      appearance: `犯行のあった後になっても、${loc}の方から源太郎本人の声が聞こえた——だから源太郎はその時刻まで生きていた、と多くの者が思い込んでいる。`,
+      flaw: `だが聞こえた「源太郎の声」は、いつも決まって同じ一言の繰り返しだった。後に、部屋の隅から小型の録音機が見つかっている。`,
+      note: `あなたは源太郎の声を録音しておき、犯行の後に${loc}からそれを流した。皆が「その時刻まで源太郎は生きていた」と錯覚し、あなたのアリバイが成立した。録音機を回収し損ねていないか気を配ること。`,
+    }),
+  },
+  {
+    name: '替え玉による目撃偽装トリック',
+    cats: 'any',
+    build: loc => ({
+      appearance: `犯行の後、${loc}の窓辺に源太郎らしき人影が立っているのを遠目に見た、という証言がある。だから源太郎はその時刻まで生きていた、と思われている。`,
+      flaw: `だがその人影は、源太郎にしては背が高すぎたという。源太郎が決して着なかったはずの色の上着をまとっていた、とも。`,
+      note: `あなたは源太郎の上着を着た人物を${loc}の窓辺に立たせ、遠目に「生きている源太郎」を演じさせた。おかげで死亡時刻がずれて見え、あなたのアリバイが成立している。`,
+    }),
+  },
+  {
+    name: '時計の細工による死亡時刻偽装トリック',
+    cats: ['fall', 'natural'],
+    build: loc => ({
+      appearance: `${loc}に落ちて止まっていた時計は、実際よりも遅い時刻を指していた。そのため、源太郎はもっと遅い時刻に亡くなったと思われている。`,
+      flaw: `だがその時計は「数日前から進みがおかしい」と源太郎自身がこぼしていた。止まった時刻をそのまま信じることはできない。冷めきった料理が、本当の時刻を物語っている。`,
+      note: `あなたは現場の時計に細工をして、死亡時刻を実際より遅く見せかけた。その"遅い時刻"にはあなたのアリバイがある。時計以外の時間の手がかり（冷めた料理、溶けた氷）に矛盾が出ていないか注意すること。`,
+    }),
+  },
+  {
+    name: '施錠トリック（外からの密室工作）',
+    cats: ['hang', 'fall'],
+    build: loc => ({
+      appearance: `${loc}の扉は内側から施錠されていた。そのため、これは事件ではなく源太郎自身の身に起きたこと（自死や事故）だと思われている。`,
+      flaw: `だが鍵穴の内側に、細い糸か針でこすったような真新しい傷が残っていた。扉は、外から施錠された可能性がある。`,
+      note: `あなたは糸を使い、${loc}の扉を外側から施錠して密室を装った。密室であること自体が「他殺ではない」という思い込みを生み、あなたのアリバイを守っている。糸や器具を残していないか気を配ること。`,
+    }),
+  },
+]
+
 export function generateScenario(
   playerCount: number,
   mode: GameMode
@@ -430,6 +484,7 @@ export function generateScenario(
   let mainVictimLocation: Location
   let deathDiscovery: string
   let mainMurderWeapon: Weapon | null = null   // 非二重・プレイヤー犯の当主殺しに使う凶器
+  let mainCat: DeathCat | null = null          // 当主殺しの手口カテゴリ（トリック生成に使う）
   if (mode === 'puzzle') {
     mainVictimLocation = 'master_bedroom'
     deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で事切れているのが発見された。その死には不審な点が残った。`
@@ -444,6 +499,7 @@ export function generateScenario(
     deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で複数の傷を負って倒れていた。ひと目で穏やかな死でないことは分かるが、その経緯は判然としない。`
   } else {
     const cat = pickRandom(DEATH_CATS)
+    mainCat = cat
     mainVictimLocation = pickRandom(CAT_LOCS[cat])
     const wid = pickRandom(CAT_WEAPONS[cat])
     mainMurderWeapon = WEAPONS.find(w => w.id === wid) ?? pickRandom(poisonWeapons)
@@ -599,6 +655,39 @@ export function generateScenario(
     EXTRA_NPCS.filter(n => !usedNpcRoles.has(n.role))
   ).slice(0, 3).map(n => ({ role: n.role }))
 
+  // ── コナン風トリック（非二重・プレイヤー犯のみ）───────────────────────
+  let mainTrick: import('../types/game').MainTrick | undefined
+  if (mainCat && !outsideKiller && !suicide && mode !== 'puzzle') {
+    const mainKiller = killers.find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
+    if (mainKiller) {
+      const killerName = CHARACTERS[mainKiller.slot].name
+      const locName = LOCATION_NAMES[mainVictimLocation]
+      const innocentSlots = slots.filter(s => !killerSlots.includes(s))
+      const innocentName = innocentSlots.length > 0
+        ? CHARACTERS[pickRandom(innocentSlots)].name
+        : '館の使用人'
+      const usable = TRICKS.filter(t => t.cats === 'any' || t.cats.includes(mainCat!))
+      const trick = pickRandom(usable)
+      const built = trick.build(locName)
+      const eyeVariants = [
+        `事件のあった時間帯、${killerName}が${locName}の方へ急ぎ足で向かうのを廊下で見た、という証言がある。`,
+        `事件のあった時間帯、${killerName}が${locName}のあたりから出てくるのを見た者がいる。ひどく思いつめた様子だったという。`,
+        `事件の前後、${killerName}の姿だけが${locName}付近で見当たらなくなった時間がある、と複数の者が話している。`,
+      ]
+      mainTrick = {
+        name: trick.name,
+        killerSlots: [mainKiller.slot],
+        killerNote: built.note,
+        eyewitness: pickRandom(eyeVariants),
+        sound: CAT_SOUND[mainCat](locName),
+        trace: CAT_TRACE[mainCat](locName),
+        appearance: built.appearance,
+        flaw: built.flaw,
+        misdirection: `事件のあった時間帯、${innocentName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+      }
+    }
+  }
+
   // ── synopsis ──────────────────────────────────────────────────────────
   const synopsis = generateSynopsis(npcVictims, slots, deathDiscovery)
 
@@ -619,6 +708,7 @@ export function generateScenario(
     synopsis,
     npcSurvivors,
     mainVictimLocation,
+    mainTrick,
   }
 }
 
