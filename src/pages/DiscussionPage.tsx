@@ -180,14 +180,14 @@ export default function DiscussionPage() {
         </div>
       )}
 
-      <div className="max-w-md mx-auto px-4 py-4 space-y-3">
+      <div className="max-w-md sm:max-w-2xl mx-auto px-4 py-4 space-y-3">
         {/* PUBLIC */}
         {tab === 'public' && (
           <>
             {publicCards.length === 0 ? (
               <p className="text-purple-600 text-sm text-center py-8">まだ公開されたカードがありません</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {publicCards.map(card => (
                   <EvidenceCardView key={card.id} card={card} showActions={false} />
                 ))}
@@ -202,7 +202,7 @@ export default function DiscussionPage() {
             {myCards.length === 0 ? (
               <p className="text-purple-600 text-sm text-center py-8">手札がありません</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {myCards.map(card => (
                   <EvidenceCardView
                     key={card.id}
