@@ -1,5 +1,18 @@
-import type { NpcVictim } from '../types/game'
+import type { NpcVictim, Location } from '../types/game'
 import { MAIN_VICTIM } from '../data/characters'
+import { LOCATION_NAMES } from '../data/locations'
+
+// 当主の遺体発見場所（Location）→ 図面上の座標
+const MAIN_LOC_COORDS: Partial<Record<Location, { x: number; y: number }>> = {
+  master_bedroom: { x: 152, y: 71 },
+  guest_room: { x: 52, y: 71 },
+  study: { x: 105, y: 325 },
+  library: { x: 43, y: 325 },
+  dining: { x: 204, y: 325 },
+  gallery: { x: 43, y: 411 },
+  greenhouse: { x: 109, y: 411 },
+  basement: { x: 78, y: 607 },
+}
 
 // 死亡場所（deathLocation 文字列）→ 図面上の座標
 const PIN_COORDS: Record<string, { x: number; y: number }> = {
@@ -40,10 +53,14 @@ const C = {
 export default function ManorMap({
   onClose,
   npcVictims = [],
+  mainVictimLocation,
 }: {
   onClose: () => void
   npcVictims?: NpcVictim[]
+  mainVictimLocation?: Location
 }) {
+  const mainCoord = (mainVictimLocation && MAIN_LOC_COORDS[mainVictimLocation]) || { x: 152, y: 71 }
+  const mainLocName = mainVictimLocation ? LOCATION_NAMES[mainVictimLocation] : '主寝室'
   const pins = npcVictims.map((v, i) => ({
     n: i + 1,
     role: v.role,
@@ -170,7 +187,7 @@ export default function ManorMap({
               <Door hx={210} hy={650} r={12} a0={180} sweep={1} />
 
               {/* ══════════ markers ══════════ */}
-              <Pin x={152} y={71} kind="main" />
+              <Pin x={mainCoord.x} y={mainCoord.y} kind="main" />
               {pins.map(p => p.coord && (
                 <Pin key={p.n} x={p.coord.x} y={p.coord.y} kind="npc" n={p.n} />
               ))}
@@ -181,7 +198,7 @@ export default function ManorMap({
           <div className="px-4 pb-2">
             <div className="flex items-center gap-2 mb-1.5">
               <MarkerGlyph kind="main" />
-              <span className="text-xs" style={{ color: C.text }}>{MAIN_VICTIM.name}（当主）— 主寝室で発見</span>
+              <span className="text-xs" style={{ color: C.text }}>{MAIN_VICTIM.name}（当主）— {mainLocName}で発見</span>
             </div>
             {pins.length > 0 ? (
               <div className="space-y-1">

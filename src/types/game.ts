@@ -165,6 +165,7 @@ export interface Scenario {
   assignedProfessions?: Partial<Record<CharacterSlot, string>>  // past profession id per slot
   synopsis?: string  // auto-generated narrative summary shown to all players
   npcSurvivors?: NpcSurvivor[]  // NPCs present in the manor who survived
+  mainVictimLocation?: Location  // 当主の遺体が発見された場所（マップの★位置）
 }
 
 export interface EvidenceCard {

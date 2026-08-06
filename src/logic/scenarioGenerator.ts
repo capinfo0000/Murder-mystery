@@ -10,6 +10,7 @@ import type {
   KillerInfo,
   Location,
   NpcSurvivor,
+  Weapon,
   NpcVictim,
   PlayerConnection,
   Scenario,
@@ -223,6 +224,32 @@ function generateCooperationChain(killerSlots: CharacterSlot[]): CooperationChai
   return { mastermindSlot: mastermind, links }
 }
 
+// ── 当主殺しの手口プロファイル ──────────────────────────────────
+// 凶器・偽装・発見場所・発見時の描写を「整合した束」として持つ。
+// これにより手口や場所を変えても、あらすじ・犯人ハンドアウト・マップが矛盾しない。
+type DeathCat = 'natural' | 'fall' | 'hang' | 'fire'
+const CAT_WEAPONS: Record<DeathCat, string[]> = {
+  natural: ['poison_herb', 'sedative', 'poison_wine'],   // 病死・自然死・中毒に見せる
+  fall: ['dagger', 'candlestick', 'stair_trap'],          // 転落事故に見せる（要・階段）
+  hang: ['strangling'],                                    // 首吊り自殺に見せる
+  fire: ['arson_setup'],                                   // 失火・焼死に見せる
+}
+// 手口ごとに「その死が起こりうる／偽装が成立する」場所だけを許可
+const CAT_LOCS: Record<DeathCat, Location[]> = {
+  natural: ['master_bedroom', 'study', 'library', 'dining', 'greenhouse', 'guest_room', 'gallery'],
+  fall: ['basement'],                                      // 転落＝地下へ下りる階段
+  hang: ['study', 'guest_room', 'master_bedroom'],         // 梁のある部屋
+  fire: ['study', 'library', 'guest_room', 'gallery'],     // 焼け落ちうる部屋
+}
+const CAT_DISCOVERY: Record<DeathCat, (loc: string) => string> = {
+  natural: loc => `源太郎が${loc}で倒れているのが発見された。取り乱した様子はなく、急な発作で亡くなったようにも見えるが、その死にはどうにも腑に落ちない点が残った。`,
+  fall: loc => `源太郎が${loc}へ下りる階段の下で、頭を強く打って倒れていた。足を踏み外して転落したようにも見えるが、現場にはどこか不自然な点が残った。`,
+  hang: loc => `源太郎が${loc}で、首に索状の痕を残して事切れていた。自ら首を吊ったようにも見えるが、その死にはどうにも腑に落ちない点が残った。`,
+  fire: loc => `${loc}が半ば焼け落ち、その焼け跡から源太郎が見つかった。失火による焼死のようにも見えるが、現場には不審な点が残った。`,
+}
+// natural を厚めに（穏やかな発見＝古典的な館ミステリーの手触り）
+const DEATH_CATS: DeathCat[] = ['natural', 'natural', 'natural', 'fall', 'hang', 'fire']
+
 export function generateScenario(
   playerCount: number,
   mode: GameMode
@@ -374,8 +401,9 @@ export function generateScenario(
   const environmentalWeapons = WEAPONS.filter(w => w.isEnvironmental)
   const dualPattern = npcVictims[0]?.dualKillerPattern
 
-  // 二重犯行も当主殺し。凶行場所は遺体発見場所（主寝室）に統一
-  const sharedLocation: Location | null = dualPattern ? 'master_bedroom' : null
+  // 二重犯行も当主殺し。凶行＝遺体発見場所（毎回ランダムに変え、あらすじ・ハンドアウトと一致させる）
+  const DUAL_LOCS: Location[] = ['study', 'library', 'dining', 'gallery', 'greenhouse', 'guest_room', 'basement', 'master_bedroom']
+  const sharedLocation: Location | null = dualPattern ? pickRandom(DUAL_LOCS) : null
 
   // Pre-build the dual pair so weapon[1] can avoid repeating weapon[0]
   type DualPair = [KillerInfo, KillerInfo]
@@ -397,6 +425,30 @@ export function generateScenario(
       { slot: killerSlots[1], victimName: vName, weapon: w1, location: sharedLocation!, method: 'weapon' as const, isDualKiller: true },
     ]
   })()
+
+  // ── 当主殺しの発見状況（手口・場所・描写を整合させる）──────────────
+  let mainVictimLocation: Location
+  let deathDiscovery: string
+  let mainMurderWeapon: Weapon | null = null   // 非二重・プレイヤー犯の当主殺しに使う凶器
+  if (mode === 'puzzle') {
+    mainVictimLocation = 'master_bedroom'
+    deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で事切れているのが発見された。その死には不審な点が残った。`
+  } else if (suicide) {
+    mainVictimLocation = pickRandom(CAT_LOCS.natural)
+    deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で事切れているのが発見された。取り乱した様子はなく、一見おだやかな死のようにも見えるが、その死にはどうにも腑に落ちない点が残った。`
+  } else if (outsideKiller) {
+    mainVictimLocation = pickRandom(CAT_LOCS.natural)
+    deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で倒れているのが発見された。表向きは急な発作のようだが、現場には見過ごせない不審な点が残った。`
+  } else if (dualPattern) {
+    mainVictimLocation = sharedLocation!
+    deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で複数の傷を負って倒れていた。ひと目で穏やかな死でないことは分かるが、その経緯は判然としない。`
+  } else {
+    const cat = pickRandom(DEATH_CATS)
+    mainVictimLocation = pickRandom(CAT_LOCS[cat])
+    const wid = pickRandom(CAT_WEAPONS[cat])
+    mainMurderWeapon = WEAPONS.find(w => w.id === wid) ?? pickRandom(poisonWeapons)
+    deathDiscovery = CAT_DISCOVERY[cat](LOCATION_NAMES[mainVictimLocation])
+  }
 
   // 口封じでNPCを殺した犯人（slot→NPC役職）。二重犯行の当主殺し(dualKillerPattern付き)は除外
   const npcKillMap: Partial<Record<CharacterSlot, string>> = {}
@@ -430,13 +482,17 @@ export function generateScenario(
         ? { id: `npc_${def.id}`, name: def.method, disguisedAs: def.disguisedMurderCause }
         : pickRandom(physicalWeapons)
     } else {
-      // 当主殺し：自室で発見・一見自然死に見える手口（毒物）に限定
+      // 当主殺し：手口プロファイルで選んだ凶器・場所（発見状況と一致）
       victimName = MAIN_VICTIM.name
-      location = 'master_bedroom'
-      weapon = pickRandom(poisonWeapons)
+      location = mainVictimLocation
+      weapon = mainMurderWeapon ?? pickRandom(poisonWeapons)
     }
 
-    return { slot, victimSlot, victimName, weapon, location }
+    const method: 'weapon' | 'poison' | 'environmental' | undefined =
+      victimName === MAIN_VICTIM.name && !preDual
+        ? (weapon.isPoison ? 'poison' : weapon.isEnvironmental ? 'environmental' : 'weapon')
+        : undefined
+    return { slot, victimSlot, victimName, weapon, location, method }
   })
 
   // Fill trueMurderDetail for dual killer shared victim
@@ -544,7 +600,7 @@ export function generateScenario(
   ).slice(0, 3).map(n => ({ role: n.role }))
 
   // ── synopsis ──────────────────────────────────────────────────────────
-  const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, suicide, cooperationChain, slots)
+  const synopsis = generateSynopsis(npcVictims, slots, deathDiscovery)
 
   return {
     victims,
@@ -562,16 +618,14 @@ export function generateScenario(
     assignedProfessions,
     synopsis,
     npcSurvivors,
+    mainVictimLocation,
   }
 }
 
 function generateSynopsis(
-  _killers: KillerInfo[],
   npcVictims: NpcVictim[],
-  _outsideKiller: boolean,
-  _suicide: boolean,
-  _cooperationChain: CooperationChain | undefined | null,
   slots: CharacterSlot[],
+  deathDiscovery: string,
 ): string {
   const playerCount = slots.length
 
@@ -625,7 +679,7 @@ function generateSynopsis(
       `事件直前、${n}が源太郎の部屋の方向をじっと見つめていたのを目撃されている。`,
     ]
   const hint = redHerrings[Math.floor(Math.random() * redHerrings.length)]
-  const lastParagraph = `そして最初の夜明け前、源太郎が自室で息絶えているのが発見された。第一発見者によれば、部屋に激しく争ったような乱れはなかったという——だが、その死を素直に事故や病死と片づけるには、どうにも腑に落ちない点が残った。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
+  const lastParagraph = `そして最初の夜明け前、${deathDiscovery}${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
 
   return [...commonParagraphs, lastParagraph].join('\n\n')
 }
