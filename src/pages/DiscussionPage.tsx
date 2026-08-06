@@ -118,7 +118,7 @@ export default function DiscussionPage() {
 
   return (
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
-      {showMap && <ManorMap onClose={() => setShowMap(false)} npcVictims={scenario?.npcVictims ?? []} />}
+      {showMap && <ManorMap onClose={() => setShowMap(false)} npcVictims={scenario?.npcVictims ?? []} mainVictimLocation={scenario?.mainVictimLocation} />}
       {showProfile && scenario && viewSlot && (
         <ProfileModal scenario={scenario} slot={viewSlot} onClose={() => setShowProfile(false)} />
       )}

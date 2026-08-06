@@ -149,7 +149,7 @@ export default function HandoutPage() {
   // ── INDIVIDUAL SCREEN ──────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
-      {showMap && <ManorMap onClose={() => setShowMap(false)} npcVictims={scenario.npcVictims ?? []} />}
+      {showMap && <ManorMap onClose={() => setShowMap(false)} npcVictims={scenario.npcVictims ?? []} mainVictimLocation={scenario.mainVictimLocation} />}
       {/* Top bar */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3 flex items-center justify-between">
         <div>
