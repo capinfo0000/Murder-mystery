@@ -69,7 +69,7 @@ export default function HandoutPage() {
         </div>
         <div className="max-w-md mx-auto px-4 py-4 space-y-4">
           {scenario.synopsis && (
-            <Section title="📜 あらすじ">
+            <Section title="あらすじ">
               <div className="space-y-3">
                 {scenario.synopsis.split('\n\n').map((para, i) => (
                   <p key={i} className="text-purple-200 text-sm leading-relaxed">{para}</p>
@@ -77,11 +77,11 @@ export default function HandoutPage() {
               </div>
             </Section>
           )}
-          <Section title={`💀 被害者: ${MAIN_VICTIM.name}（${MAIN_VICTIM.role}）`}>
+          <Section title={`被害者: ${MAIN_VICTIM.name}（${MAIN_VICTIM.role}）`}>
             <p className="text-purple-200 text-sm leading-relaxed">{MAIN_VICTIM.background}</p>
           </Section>
           {((scenario.npcVictims ?? []).length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
-            <Section title="🕯 館の関係者（全員既知）">
+            <Section title="館の関係者（全員既知）">
               <p className="text-purple-500 text-xs mb-3">紫苑館に関わる人物の状況。死因は報告書による。</p>
               <div className="space-y-2">
                 {(scenario.npcVictims ?? []).map((v, i) => (
@@ -236,7 +236,7 @@ export default function HandoutPage() {
                 key_provision: '合鍵の提供',
               }
               return (
-                <Section title="🤝 今夜の密約（あなただけが知ること）" accent="amber">
+                <Section title="今夜の密約（あなただけが知ること）" accent="amber">
                   <div className="space-y-4">
                     {myConns.map((conn, i) => {
                       const isFrom = conn.fromSlot === viewSlot
@@ -272,7 +272,7 @@ export default function HandoutPage() {
                 blackmail_face: '直接対面での脅迫',
               }
               return (
-                <Section title="📞 秘密の指令（あなただけが知ること）" accent="amber">
+                <Section title="秘密の指令（あなただけが知ること）" accent="amber">
                   <p className="text-amber-400/70 text-xs mb-3">以下の情報は他のプレイヤーには絶対に見せないでください。</p>
                   <div className="space-y-4">
                     {myLinks.map((link, i) => {
@@ -297,7 +297,7 @@ export default function HandoutPage() {
               )
             })()}
             {myRole === 'killer' && myKillerInfo && (
-              <Section title="🔪 あなたが行った凶行（厳重に秘密）" accent="red">
+              <Section title="あなたが行った凶行（厳重に秘密）" accent="red">
                 <div className="space-y-2 text-sm">
                   <Row label="被害者" value={
                     myKillerInfo.victimSlot
