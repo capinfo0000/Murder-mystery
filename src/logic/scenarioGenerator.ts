@@ -572,44 +572,26 @@ export function generateScenario(
 function generateSynopsis(
   killers: KillerInfo[],
   npcVictims: NpcVictim[],
-  outsideKiller: boolean,
-  suicide: boolean,
-  cooperationChain: CooperationChain | undefined | null,
+  _outsideKiller: boolean,
+  _suicide: boolean,
+  _cooperationChain: CooperationChain | undefined | null,
   playerCount: number,
 ): string {
-  const murderedNpcs = npcVictims.filter(v => v.isRelatedToCase)
-  const mainApparentCause = killers[0]?.weapon.disguisedAs ?? '不審な死'
+  const apparentCause = killers[0]?.weapon.disguisedAs ?? '突然死（死因不明）'
 
-  if (suicide) {
-    return `嵐の気配が漂う夜、紫苑館の当主・神条源太郎が自室で冷たくなっているのが発見された。死因は「${mainApparentCause.includes('自') ? mainApparentCause : '突然死（死因不明）'}」とされているが、遺書らしきものは見つかっていない。長年にわたり裏社会の組織と深い関係を持っていた当主の死には、外部からの圧力の影がちらつく——しかし${playerCount}名の滞在者全員に何かしらの後ろ暗い秘密がある夜、真相は霧の中に包まれている。`
-  }
+  const npcLine = npcVictims.length > 0
+    ? `同じ夜、館内では${npcVictims.map(v => `${v.role}が${v.apparentCause}`).join('、')}という報告も相次いだ。`
+    : ''
 
-  if (outsideKiller) {
-    const npcCount = npcVictims.length
-    return `嵐の夜、紫苑館の当主・神条源太郎が謎の死を遂げ、関係者${npcCount}名も相次いで命を落とした。表向きは事故や病死とされているが、証拠が別の何かを示している。組織から派遣された外部の殺し屋による犯行か——それとも別の真相が潜んでいるのか。${playerCount}名の滞在者全員が容疑の外にいるとは限らない。`
-  }
+  return [
+    '現代日本。中部山間の深い森に抱かれた石造りの西洋館「紫苑館」——神条財閥総帥・神条 源太郎が昭和期に建て、半世紀以上にわたって使い続けてきた別邸である。東京の本邸とは異なり、来客を厳選することで知られるこの館には、源太郎が認めた者だけが足を踏み入れることができた。',
 
-  if (killers.length === 0) {
-    return `今夜、紫苑館の当主・神条源太郎が「${mainApparentCause}」で発見された。現場には疑問点が残る。${playerCount}名の滞在者の中に、真相を知る者がいる。`
-  }
+    '数週間前、源太郎は親族・側近・館の関係者に一方的な連絡を入れた。「今月中に紫苑館まで来るように」——理由は告げられなかった。源太郎がこのような招集をかけること自体が異例であり、呼ばれた者たちはそれぞれ思惑を巡らせながら館へと足を向けた。こうして今夜この館には、家族として呼び寄せられた者、定期的な用件でここを訪れていた者、依頼を受けて館内の仕事を進めていた者、そして長年ここに住み込んで仕えてきた者たちが、それぞれの立場で同じ屋根の下に集うことになった。',
 
-  const dualPattern = npcVictims[0]?.dualKillerPattern
-  const hasNpcDeaths = murderedNpcs.length > 0
+    '夕刻から雨が強まり、夜半には暴風雨となった。山間の細い道路は崖崩れで寸断され、電話回線も夜半過ぎに途絶えた。最後に外部と連絡が取れたのは夜の十時——それ以降、紫苑館は外の世界から完全に孤立した。',
 
-  if (dualPattern) {
-    return `雨降る夜、紫苑館の当主・神条源太郎が「${mainApparentCause}」で発見された。複数の証言が矛盾を示し、事故として処理するには不自然な点が多すぎる。二つの殺意が交差したこの夜、${playerCount}名の滞在者それぞれが胸に秘密を抱えている。`
-  }
-
-  if (killers.length === 1) {
-    const suffix = hasNpcDeaths ? `関係者にも不審な死者が出ている。` : ''
-    return `嵐が近づく夜、紫苑館の当主・神条源太郎が「${mainApparentCause}」で発見された。偶然の事故とも、仕組まれた罠とも読める——${playerCount}名の滞在者それぞれが嘘をつく理由を持つこの夜、ひとつの殺意が静かに動いていた。${suffix}`
-  }
-
-  if (cooperationChain) {
-    return `静かな夜のはずだった。しかし夜明け前、紫苑館の当主・神条源太郎が謎の死を遂げ、複数の関係者も命を落としていた。黒幕の命令が見えない連鎖を作り、複数の人間が知らぬ間に関与していた——${playerCount}名の滞在者の中で、秘密と欺瞞が絡み合う。`
-  }
-
-  return `嵐の一夜、紫苑館の当主・神条源太郎が「${mainApparentCause}」で発見された。さらに複数の関係者が相次いで命を落とし、館は混乱に包まれた。それぞれが異なる動機と秘密を抱えた${playerCount}名の中に、複数の殺意が潜んでいる。真相は討議の中にのみ現れる。`
+    `そして夜明け前、源太郎が自室で「${apparentCause}」の状態で発見された。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`,
+  ].join('\n\n')
 }
 
 export { getSlotsForCount }
