@@ -187,9 +187,11 @@ export default function DiscussionPage() {
             {publicCards.length === 0 ? (
               <p className="text-purple-600 text-sm text-center py-8">まだ公開されたカードがありません</p>
             ) : (
-              publicCards.map(card => (
-                <EvidenceCardView key={card.id} card={card} showActions={false} />
-              ))
+              <div className="grid grid-cols-2 gap-3">
+                {publicCards.map(card => (
+                  <EvidenceCardView key={card.id} card={card} showActions={false} />
+                ))}
+              </div>
             )}
           </>
         )}
@@ -200,15 +202,17 @@ export default function DiscussionPage() {
             {myCards.length === 0 ? (
               <p className="text-purple-600 text-sm text-center py-8">手札がありません</p>
             ) : (
-              myCards.map(card => (
-                <EvidenceCardView
-                  key={card.id}
-                  card={card}
-                  showActions
-                  onShareAll={handleShareAll}
-                  onSecretSend={() => setTab('secret')}
-                />
-              ))
+              <div className="grid grid-cols-2 gap-3">
+                {myCards.map(card => (
+                  <EvidenceCardView
+                    key={card.id}
+                    card={card}
+                    showActions
+                    onShareAll={handleShareAll}
+                    onSecretSend={() => setTab('secret')}
+                  />
+                ))}
+              </div>
             )}
           </>
         )}
