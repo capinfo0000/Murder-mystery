@@ -5,10 +5,12 @@ import {
 } from '../services/firebase'
 import type { GameState, GamePhase, CharacterSlot } from '../types/game'
 import { CHARACTERS } from '../data/characters'
+import { LOCATION_NAMES } from '../data/locations'
 import EvidenceCardView from '../components/EvidenceCard'
 import DeckPanel from '../components/DeckPanel'
 import SecretMessagePanel from '../components/SecretMessagePanel'
 import ManorMap from '../components/ManorMap'
+import AlibiMatrix from '../components/AlibiMatrix'
 
 const PHASE_LABELS: Record<string, string> = {
   round1: 'ラウンド1 — 全体討議',
@@ -34,6 +36,7 @@ export default function DiscussionPage() {
   const [tab, setTab] = useState<'public' | 'hand' | 'deck' | 'secret'>('public')
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [showMap, setShowMap] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const [activeViewSlot, setActiveViewSlot] = useState<CharacterSlot | null>(null)
 
   useEffect(() => {
@@ -116,13 +119,22 @@ export default function DiscussionPage() {
   return (
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
       {showMap && <ManorMap onClose={() => setShowMap(false)} npcVictims={scenario?.npcVictims ?? []} />}
+      {showProfile && scenario && viewSlot && (
+        <ProfileModal scenario={scenario} slot={viewSlot} onClose={() => setShowProfile(false)} />
+      )}
       {/* Top bar */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3">
         <div className="flex items-center justify-between">
           <h2 className="text-purple-200 font-medium text-sm">
             {PHASE_LABELS[game.phase] ?? game.phase}
           </h2>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowProfile(true)}
+              className="text-purple-400 hover:text-purple-200 text-sm px-2 py-0.5 rounded border border-purple-800 hover:border-purple-600 transition-colors"
+            >
+              👤 プロフィール
+            </button>
             <button
               onClick={() => setShowMap(true)}
               className="text-purple-400 hover:text-purple-200 text-sm px-2 py-0.5 rounded border border-purple-800 hover:border-purple-600 transition-colors"
@@ -260,6 +272,163 @@ function Loading() {
   return (
     <div className="min-h-screen bg-[#0f0a1a] flex items-center justify-center">
       <div className="text-purple-400 text-sm animate-pulse">読み込み中…</div>
+    </div>
+  )
+}
+
+// ── Profile modal (private handout info, viewable during discussion) ──────────
+function ProfileModal({
+  scenario, slot, onClose,
+}: {
+  scenario: NonNullable<GameState['scenario']>
+  slot: CharacterSlot
+  onClose: () => void
+}) {
+  const char = CHARACTERS[slot]
+  if (!char) return null
+  const role = scenario.roles[slot]
+  const killerInfo = (scenario.killers ?? []).find(k => k.slot === slot)
+  const alibis = scenario.alibis[slot]
+  const relationships = Object.entries(char.relationships ?? {}) as [CharacterSlot, string][]
+
+  const connTypeLabel: Record<string, string> = {
+    lookout: '見張り番', preparation: '準備の手伝い', silence_deal: '口止め取引',
+    weapon_supply: '凶器・品物の調達', victim_lure: '被害者の誘導', map_provision: '見取り図の提供',
+    false_alibi: '偽アリバイの口裏合わせ', distraction: '陽動・騒ぎの演出',
+    evidence_disposal: '証拠品の処分', key_provision: '合鍵の提供',
+  }
+  const methodLabel: Record<string, string> = {
+    anonymous_phone: '声変え電話', anonymous_letter: '差出人不明の手紙', blackmail_face: '直接対面での脅迫',
+  }
+  const myConns = (scenario.connections ?? []).filter(c => c.fromSlot === slot || c.toSlot === slot)
+  const myLinks = scenario.cooperationChain?.links.filter(l => l.fromSlot === slot || l.toSlot === slot) ?? []
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
+      <div
+        className="bg-[#12091e] border border-purple-800 rounded-xl w-full max-w-md max-h-[92vh] overflow-hidden flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-purple-900 bg-[#1a0f2e] shrink-0">
+          <div>
+            <span className="text-purple-400 text-xs">{slot}枠</span>
+            <h3 className="text-purple-100 font-bold text-base leading-tight" style={{ fontFamily: 'serif' }}>{char.name}</h3>
+            <span className="text-purple-500 text-xs">{char.role}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`px-3 py-1 rounded-full text-xs font-medium ${role === 'killer' ? 'bg-red-900/50 text-red-300 border border-red-800' : 'bg-purple-900/50 text-purple-300 border border-purple-800'}`}>
+              {role === 'killer' ? '🔪 犯人' : '👁 無実'}
+            </div>
+            <button onClick={onClose} className="text-purple-500 hover:text-purple-300 text-lg leading-none">✕</button>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto px-4 py-4 space-y-4">
+          <PSection title="背景">
+            <p className="text-purple-200 text-sm leading-relaxed">{char.background}</p>
+          </PSection>
+          <PSection title="あなただけの秘密（誰にも言わないこと）" accent="amber">
+            <p className="text-amber-200 text-sm leading-relaxed">{char.secretAction}</p>
+          </PSection>
+
+          {myConns.length > 0 && (
+            <PSection title="今夜の密約（あなただけが知ること）" accent="amber">
+              <div className="space-y-4">
+                {myConns.map((conn, i) => {
+                  const isFrom = conn.fromSlot === slot
+                  const otherSlot = isFrom ? conn.toSlot : conn.fromSlot
+                  const text = isFrom ? conn.fromText : conn.toText
+                  return (
+                    <div key={i} className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-0.5 rounded border border-amber-700 bg-amber-900/30 text-amber-300">{connTypeLabel[conn.type]}</span>
+                        <span className="text-purple-400 text-xs">{CHARACTERS[otherSlot]?.name}（{otherSlot}枠）</span>
+                      </div>
+                      <p className="text-amber-100 text-sm leading-relaxed">{text}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </PSection>
+          )}
+
+          {myLinks.length > 0 && (
+            <PSection title="秘密の指令（あなただけが知ること）" accent="amber">
+              <div className="space-y-4">
+                {myLinks.map((link, i) => {
+                  const isFrom = link.fromSlot === slot
+                  const text = isFrom ? link.fromText : link.toText
+                  const label = isFrom
+                    ? `指示を出した（${methodLabel[link.method]}）`
+                    : link.senderKnown
+                      ? `脅迫を受けた — ${CHARACTERS[link.fromSlot].name}から`
+                      : `${methodLabel[link.method]}を受けた（送り主不明）`
+                  return (
+                    <div key={i} className="space-y-1.5">
+                      <span className="inline-block text-xs px-2 py-0.5 rounded border border-amber-700 bg-amber-900/30 text-amber-300">{label}</span>
+                      <p className="text-amber-100 text-sm leading-relaxed">{text}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </PSection>
+          )}
+
+          {role === 'killer' && killerInfo && (
+            <PSection title="あなたが行った凶行（厳重に秘密）" accent="red">
+              <div className="space-y-2 text-sm">
+                <PRow label="被害者" value={killerInfo.victimSlot ? `${killerInfo.victimSlot}枠 — ${CHARACTERS[killerInfo.victimSlot]?.name ?? '？'}` : (killerInfo.victimName ?? '？')} />
+                <PRow label={killerInfo.method === 'poison' ? '毒物' : killerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={killerInfo.weapon.name} />
+                <PRow label="場所" value={LOCATION_NAMES[killerInfo.location]} />
+                <PRow label="偽装死因" value={killerInfo.weapon.disguisedAs} />
+                <PRow label="時刻" value="T2（21:00〜22:00頃）" />
+              </div>
+            </PSection>
+          )}
+
+          {alibis && (
+            <PSection title="あなたの真実のアリバイ">
+              <AlibiMatrix alibis={alibis} />
+            </PSection>
+          )}
+
+          <PSection title="あなたが知る関係図">
+            {relationships.length === 0 ? (
+              <p className="text-purple-500 text-sm">関係情報なし</p>
+            ) : (
+              <div className="space-y-2">
+                {relationships.map(([s, desc]) => (
+                  <div key={s} className="flex gap-2">
+                    <span className="text-purple-500 text-xs w-16 shrink-0">{CHARACTERS[s]?.name ?? s}枠</span>
+                    <span className="text-purple-300 text-sm">{desc}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </PSection>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PSection({ title, children, accent = 'purple' }: { title: string; children: React.ReactNode; accent?: string }) {
+  const border = accent === 'red' ? 'border-red-900' : accent === 'amber' ? 'border-amber-900' : 'border-purple-900'
+  const titleColor = accent === 'red' ? 'text-red-300' : accent === 'amber' ? 'text-amber-300' : 'text-purple-300'
+  return (
+    <div className={`bg-[#1a0f2e] border ${border} rounded-xl p-4`}>
+      <h4 className={`${titleColor} text-xs font-medium mb-2 tracking-wide`}>{title}</h4>
+      {children}
+    </div>
+  )
+}
+
+function PRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-2">
+      <span className="text-red-400/70 text-xs w-20 shrink-0">{label}</span>
+      <span className="text-red-200 text-xs">{value}</span>
     </div>
   )
 }
