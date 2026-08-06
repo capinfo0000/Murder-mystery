@@ -115,7 +115,7 @@ export default function DiscussionPage() {
 
   return (
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
-      {showMap && <ManorMap onClose={() => setShowMap(false)} />}
+      {showMap && <ManorMap onClose={() => setShowMap(false)} npcVictims={scenario?.npcVictims ?? []} />}
       {/* Top bar */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3">
         <div className="flex items-center justify-between">
