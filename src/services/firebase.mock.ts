@@ -87,7 +87,11 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
 
   const allIds = Object.keys(state.players)
   const slots = getSlotsForCount(totalCount)
-  const shuffled = [...slots].sort(() => Math.random() - 0.5)
+  const shuffled = [...slots]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
   allIds.forEach((pid, i) => { state.players[pid].characterSlot = shuffled[i] })
 
   const scenario = generateScenario(totalCount, state.mode)

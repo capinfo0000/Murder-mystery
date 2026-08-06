@@ -102,7 +102,7 @@ export default function HandoutPage() {
       {/* Debug character switcher */}
       {isDebug && (
         <div className="bg-[#0d0820] border-b border-purple-900/50 px-4 py-2">
-          <div className="flex gap-1.5 max-w-md mx-auto overflow-x-auto">
+          <div className="flex flex-wrap gap-1.5 max-w-md mx-auto">
             {allSlots.map(slot => {
               const slotEntry = Object.entries(game.players).find(([, p]) => p.characterSlot === slot)
               const slotPlayer = slotEntry?.[1]
@@ -110,14 +110,14 @@ export default function HandoutPage() {
                 <button
                   key={slot}
                   onClick={() => setActiveViewSlot(slot === mySlot ? null : slot)}
-                  className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`px-2 py-1 rounded-lg text-xs font-medium border transition-colors ${
                     viewSlot === slot
                       ? 'bg-purple-700 border-purple-500 text-white'
                       : 'bg-[#1a0f2e] border-purple-800 text-purple-500 hover:border-purple-600 hover:text-purple-300'
                   }`}
                 >
-                  {slot}枠 {CHARACTERS[slot]?.name}
-                  {slotPlayer?.isNPC && <span className="opacity-50 ml-0.5">NPC</span>}
+                  {slot}:{CHARACTERS[slot]?.name}
+                  {slotPlayer?.isNPC && <span className="opacity-50 ml-0.5"> NPC</span>}
                 </button>
               )
             })}
