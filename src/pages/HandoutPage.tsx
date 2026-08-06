@@ -17,6 +17,7 @@ export default function HandoutPage() {
 
   const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
+  const [screen, setScreen] = useState<'common' | 'announce' | 'individual'>('common')
   const [tab, setTab] = useState<'character' | 'alibi' | 'cards'>('character')
   const [showMap, setShowMap] = useState(false)
   const [activeViewSlot, setActiveViewSlot] = useState<CharacterSlot | null>(null)
@@ -48,16 +49,102 @@ export default function HandoutPage() {
 
   const char = CHARACTERS[viewSlot]
   const myRole = scenario.roles[viewSlot]
-  const myKillerInfo = scenario.killers.find(k => k.slot === viewSlot)
+  const myKillerInfo = (scenario.killers ?? []).find(k => k.slot === viewSlot)
   const myAlibis = scenario.alibis[viewSlot]
-  const myCards = Object.values(game.cards || {}).filter(c => c.ownerId === viewUid)
+  const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === viewUid)
   const isHost = game.hostId === uid
 
-  const allReady = Object.values(game.players).filter(p => !p.isNPC).every(p => p.isReady)
+  const allReady = Object.values(game.players ?? {}).filter(p => !p.isNPC).every(p => p.isReady)
 
-  // Relationship list from character definition
   const relationships = Object.entries(char.relationships ?? {}) as [CharacterSlot, string][]
 
+  // ── COMMON SCREEN ──────────────────────────────────────────────────────────
+  if (screen === 'common') {
+    return (
+      <div className="min-h-screen bg-[#0f0a1a] pb-24">
+        <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3 text-center">
+          <h2 className="text-purple-200 font-bold text-base" style={{ fontFamily: 'serif' }}>紫苑館の秘密</h2>
+          <p className="text-purple-500 text-xs mt-0.5">共通情報 — 全員で確認してください</p>
+        </div>
+        <div className="max-w-md mx-auto px-4 py-4 space-y-4">
+          {scenario.synopsis && (
+            <Section title="📜 あらすじ">
+              <div className="space-y-3">
+                {scenario.synopsis.split('\n\n').map((para, i) => (
+                  <p key={i} className="text-purple-200 text-sm leading-relaxed">{para}</p>
+                ))}
+              </div>
+            </Section>
+          )}
+          <Section title={`💀 被害者: ${MAIN_VICTIM.name}（${MAIN_VICTIM.role}）`}>
+            <p className="text-purple-200 text-sm leading-relaxed">{MAIN_VICTIM.background}</p>
+          </Section>
+          {((scenario.npcVictims ?? []).length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
+            <Section title="🕯 館の関係者（全員既知）">
+              <p className="text-purple-500 text-xs mb-3">紫苑館に関わる人物の状況。死因は報告書による。</p>
+              <div className="space-y-2">
+                {(scenario.npcVictims ?? []).map((v, i) => (
+                  <div key={`dead-${i}`} className="flex gap-3 text-sm">
+                    <span className="text-red-400/80 text-xs w-4 shrink-0 mt-0.5">✝</span>
+                    <div className="min-w-0">
+                      <span className="text-blue-300 font-medium">{v.role}</span>
+                      <p className="text-purple-300 text-xs mt-0.5">{v.apparentCause}</p>
+                    </div>
+                  </div>
+                ))}
+                {(scenario.npcSurvivors ?? []).map((s, i) => (
+                  <div key={`alive-${i}`} className="flex gap-3 text-sm">
+                    <span className="text-green-500/60 text-xs w-4 shrink-0 mt-0.5">●</span>
+                    <div className="min-w-0">
+                      <span className="text-blue-300 font-medium">{s.role}</span>
+                      <span className="text-green-400/70 text-xs ml-2">生存</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+        </div>
+        <div className="fixed bottom-0 left-0 right-0 bg-[#1a0f2e] border-t border-purple-900 px-4 py-3">
+          <div className="max-w-md mx-auto">
+            <button
+              onClick={() => setScreen('announce')}
+              className="w-full bg-purple-700 hover:bg-purple-600 text-white font-medium rounded-xl py-3 text-sm"
+            >
+              個別情報へ進む →
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── ANNOUNCE SCREEN ────────────────────────────────────────────────────────
+  if (screen === 'announce') {
+    return (
+      <div className="min-h-screen bg-[#0a0614] flex flex-col items-center justify-center px-6 text-center">
+        <div className="mb-6 text-5xl">🔒</div>
+        <h2 className="text-purple-100 font-bold text-xl mb-4" style={{ fontFamily: 'serif' }}>
+          ここからは個別情報です
+        </h2>
+        <p className="text-purple-300 text-sm leading-relaxed mb-2">
+          スマホを他のプレイヤーから遠ざけてください。
+        </p>
+        <p className="text-purple-300 text-sm leading-relaxed mb-10">
+          これ以降の情報は<span className="text-amber-300 font-medium">あなただけ</span>のものです。<br />
+          他のプレイヤーには絶対に見せないでください。
+        </p>
+        <button
+          onClick={() => setScreen('individual')}
+          className="bg-purple-700 hover:bg-purple-600 text-white font-medium rounded-xl py-3 px-10 text-sm"
+        >
+          わかった →
+        </button>
+      </div>
+    )
+  }
+
+  // ── INDIVIDUAL SCREEN ──────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
       {showMap && <ManorMap onClose={() => setShowMap(false)} />}
@@ -102,7 +189,7 @@ export default function HandoutPage() {
       {/* Debug character switcher */}
       {isDebug && (
         <div className="bg-[#0d0820] border-b border-purple-900/50 px-4 py-2">
-          <div className="flex gap-1.5 max-w-md mx-auto overflow-x-auto">
+          <div className="flex flex-wrap gap-1.5 max-w-md mx-auto">
             {allSlots.map(slot => {
               const slotEntry = Object.entries(game.players).find(([, p]) => p.characterSlot === slot)
               const slotPlayer = slotEntry?.[1]
@@ -110,14 +197,14 @@ export default function HandoutPage() {
                 <button
                   key={slot}
                   onClick={() => setActiveViewSlot(slot === mySlot ? null : slot)}
-                  className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`px-2 py-1 rounded-lg text-xs font-medium border transition-colors ${
                     viewSlot === slot
                       ? 'bg-purple-700 border-purple-500 text-white'
                       : 'bg-[#1a0f2e] border-purple-800 text-purple-500 hover:border-purple-600 hover:text-purple-300'
                   }`}
                 >
-                  {slot}枠 {CHARACTERS[slot]?.name}
-                  {slotPlayer?.isNPC && <span className="opacity-50 ml-0.5">NPC</span>}
+                  {slot}:{CHARACTERS[slot]?.name}
+                  {slotPlayer?.isNPC && <span className="opacity-50 ml-0.5"> NPC</span>}
                 </button>
               )
             })}
@@ -129,50 +216,12 @@ export default function HandoutPage() {
         {/* CHARACTER tab */}
         {tab === 'character' && (
           <div className="space-y-4">
-            {/* Synopsis — shown to all players */}
-            {scenario.synopsis && (
-              <Section title="📜 あらすじ">
-                <p className="text-purple-200 text-sm leading-relaxed italic">{scenario.synopsis}</p>
-              </Section>
-            )}
-            {/* Main victim profile — shown to all players */}
-            <Section title={`💀 被害者: ${MAIN_VICTIM.name}（${MAIN_VICTIM.role}）`}>
-              <p className="text-purple-200 text-sm leading-relaxed">{MAIN_VICTIM.background}</p>
-            </Section>
-
-            {/* Public: manor staff — dead and surviving */}
-            {(scenario.npcVictims.length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
-              <Section title="🕯 館の関係者（全員既知）">
-                <p className="text-purple-500 text-xs mb-3">紫苑館に関わる人物の状況。死因は報告書による。</p>
-                <div className="space-y-2">
-                  {scenario.npcVictims.map((v, i) => (
-                    <div key={`dead-${i}`} className="flex gap-3 text-sm">
-                      <span className="text-red-400/80 text-xs w-4 shrink-0 mt-0.5">✝</span>
-                      <div className="min-w-0">
-                        <span className="text-blue-300 font-medium">{v.role}</span>
-                        <p className="text-purple-300 text-xs mt-0.5">{v.apparentCause}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {(scenario.npcSurvivors ?? []).map((s, i) => (
-                    <div key={`alive-${i}`} className="flex gap-3 text-sm">
-                      <span className="text-green-500/60 text-xs w-4 shrink-0 mt-0.5">●</span>
-                      <div className="min-w-0">
-                        <span className="text-blue-300 font-medium">{s.role}</span>
-                        <span className="text-green-400/70 text-xs ml-2">生存</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            )}
             <Section title="背景">
               <p className="text-purple-200 text-sm leading-relaxed">{char.background}</p>
             </Section>
             <Section title="あなただけの秘密（誰にも言わないこと）">
               <p className="text-amber-200 text-sm leading-relaxed">{char.secretAction}</p>
             </Section>
-            {/* Inter-player connections — only visible to the relevant players */}
             {(() => {
               const myConns = (scenario.connections ?? []).filter(
                 c => c.fromSlot === viewSlot || c.toSlot === viewSlot
@@ -216,7 +265,6 @@ export default function HandoutPage() {
                 </Section>
               )
             })()}
-            {/* Cooperation chain — only visible to involved killers */}
             {(() => {
               const chain = scenario.cooperationChain
               if (!chain) return null
@@ -271,8 +319,7 @@ export default function HandoutPage() {
                       {(() => {
                         const v = myKillerInfo.victimName ?? '被害者'
                         const pat = scenario.dualKillerInfo?.type
-                        // First-attacker for double_weapon / environment patterns
-                        const isFirst = scenario.killers.findIndex(k => k.slot === viewSlot) === 0
+                        const isFirst = (scenario.killers ?? []).findIndex(k => k.slot === viewSlot) === 0
 
                         if (myKillerInfo.method === 'poison') {
                           if (pat === 'poison_failed_weapon_killed') {
@@ -286,7 +333,6 @@ export default function HandoutPage() {
                         if (myKillerInfo.method === 'environmental') {
                           return `T2前に${LOCATION_NAMES[myKillerInfo.location]}へ${myKillerInfo.weapon.name}を仕掛けた。${v}が罠に落ち負傷したのを遠目に確認し、その場を去った。死亡は直接確認していない。しかし夜が明けてもたらされた報告には、罠だけでは説明できない傷も含まれていたという。`
                         }
-                        // weapon killer
                         if (pat === 'weapon_found_dead') {
                           return `T2、凶器を手に${v}の部屋へ踏み込んだとき、すでに${v}は床に倒れており、脈はなかった。誰かに先を越されたのだと悟り、動揺しながらその場を後にした。凶器はそのまま持ち帰った。`
                         }
