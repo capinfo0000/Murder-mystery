@@ -548,7 +548,7 @@ export function generateScenario(
   ).slice(0, 3).map(n => ({ role: n.role }))
 
   // ── synopsis ──────────────────────────────────────────────────────────
-  const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, suicide, cooperationChain, slots.length)
+  const synopsis = generateSynopsis(killers, npcVictims, outsideKiller, suicide, cooperationChain, slots)
 
   return {
     victims,
@@ -573,23 +573,40 @@ function generateSynopsis(
   _killers: KillerInfo[],
   npcVictims: NpcVictim[],
   _outsideKiller: boolean,
-  _suicide: boolean,
+  suicide: boolean,
   _cooperationChain: CooperationChain | undefined | null,
-  playerCount: number,
+  slots: CharacterSlot[],
 ): string {
+  const playerCount = slots.length
+
   const npcLine = npcVictims.length > 0
     ? `同じ夜、館の中でさらに複数の人物が変死しているのが発見された。`
     : ''
 
-  return [
+  const commonParagraphs = [
     '現代日本。中部山間の深い森に抱かれた石造りの西洋館「紫苑館」——神条財閥総帥・神条 源太郎が昭和期に建て、半世紀以上にわたって使い続けてきた別邸である。東京の本邸とは異なり、来客を厳選することで知られるこの館には、源太郎が認めた者だけが足を踏み入れることができた。',
 
     '数週間前、源太郎は親族・側近・館の関係者に一方的な連絡を入れた。「今月中に紫苑館まで来るように」——理由は告げられなかった。源太郎がこのような招集をかけること自体が異例であり、呼ばれた者たちはそれぞれ思惑を巡らせながら館へと足を向けた。こうして今夜この館には、家族として呼び寄せられた者、定期的な用件でここを訪れていた者、依頼を受けて館内の仕事を進めていた者、そして長年ここに住み込んで仕えてきた者たちが、それぞれの立場で同じ屋根の下に集うことになった。',
 
     '夕刻から雨が強まり、夜半には暴風雨となった。山間の細い道路は崖崩れで寸断され、電話回線も夜半過ぎに途絶えた。最後に外部と連絡が取れたのは夜の十時——それ以降、紫苑館は外の世界から完全に孤立した。',
+  ]
 
-    `そして夜明け前、源太郎が自室で息絶えているのが発見された。室内に争った形跡はなく、扉の鍵は内側からかかっていた——それでいて、遺体の状況には自然死とは言い切れない不自然さがあった。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`,
-  ].join('\n\n')
+  let lastParagraph: string
+  if (suicide) {
+    const suspect = CHARACTERS[slots[Math.floor(Math.random() * slots.length)]]
+    const redHerrings = [
+      `${suspect.name}が深夜に源太郎の部屋付近を出入りするのを目撃した者がいる。`,
+      `前夜、${suspect.name}と源太郎が言い争うような声が聞こえたという証言がある。`,
+      `発見直前、${suspect.name}が廊下を急ぎ足で立ち去るのを見た者がいた。`,
+      `源太郎の部屋の前に、${suspect.name}のものと思しき品が残されていた。`,
+    ]
+    const hint = redHerrings[Math.floor(Math.random() * redHerrings.length)]
+    lastParagraph = `そして夜明け前、源太郎が自室で息絶えているのが発見された。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`
+  } else {
+    lastParagraph = `そして夜明け前、源太郎が自室で息絶えているのが発見された。室内に争った形跡はなく、扉の鍵は内側からかかっていた——それでいて、遺体の状況には自然死とは言い切れない不自然さがあった。${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、一夜のあいだに何が起きたのかを明らかにしなければならない。`
+  }
+
+  return [...commonParagraphs, lastParagraph].join('\n\n')
 }
 
 export { getSlotsForCount }
