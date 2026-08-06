@@ -66,7 +66,10 @@ export interface NpcSurvivor {
 export interface NpcVictim {
   name: string
   role: string
-  apparentCause: string      // shown during game (may disguise murder as natural death)
+  apparentCause: string      // official recorded cause (may disguise murder as natural death)
+  deathLocation: string      // estimated place of death — shown to all players
+  deathTime: string          // estimated time of death — shown to all players
+  causeHint?: string         // coroner finding revealed gradually via cards (murder anomaly)
   isRelatedToCase: boolean   // truth: was this actually murder?
   trueMurderDetail?: string  // revealed at result when isRelatedToCase=true
   killerSlot?: CharacterSlot // which player killed them (poison killer for dual scenarios)

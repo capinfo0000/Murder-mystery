@@ -81,15 +81,21 @@ export default function HandoutPage() {
             <p className="text-purple-200 text-sm leading-relaxed">{MAIN_VICTIM.background}</p>
           </Section>
           {((scenario.npcVictims ?? []).length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
-            <Section title="館の関係者（全員既知）">
-              <p className="text-purple-500 text-xs mb-3">紫苑館に関わる人物の状況。死因は報告書による。</p>
-              <div className="space-y-2">
+            <Section title="館で見つかった死亡者・生存者">
+              <p className="text-purple-500 text-xs mb-3 leading-relaxed">
+                この夜、館の内外で複数の人物が死亡した。判明しているのは「どこで」「いつ頃」亡くなったと推定されるかのみ。
+                死因や、事故なのか殺人なのかは、討議やカードの手がかりから各自で推理すること。
+              </p>
+              <div className="space-y-2.5">
                 {(scenario.npcVictims ?? []).map((v, i) => (
                   <div key={`dead-${i}`} className="flex gap-3 text-sm">
                     <span className="text-red-400/80 text-xs w-4 shrink-0 mt-0.5">✝</span>
                     <div className="min-w-0">
                       <span className="text-blue-300 font-medium">{v.role}</span>
-                      <p className="text-purple-300 text-xs mt-0.5">{v.apparentCause}</p>
+                      <div className="text-purple-400 text-xs mt-0.5 space-y-0.5">
+                        <p>推定死亡場所: <span className="text-purple-200">{v.deathLocation}</span></p>
+                        <p>推定死亡時刻: <span className="text-purple-200">{v.deathTime}</span></p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -98,7 +104,7 @@ export default function HandoutPage() {
                     <span className="text-green-500/60 text-xs w-4 shrink-0 mt-0.5">●</span>
                     <div className="min-w-0">
                       <span className="text-blue-300 font-medium">{s.role}</span>
-                      <span className="text-green-400/70 text-xs ml-2">生存</span>
+                      <span className="text-green-400/70 text-xs ml-2">生存（証言可能）</span>
                     </div>
                   </div>
                 ))}

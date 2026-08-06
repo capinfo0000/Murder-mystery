@@ -193,6 +193,9 @@ export default function ResultPage() {
                       <span className="text-purple-200 text-sm font-medium">{v.name}</span>
                       <span className="text-purple-600 text-xs">{v.role}</span>
                     </div>
+                    <p className="text-purple-500 text-xs ml-0.5">
+                      {v.deathLocation}／{v.deathTime}
+                    </p>
                     <p className="text-purple-400 text-xs ml-0.5">
                       報告書: {v.apparentCause}
                     </p>
