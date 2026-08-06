@@ -10,10 +10,10 @@ import {
 } from 'firebase/database'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { v4 as uuid } from 'uuid'
-import type { EvidenceCard, GamePhase, GameState, VoteData, CharacterSlot } from '../types/game'
+import type { EvidenceCard, GamePhase, GameState, VoteData } from '../types/game'
 import { generateScenario } from '../logic/scenarioGenerator'
 import { dealCards } from '../logic/cardDealer'
-import { computeScores, determineWinners } from '../logic/gameLogic'
+import { computeScores, determineWinners, determineMainKillerCaught } from '../logic/gameLogic'
 import { getSlotsForCount } from '../data/characters'
 
 const firebaseConfig = {
@@ -37,19 +37,28 @@ export async function signIn(): Promise<string> {
 
 // ── game creation ───────────────────────────────────────────────────────────
 
-export async function createGame(hostId: string): Promise<string> {
+export async function createGame(
+  hostId: string,
+  settings?: {
+    playerCount?: number
+    mode?: import('../types/game').GameMode
+    hasGM?: boolean
+    roundDurationMinutes?: number
+    totalRounds?: number
+  }
+): Promise<string> {
   const gameId = Math.random().toString(36).slice(2, 8).toUpperCase()
   const gameRef = ref(db, `games/${gameId}`)
 
   await set(gameRef, {
     hostId,
-    playerCount: 5,
-    mode: 'normal',
+    playerCount: settings?.playerCount ?? 5,
+    mode: settings?.mode ?? (['normal', 'hard', 'puzzle'] as const)[Math.floor(Math.random() * 3)],
     phase: 'lobby',
-    hasGM: false,
-    totalRounds: 3,
+    hasGM: settings?.hasGM ?? false,
+    totalRounds: settings?.totalRounds ?? 3,
     roundStartAt: null,
-    roundDurationMinutes: 20,
+    roundDurationMinutes: settings?.roundDurationMinutes ?? 20,
     secretTalkDurationMinutes: 10,
     players: {},
     scenario: null,
@@ -105,13 +114,16 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   const state = snap.val() as GameState
   if (!state || state.hostId !== hostId) return
 
-  const humanPlayers = Object.entries(state.players).filter(([, p]) => !p.isNPC)
+  const playersMap = state.players ?? {}
+  const humanPlayers = Object.entries(playersMap).filter(([, p]) => !p.isNPC)
   const humanCount = humanPlayers.length
   const totalCount = state.playerCount
-  const npcCount = Math.min(totalCount - humanCount, 3)
+  const isDebug = totalCount < 4
+  const needed = Math.max(0, totalCount - humanCount)
+  const npcCount = isDebug ? needed : Math.min(needed, 3)
 
-  // fill missing slots with NPC (max 3)
-  const existingNPCs = Object.keys(state.players).filter(id => state.players[id].isNPC).length
+  // fill missing slots with NPCs (debug: all slots, production: max 3)
+  const existingNPCs = Object.keys(playersMap).filter(id => playersMap[id].isNPC).length
   for (let i = existingNPCs; i < npcCount; i++) {
     await joinGame(gameId, `npc_${uuid().slice(0, 6)}`, `NPC${i + 1}`, true)
   }
@@ -122,14 +134,11 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   const shuffledSlots = [...slots].sort(() => Math.random() - 0.5)
   const playerIds = Object.keys(allPlayers)
 
-  const slotAssignments: Record<string, CharacterSlot> = {}
-  playerIds.forEach((pid, i) => {
-    slotAssignments[pid] = shuffledSlots[i]
-  })
-
   const updates: Record<string, unknown> = {}
   playerIds.forEach((pid, i) => {
-    updates[`games/${gameId}/players/${pid}/characterSlot`] = shuffledSlots[i]
+    if (shuffledSlots[i] !== undefined) {
+      updates[`games/${gameId}/players/${pid}/characterSlot`] = shuffledSlots[i]
+    }
   })
 
   // generate scenario
@@ -144,14 +153,20 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
     scenario.killers,
     scenario.victims,
     5,
-    25
+    25,
+    scenario.assignedProfessions ?? {},
+    scenario.npcSurvivors ?? [],
+    scenario.npcVictims ?? [],
+    scenario.outsideKiller ?? false,
+    scenario.suicide ?? false,
   )
 
   const cardUpdates: Record<string, EvidenceCard> = {}
   for (const [cardId, card] of Object.entries(cards)) {
     cardUpdates[cardId] = card
   }
-  updates[`games/${gameId}/scenario`] = scenario
+  // Firebase rejects undefined values — strip them via JSON round-trip
+  updates[`games/${gameId}/scenario`] = JSON.parse(JSON.stringify(scenario))
   updates[`games/${gameId}/phase`] = 'handout'
   await update(ref(db), updates)
   await set(ref(db, `games/${gameId}/cards`), cardUpdates)
@@ -289,20 +304,15 @@ export async function finalizeResult(gameId: string, hostId: string): Promise<vo
 
   const scores = computeScores(state)
   const winnerIds = determineWinners(scores)
-  const mainKillerSlot = state.scenario?.killers[0]?.slot ?? null
-  const votes = state.votes || {}
-
-  const counts: Record<string, number> = {}
-  for (const v of Object.values(votes)) {
-    if (!v.targetSlot) continue
-    counts[v.targetSlot] = (counts[v.targetSlot] || 0) + 1
-  }
-  const mv = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-  const mainKillerCaught = mv === mainKillerSlot
+  const mainKillerCaught = determineMainKillerCaught(state)
+  const outsideKillerCase = state.scenario?.outsideKiller === true
+  const suicideCase = state.scenario?.suicide === true
 
   await update(ref(db), {
     [`games/${gameId}/result`]: {
       mainKillerCaught,
+      outsideKillerCase,
+      suicideCase,
       scores,
       winnerIds,
       trueScenario: state.scenario,
@@ -321,6 +331,10 @@ export function subscribeGame(
   return onValue(gameRef, snap => {
     callback(snap.val() as GameState | null)
   })
+}
+
+export async function renamePlayer(gameId: string, playerId: string, name: string): Promise<void> {
+  await set(ref(db, `games/${gameId}/players/${playerId}/name`), name)
 }
 
 export function markMessageRead(gameId: string, msgId: string): void {

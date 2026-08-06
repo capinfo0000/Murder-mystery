@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   subscribeGame, advancePhase, shareCardWithAll, drawFromDeck,
 } from '../services/firebase'
-import type { GameState, GamePhase } from '../types/game'
+import type { GameState, GamePhase, CharacterSlot } from '../types/game'
+import { CHARACTERS } from '../data/characters'
 import EvidenceCardView from '../components/EvidenceCard'
 import DeckPanel from '../components/DeckPanel'
 import SecretMessagePanel from '../components/SecretMessagePanel'
+import ManorMap from '../components/ManorMap'
 
 const PHASE_LABELS: Record<string, string> = {
   round1: 'ラウンド1 — 全体討議',
@@ -27,14 +29,25 @@ export default function DiscussionPage() {
   const [searchParams] = useSearchParams()
   const uid = searchParams.get('uid') ?? ''
 
+  const navigate = useNavigate()
   const [game, setGame] = useState<GameState | null>(null)
   const [tab, setTab] = useState<'public' | 'hand' | 'deck' | 'secret'>('public')
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
+  const [showMap, setShowMap] = useState(false)
+  const [activeViewSlot, setActiveViewSlot] = useState<CharacterSlot | null>(null)
 
   useEffect(() => {
     if (!gameId) return
     return subscribeGame(gameId, setGame)
   }, [gameId])
+
+  useEffect(() => {
+    if (!game) return
+    if (game.phase === 'voting') navigate(`/vote/${gameId}?uid=${uid}`, { replace: true })
+    else if (game.phase === 'result') navigate(`/result/${gameId}?uid=${uid}`, { replace: true })
+    else if (!['round1', 'secret_talk', 'round2', 'round3'].includes(game.phase))
+      navigate(`/handout/${gameId}?uid=${uid}`, { replace: true })
+  }, [game, gameId, uid, navigate])
 
   // Timer
   useEffect(() => {
@@ -76,23 +89,19 @@ export default function DiscussionPage() {
 
   if (!game) return <Loading />
 
-  // redirect when phase is out of range
-  if (game.phase === 'voting') {
-    window.location.href = `/vote/${gameId}?uid=${uid}`
-    return null
-  }
-  if (game.phase === 'result') {
-    window.location.href = `/result/${gameId}?uid=${uid}`
-    return null
-  }
-  if (!['round1', 'secret_talk', 'round2', 'round3'].includes(game.phase)) {
-    window.location.href = `/handout/${gameId}?uid=${uid}`
-    return null
-  }
+  if (!['round1', 'secret_talk', 'round2', 'round3'].includes(game.phase)) return null
 
   const isHost = game.hostId === uid
   const myPlayer = game.players[uid]
-  const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === uid)
+  const isDebug = game.playerCount < 4
+  const scenario = game.scenario
+  const allSlots = scenario ? Object.keys(scenario.roles) as CharacterSlot[] : []
+  const mySlot = myPlayer?.characterSlot
+  const viewSlot: CharacterSlot | null = (isDebug && activeViewSlot) ? activeViewSlot : (mySlot ?? null)
+  const viewUid = viewSlot
+    ? (Object.entries(game.players).find(([, p]) => p.characterSlot === viewSlot)?.[0] ?? uid)
+    : uid
+  const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === viewUid)
   const publicCards = Object.values(game.cards ?? {}).filter(c => c.sharedWith.includes('all'))
   const deckCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === 'deck')
   const hasDrawn = !!myPlayer?.hasDrawn
@@ -106,14 +115,23 @@ export default function DiscussionPage() {
 
   return (
     <div className="min-h-screen bg-[#0f0a1a] pb-24">
+      {showMap && <ManorMap onClose={() => setShowMap(false)} />}
       {/* Top bar */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-3">
         <div className="flex items-center justify-between">
           <h2 className="text-purple-200 font-medium text-sm">
             {PHASE_LABELS[game.phase] ?? game.phase}
           </h2>
-          <div className={`text-lg font-mono font-bold ${timerColor}`}>
-            {mins}:{secs}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowMap(true)}
+              className="text-purple-400 hover:text-purple-200 text-sm px-2 py-0.5 rounded border border-purple-800 hover:border-purple-600 transition-colors"
+            >
+              🗺 マップ
+            </button>
+            <div className={`text-lg font-mono font-bold ${timerColor}`}>
+              {mins}:{secs}
+            </div>
           </div>
         </div>
         {isSecretTalk && (
@@ -140,6 +158,27 @@ export default function DiscussionPage() {
           </button>
         ))}
       </div>
+
+      {/* Debug character switcher */}
+      {isDebug && allSlots.length > 0 && (
+        <div className="bg-[#0d0820] border-b border-purple-900/50 px-4 py-2">
+          <div className="flex gap-1.5 max-w-md mx-auto overflow-x-auto">
+            {allSlots.map(slot => (
+              <button
+                key={slot}
+                onClick={() => setActiveViewSlot(slot === mySlot ? null : slot)}
+                className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                  viewSlot === slot
+                    ? 'bg-purple-700 border-purple-500 text-white'
+                    : 'bg-[#1a0f2e] border-purple-800 text-purple-500 hover:border-purple-600 hover:text-purple-300'
+                }`}
+              >
+                {slot}枠 {CHARACTERS[slot]?.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-md mx-auto px-4 py-4 space-y-3">
         {/* PUBLIC */}

@@ -1,9 +1,29 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { subscribeGame } from '../services/firebase'
-import type { GameState, CharacterSlot } from '../types/game'
-import { CHARACTERS } from '../data/characters'
+import type { GameState, CharacterSlot, DualKillerPattern } from '../types/game'
+import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
+
+const DUAL_FIRST_LABEL: Record<DualKillerPattern, string> = {
+  poison_then_weapon:          '毒を盛った者',
+  weapon_found_dead:           '毒を盛った者',
+  weapon_then_poison:          '毒で止めを刺した者',
+  poison_failed_weapon_killed: '毒を盛った者（失敗）',
+  double_weapon_first_failed:  '先に攻撃した者',
+  double_weapon_overlap:       '攻撃者（一方）',
+  environment_then_weapon:     '罠を仕掛けた者',
+}
+
+const DUAL_SECOND_LABEL: Record<DualKillerPattern, string> = {
+  poison_then_weapon:          '凶器で止めを刺した者',
+  weapon_found_dead:           '凶器持参・未使用',
+  weapon_then_poison:          '先に凶器で傷つけた者',
+  poison_failed_weapon_killed: '凶器で独立に殺害した者',
+  double_weapon_first_failed:  '致命傷を与えた者',
+  double_weapon_overlap:       '攻撃者（もう一方）',
+  environment_then_weapon:     '凶器で止めを刺した者',
+}
 
 export default function ResultPage() {
   const { gameId } = useParams<{ gameId: string }>()
@@ -30,14 +50,32 @@ export default function ResultPage() {
     <div className="min-h-screen bg-[#0f0a1a] pb-16">
       {/* Header */}
       <div className="bg-[#1a0f2e] border-b border-purple-900 px-4 py-4 text-center">
-        <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
-          {result.mainKillerCaught ? '✓ 犯人逮捕成功' : '✗ 犯人逃走'}
-        </div>
-        <p className="text-purple-400 text-xs">
-          {result.mainKillerCaught
-            ? '真犯人への最多票が一致しました'
-            : '無実の人物への最多票が集まりました'}
-        </p>
+        {result.suicideCase ? (
+          <>
+            <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
+              {result.mainKillerCaught ? '✓ 自殺と見破った' : '✗ 自殺を見抜けず'}
+            </div>
+            <p className="text-purple-400 text-xs">当主が組織の追手を悟り、自ら命を絶った</p>
+          </>
+        ) : result.outsideKillerCase ? (
+          <>
+            <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
+              {result.mainKillerCaught ? '✓ 外部犯を見破った' : '✗ 外部犯を見破れず'}
+            </div>
+            <p className="text-purple-400 text-xs">組織の殺し屋による犯行 — 迷宮入り</p>
+          </>
+        ) : (
+          <>
+            <div className={`text-2xl mb-1 ${result.mainKillerCaught ? 'text-green-400' : 'text-red-400'}`}>
+              {result.mainKillerCaught ? '✓ 犯人逮捕成功' : '✗ 犯人逃走'}
+            </div>
+            <p className="text-purple-400 text-xs">
+              {result.mainKillerCaught
+                ? '真犯人への最多票が一致しました'
+                : '無実の人物への最多票が集まりました'}
+            </p>
+          </>
+        )}
       </div>
 
       {/* Tabs */}
@@ -104,22 +142,87 @@ export default function ResultPage() {
         {/* TRUTH */}
         {tab === 'truth' && scenario && (
           <div className="space-y-4">
-            {/* Killers */}
-            <Section title="🔪 真犯人">
-              {scenario.killers.map(k => (
-                <div key={k.slot} className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 mb-2">
-                  <div className="text-red-300 font-medium text-sm mb-1">
-                    {CHARACTERS[k.slot]?.name} ({k.slot}枠)
-                  </div>
-                  <div className="text-red-200/70 text-xs space-y-0.5">
-                    <p>被害者: {CHARACTERS[k.victimSlot]?.name}</p>
-                    <p>凶器: {k.weapon.name}</p>
-                    <p>場所: {LOCATION_NAMES[k.location]}</p>
-                    <p>偽装: {k.weapon.disguisedAs}</p>
-                  </div>
-                </div>
-              ))}
+            {/* Main victim profile */}
+            <Section title={`💀 被害者: ${MAIN_VICTIM.name}`}>
+              <div className="text-purple-400 text-xs mb-1">{MAIN_VICTIM.role}</div>
+              <p className="text-purple-200 text-xs leading-relaxed">{MAIN_VICTIM.background}</p>
             </Section>
+
+            {/* Killers */}
+            {scenario.suicide ? (
+              <Section title="💊 真相：自殺">
+                <div className="bg-amber-950/30 border border-amber-900/50 rounded-lg p-3">
+                  <div className="text-amber-300 font-medium text-sm mb-1">神条源太郎（自死）</div>
+                  <p className="text-amber-200/70 text-xs">裏社会の組織が自分を消しに来ることを悟った当主は、追い詰められた末に自ら命を絶った。プレイヤーの誰も殺人は犯していない。館に集う者たちはそれぞれの秘密行動に追われ、当主の最後の苦悩を知らなかった。</p>
+                </div>
+              </Section>
+            ) : scenario.outsideKiller ? (
+              <Section title="🔫 真犯人">
+                <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-3">
+                  <div className="text-red-300 font-medium text-sm mb-1">組織の殺し屋（身元不明・逃走済み）</div>
+                  <p className="text-red-200/70 text-xs">犯罪組織から派遣されたプロの殺し屋が当主を暗殺し、目撃者を口封じした後に逃走した。プレイヤーの誰も殺人は犯していない。</p>
+                </div>
+              </Section>
+            ) : (
+              <Section title="🔪 真犯人">
+                {scenario.killers.map(k => (
+                  <div key={k.slot} className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 mb-2">
+                    <div className="text-red-300 font-medium text-sm mb-1">
+                      {CHARACTERS[k.slot]?.name} ({k.slot}枠)
+                    </div>
+                    <div className="text-red-200/70 text-xs space-y-0.5">
+                      <p>被害者: {k.victimSlot ? `${CHARACTERS[k.victimSlot]?.name}（${k.victimSlot}枠）` : k.victimName}</p>
+                      <p>凶器: {k.weapon.name}</p>
+                      <p>場所: {LOCATION_NAMES[k.location]}</p>
+                      <p>偽装: {k.weapon.disguisedAs}</p>
+                    </div>
+                  </div>
+                ))}
+              </Section>
+            )}
+
+            {/* NPC victim truth */}
+            {scenario.npcVictims && scenario.npcVictims.length > 0 && (
+              <Section title="🕯 死亡者の真実">
+                {scenario.npcVictims.map((v, i) => (
+                  <div key={i} className="py-2 border-b border-purple-900/30 last:border-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs px-1.5 py-0.5 rounded border ${v.isRelatedToCase ? 'bg-red-900/30 text-red-300 border-red-800' : 'bg-purple-900/30 text-purple-400 border-purple-800'}`}>
+                        {v.isRelatedToCase ? (v.dualKillerPattern ? '二重犯行' : '他殺') : '自然死'}
+                      </span>
+                      <span className="text-purple-200 text-sm font-medium">{v.name}</span>
+                      <span className="text-purple-600 text-xs">{v.role}</span>
+                    </div>
+                    <p className="text-purple-400 text-xs ml-0.5">
+                      報告書: {v.apparentCause}
+                    </p>
+                    {v.isRelatedToCase && v.trueMurderDetail && (
+                      <p className="text-red-300 text-xs mt-0.5 ml-0.5">真相: {v.trueMurderDetail}</p>
+                    )}
+                    {v.isRelatedToCase && (
+                      <div className="mt-0.5 ml-0.5 space-y-0.5">
+                        {v.dualKillerPattern ? (
+                          <>
+                            <p className="text-red-400 text-xs">
+                              {DUAL_FIRST_LABEL[v.dualKillerPattern]}: {CHARACTERS[v.killerSlot!]?.name}（{v.killerSlot}枠）
+                            </p>
+                            <p className="text-red-400 text-xs">
+                              {DUAL_SECOND_LABEL[v.dualKillerPattern]}: {CHARACTERS[v.secondKillerSlot!]?.name}（{v.secondKillerSlot}枠）
+                            </p>
+                          </>
+                        ) : v.killerSlot ? (
+                          <p className="text-red-400 text-xs">
+                            犯人: {CHARACTERS[v.killerSlot]?.name}（{v.killerSlot}枠）
+                          </p>
+                        ) : scenario.outsideKiller ? (
+                          <p className="text-red-400 text-xs">犯人: 組織の殺し屋</p>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </Section>
+            )}
 
             {/* All secret actions */}
             <Section title="全員の秘密行動">

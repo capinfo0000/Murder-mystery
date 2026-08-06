@@ -369,6 +369,135 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     content: '被害者は毎晩、就寝前に同じ銘柄のワインを1杯飲む習慣があった。使用人なら誰でも知っていた。',
     category: 'victim', relatedSlot: null, baseIsTrue: true,
   },
+  {
+    id: 'vi_org_001',
+    content: '被害者の金庫に、国内外の複数の架空名義口座への送金記録が残されていた。総額は数十億円に上る。送金先の法人はいずれも実体のない幽霊会社だった。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_002',
+    content: '被害者の手帳の最終ページに、暗号化された連絡先リストが挟まれていた。記号と数字だけで構成されており、人名は一切記されていない。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_003',
+    content: '使用人の証言によれば、被害者は月に一度、「顔も名前も名乗らない訪問者」を深夜に書斎へ迎えていたという。その後、被害者は必ず不機嫌になっていた。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_004',
+    content: '被害者の書斎の隠し引き出しから、「債務確認書」と題された文書が発見された。差出人の記名はなく、被害者の署名のみがある。記載された金額は法外な額だった。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_005',
+    content: '被害者はここ数年で急激に財を成したとされるが、その事業の詳細は一切公開されていない。「本業は別にある」と被害者自身が酒席で漏らしたことがあるという証言がある。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_org_006',
+    content: '被害者の携帯電話の通話記録から、登録のない番号への定期的な発信が確認された。番号の契約者は「存在しない人物」だった。（注: 記録の信憑性は未確認）',
+    category: 'victim', relatedSlot: null, baseIsTrue: false,
+  },
+  {
+    id: 'vi_fear_001',
+    content: '被害者は事件の一週間前から食事を取り分けてもらい、自ら先に一口確認してから全員に出すよう指示していたという。使用人は「毒を疑っているようだった」と証言している。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_002',
+    content: '被害者は就寝前に必ず書斎の鍵を二重に確認し、窓の施錠を自分で確かめてから床についていた。ここ数ヶ月で始まった習慣だという。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_003',
+    content: '被害者は事件前夜、顧問弁護士に「もし自分に何かあれば、この封筒を開けてほしい」と手紙を預けていた。弁護士はその存在を認めたが、内容の開示を拒んでいる。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_004',
+    content: '被害者は「自分の命はもう長くないかもしれない」と側近に打ち明けていたという。病気の診断ではなく、「人間に殺される」という意味だったと側近は語る。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_005',
+    content: '被害者の日記には「今夜もまた見張られている気がする」という記述が三週間にわたって繰り返されていた。妄想か、根拠のある恐怖か。',
+    category: 'victim', relatedSlot: null, baseIsTrue: true,
+  },
+  {
+    id: 'vi_fear_006',
+    content: '被害者は最近になって護身用の護符を肌身離さず持つようになっていたが、事件当夜に限ってそれが部屋に残されていた。なぜ外したのかは不明だ。',
+    category: 'victim', relatedSlot: null, baseIsTrue: false,
+  },
+
+  // ───── 組織についての情報（外部犯時のみ真）─────
+  {
+    id: 'org_assassination',
+    content: '組織は「暗殺部門」を持つとされる——依頼があれば標的を問わず、跡形もなく消す。組織と金銭的なつながりを持つ者が増えれば増えるほど、「消される側」に回る可能性も高くなる。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_drugs_weapons',
+    content: '組織の主要収益は麻薬密売と武器密輸だ。その資金を使って財閥を作り上げた者、組織の取引を仲介した者、資産を洗浄するために利用された者——どれも組織にとっては「駒」にすぎない。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_fraud',
+    content: '組織は詐欺と書類偽造の専門家を抱えている。遺言書の改ざん、権利証の偽造、美術品の鑑定書すり替え——紙一枚で何億円もの財産を動かすことを組織はビジネスにしている。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_poison',
+    content: '組織の毒物専門家は「自然死に見せかけた殺害」を得意とする。持病を悪化させる遅効性の毒、アレルギー反応を誘発する薬物——どれも解剖しても判別が難しいものばかりだ。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_blackmail',
+    content: '組織は脅迫と恐喝を支配の道具として使う。医療ミス・横領・不正取引——どんな秘密も組織の手にかかれば永遠の鎖になる。逆らえば証拠を公開され、従い続ければ際限なく搾り取られる。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'org_coverup',
+    content: '組織が動いた痕跡は必ず消される——犯行現場の物証、目撃者の証言、帳簿の記録。組織の証拠消去班が動けば、捜査官が何を調べても「何もなかった夜」が出来上がる。',
+    category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
+  },
+
+  // ───── 全員無実の示唆（外部犯時のみ真）─────
+  {
+    id: 'innocent_A',
+    content: 'T2の時刻、Aが書斎にいたことは複数の目撃証言で裏付けられている。遺言書に触れていたのは事実だが、それは犯行とは無関係だった。',
+    category: 'alibi', relatedSlot: 'A', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_B',
+    content: 'BのT2の行動は書庫の使用記録と照合できる。カルテを持ち出していたのは確かだが、その時刻に犯行現場にいた形跡はない。',
+    category: 'alibi', relatedSlot: 'B', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_C',
+    content: 'CはT2の時間帯、絵画室で修復作業を続けていたとみられる。名画のすり替えを試みていたが、当主の死とは直接関わっていない。',
+    category: 'alibi', relatedSlot: 'C', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_D',
+    content: 'Dが秘密通路を使っていたことは事実だが、T2の時刻に当主の部屋へ向かった証拠はない。通路内の足跡は別の方向を示していた。',
+    category: 'alibi', relatedSlot: 'D', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_E',
+    content: 'EはT2、金庫室に籠もって裏金の整理をしていたとみられる。金庫室の鍵の使用記録がその時刻を裏付けている。',
+    category: 'alibi', relatedSlot: 'E', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_F',
+    content: 'FがT2に隠し部屋にいたことは、残された毒草の葉片が証明している。部屋から当主の居室へ移動する時間はなかった。',
+    category: 'alibi', relatedSlot: 'F', baseIsTrue: false, condition: 'outside_killer',
+  },
+  {
+    id: 'innocent_G',
+    content: 'GはT2に書斎で権利証を探していた。書斎の乱れた形跡がその証拠だが、当主への接触はなかったと推測される。',
+    category: 'alibi', relatedSlot: 'G', baseIsTrue: false, condition: 'outside_killer',
+  },
 
   // ───── 動機（motive）─────
   {
@@ -430,6 +559,161 @@ export const CARD_TEMPLATES: CardTemplate[] = [
     id: 'mo_012',
     content: 'Dは被害者への復讐を実行に移すための「段取り」を長年かけて準備していたという証言がある。',
     category: 'motive', relatedSlot: 'D', baseIsTrue: true,
+  },
+
+  // ───── 過去職業ヒント（background / physical / alibi）─────
+  // 各キャラの隠れた過去を示唆するカード。直接明記せず断片として散りばめる。
+  {
+    id: 'bg_015',
+    content: '神条薫はかつてヨーロッパに5年滞在していた。帰国後も骨董品に触れるとき、特有の角度から光を当てて確認する癖があると複数の人物が証言している。',
+    category: 'background', relatedSlot: 'A', baseIsTrue: true,
+  },
+  {
+    id: 'ph_019',
+    content: '書斎のゴミ箱に、同じ文字を繰り返し練習した反故紙が数枚捨てられていた。署名の練習のようにも見える。',
+    category: 'physical', relatedSlot: 'A', baseIsTrue: true,
+  },
+  {
+    id: 'bg_016',
+    content: '白川医師が医師免許を取得したのは35歳のときだという。それ以前の10年間のキャリアについては一切語らず、話題を変えようとする。',
+    category: 'background', relatedSlot: 'B', baseIsTrue: true,
+  },
+  {
+    id: 'al_015',
+    content: '白川は夕食の席で、処方箋に載っていない薬品名を流暢に並べていた。同席した者は「あれは臨床医の知識ではない」と感じたという。',
+    category: 'alibi', relatedSlot: 'B', baseIsTrue: true,
+  },
+  {
+    id: 'bg_017',
+    content: '氷室涼子は酒の席で「若い頃は芸能関係の仕事をしていた」と笑いながら漏らしたことがある。詳細は語らなかった。',
+    category: 'background', relatedSlot: 'C', baseIsTrue: true,
+  },
+  {
+    id: 'ph_020',
+    content: '氷室の荷物の中に、絵画修復とは無関係の特殊メイク用品と、人毛を使ったウィッグが収められていた。',
+    category: 'physical', relatedSlot: 'C', baseIsTrue: true,
+  },
+  {
+    id: 'al_016',
+    content: '小夜は古い南京錠を手に取り、一瞬眺めただけで音もなく開けてしまった。見ていた若いメイドを驚かせたが、小夜本人は何も言わなかった。',
+    category: 'alibi', relatedSlot: 'D', baseIsTrue: true,
+  },
+  {
+    id: 'bg_018',
+    content: '館に来る前の小夜の経歴を知る者は誰もいない。採用時の身元保証人も今では連絡が取れなくなっている。',
+    category: 'background', relatedSlot: 'D', baseIsTrue: true,
+  },
+  {
+    id: 'al_017',
+    content: '黒部はワインを一口含んだだけで産地と収穫年を言い当てた。驚いて尋ねた者に「以前の仕事の名残です」とだけ答えた。',
+    category: 'alibi', relatedSlot: 'E', baseIsTrue: true,
+  },
+  {
+    id: 'bg_019',
+    content: '黒部が神条家に仕える前、都内のどこかの一流ホテルにいたという噂がある。本人は否定も肯定もしない。',
+    category: 'background', relatedSlot: 'E', baseIsTrue: true,
+  },
+  {
+    id: 'al_018',
+    content: '蓮がロープの結び目を確かめるとき、庭師とは思えない鮮やかな手つきだった。まるで舞台や演技で慣れ親しんだような身のこなしだった。',
+    category: 'alibi', relatedSlot: 'F', baseIsTrue: true,
+  },
+  {
+    id: 'bg_020',
+    content: '神条蓮が家を出てからの数年間、一切の消息が途絶えていた。帰国後に「各地を転々とした」と言うだけで、詳細は決して語らない。',
+    category: 'background', relatedSlot: 'F', baseIsTrue: true,
+  },
+  {
+    id: 'al_019',
+    content: '綾小路麗華は自分の出身地について、昨日と今日で微妙に違う説明をしていた。気づいた者が問い詰めると自然に話題を変えた。',
+    category: 'alibi', relatedSlot: 'G', baseIsTrue: true,
+  },
+  {
+    id: 'ph_021',
+    content: '麗華の客間のゴミ箱に、用途不明の封蝋の欠片と、異なるインクで書かれた数枚の下書きが捨てられていた。',
+    category: 'physical', relatedSlot: 'G', baseIsTrue: true,
+  },
+  {
+    id: 'te_013',
+    content: '筆跡鑑定の専門家によると、遺言書の一部の文字はインクの乾き具合が他の箇所と微妙に異なる。後から書き加えた可能性がある。',
+    category: 'technical', relatedSlot: 'A', baseIsTrue: true,
+  },
+  {
+    id: 'ph_026',
+    content: '白川の往診カバンの奥に、医療現場では使わない化学系の試薬名が書かれたメモが挟まれていた。',
+    category: 'physical', relatedSlot: 'B', baseIsTrue: true,
+  },
+  {
+    id: 'ps_018',
+    content: '氷室は夕食の席で、立ち上がるたびに身のこなしが変わる瞬間があった。舞台に立ち慣れた者特有の、重心の切り替えに見えた。',
+    category: 'psychology', relatedSlot: 'C', baseIsTrue: true,
+  },
+  {
+    id: 'bg_025',
+    content: '小夜が鍵束を管理する方法は独特で、錠前ごとに素材と構造を書いたメモを添えている。趣味の域を超えた几帳面さだ。',
+    category: 'background', relatedSlot: 'D', baseIsTrue: true,
+  },
+  {
+    id: 'vi_011',
+    content: '被害者の寝室のグラスに残っていたワインを調べると、通常の銘柄と異なる微量成分が検出された。飲み残しは一口分だった。',
+    category: 'victim', relatedSlot: 'E', baseIsTrue: true,
+  },
+  {
+    id: 'ps_019',
+    content: '蓮は狭い通路を通るとき、肩をすくめる前に一瞬だけ体の向きを確認してから通り抜けた。身体訓練を受けた者の癖に見えた。',
+    category: 'psychology', relatedSlot: 'F', baseIsTrue: true,
+  },
+
+  // ───── 過去職業ミスリード（別キャラへの疑惑誘導）─────
+  {
+    id: 'bg_021',
+    content: '黒部はかつて劇団に所属していたことがあるという噂がある。変装が得意だと言う者もいる。（確認は取れていない）',
+    category: 'background', relatedSlot: 'E', baseIsTrue: false,
+  },
+  {
+    id: 'ph_022',
+    content: 'Fの庭仕事用の道具箱に、場違いなマジック用トランプが混入していた。（植物の押し花を挟む台紙に使っていた）',
+    category: 'physical', relatedSlot: 'F', baseIsTrue: false,
+  },
+  {
+    id: 'bg_022',
+    content: 'Aは若い頃に美術学校に通っていたという話がある。絵画の模写を繰り返していたと同期生が証言した。',
+    category: 'background', relatedSlot: 'A', baseIsTrue: false,
+  },
+  {
+    id: 'ph_023',
+    content: 'BのカバンにE向けと思われる未開封の酒瓶が入っていた。ラベルに手書きの文字がある。（実際は贈り物用だった）',
+    category: 'physical', relatedSlot: 'B', baseIsTrue: false,
+  },
+  {
+    id: 'al_020',
+    content: 'T2頃、絵画室のあたりで黒部に似た人物が廊下をうろついているのを見た。（暗くて顔まではわからなかった）',
+    category: 'alibi', relatedSlot: 'E', baseIsTrue: false,
+  },
+  {
+    id: 'al_021',
+    content: '氷室は「ワインの味の変化には敏感なんです」と笑いながら話していた。専門家並みの知識を披露した。',
+    category: 'alibi', relatedSlot: 'C', baseIsTrue: false,
+  },
+  {
+    id: 'ph_024',
+    content: '小夜の私物の引き出しに、封蝋の道具と見知らぬ家紋の印章が隠されていた。（館の調度品を修繕するための備品だった）',
+    category: 'physical', relatedSlot: 'D', baseIsTrue: false,
+  },
+  {
+    id: 'bg_023',
+    content: '蓮はかつて海外の醸造所で働いていたことがあると言われる。植物の発酵・蒸留に詳しいという話が出回っている。',
+    category: 'background', relatedSlot: 'F', baseIsTrue: false,
+  },
+  {
+    id: 'ps_015',
+    content: 'Eは被害者のワインを注ぐとき、わずかに手元を隠すような動きをしていたと複数の者が証言している。',
+    category: 'psychology', relatedSlot: 'E', baseIsTrue: false,
+  },
+  {
+    id: 'ps_017',
+    content: '小夜は被害者のそばでワインのデキャンタを扱うとき、液体の色をやけに注意深く観察していた。',
+    category: 'psychology', relatedSlot: 'D', baseIsTrue: false,
   },
 
   // ───── 技術情報（technical）─────
