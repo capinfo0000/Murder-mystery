@@ -149,6 +149,20 @@ export interface CooperationChain {
   links: ChainLink[]
 }
 
+// コナン風トリック：犯人がアリバイ工作に使った手口と、その綻び（手がかり）。
+// すべて事件の実データ（犯人・場所・凶器）から生成し、矛盾しないようにする。
+export interface MainTrick {
+  name: string                 // トリック名
+  killerSlots: CharacterSlot[] // 実行した犯人
+  killerNote: string           // 犯人ハンドアウトに表示する説明
+  eyewitness: string           // 真・決定的：犯行時刻に犯人を現場付近で目撃
+  sound: string                // 真：物音・におい（凶器の手口に一致）
+  trace: string                // 真：物的痕跡（凶器の手口に一致）
+  appearance: string           // ミスリード：トリックが作り出した錯覚
+  flaw: string                 // 真・決定的：トリックの綻び
+  misdirection: string         // ミスリード：無実の人物を指す目撃証言
+}
+
 export interface Scenario {
   victims: VictimInfo[]        // player victims (puzzle mode only)
   npcVictims: NpcVictim[]      // NPC deaths: murder victims + natural death noise
@@ -166,6 +180,7 @@ export interface Scenario {
   synopsis?: string  // auto-generated narrative summary shown to all players
   npcSurvivors?: NpcSurvivor[]  // NPCs present in the manor who survived
   mainVictimLocation?: Location  // 当主の遺体が発見された場所（マップの★位置）
+  mainTrick?: MainTrick          // コナン風アリバイ工作（プレイヤー犯の場合）
 }
 
 export interface EvidenceCard {

@@ -363,6 +363,14 @@ export default function HandoutPage() {
                 )}
               </Section>
             )}
+            {myRole === 'killer' && scenario.mainTrick && scenario.mainTrick.killerSlots.includes(viewSlot) && (
+              <Section title={`🎭 あなたが仕掛けたトリック：${scenario.mainTrick.name}`} accent="red">
+                <p className="text-red-100 text-sm leading-relaxed">{scenario.mainTrick.killerNote}</p>
+                <p className="text-red-300/60 text-xs mt-2 leading-relaxed">
+                  ※このトリックがあなたのアリバイを作っている。綻び（手がかり）を突かれないよう立ち回ること。
+                </p>
+              </Section>
+            )}
             <Section title="あなたが知る関係図">
               {relationships.length === 0 ? (
                 <p className="text-purple-500 text-sm">関係情報なし</p>

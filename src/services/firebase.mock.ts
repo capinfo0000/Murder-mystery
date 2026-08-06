@@ -99,7 +99,7 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
 
   const humanIds = allIds.filter(id => !state.players[id].isNPC)
   const npcIds = allIds.filter(id => state.players[id].isNPC)
-  const cards = dealCards([...humanIds, ...npcIds], slots, scenario.killers, scenario.victims, 5, 25, scenario.assignedProfessions ?? {}, scenario.npcSurvivors ?? [], scenario.npcVictims ?? [], scenario.outsideKiller ?? false)
+  const cards = dealCards([...humanIds, ...npcIds], slots, scenario.killers, scenario.victims, 5, 25, scenario.assignedProfessions ?? {}, scenario.npcSurvivors ?? [], scenario.npcVictims ?? [], scenario.outsideKiller ?? false, scenario.suicide ?? false, scenario.mainTrick)
   state.cards = cards as Record<string, EvidenceCard>
   state.phase = 'handout'
   notify(gameId)

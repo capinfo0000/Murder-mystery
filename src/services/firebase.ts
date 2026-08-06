@@ -163,6 +163,7 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
     scenario.npcVictims ?? [],
     scenario.outsideKiller ?? false,
     scenario.suicide ?? false,
+    scenario.mainTrick,
   )
 
   const cardUpdates: Record<string, EvidenceCard> = {}

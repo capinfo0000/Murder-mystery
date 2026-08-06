@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid'
-import type { CardCategory, EvidenceCard, CharacterSlot, KillerInfo, NpcSurvivor, NpcVictim, VictimInfo } from '../types/game'
+import type { CardCategory, EvidenceCard, CharacterSlot, KillerInfo, NpcSurvivor, NpcVictim, VictimInfo, MainTrick } from '../types/game'
 import { CARD_TEMPLATES } from '../data/cardTemplates'
 import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { CHARACTERS } from '../data/characters'
@@ -148,6 +148,19 @@ function generateSecretRouteCards(): EvidenceCard[] {
   return shuffle(routes).slice(0, count).map(r => makeCard(r, 'technical', null, true))
 }
 
+// コナン風トリックと現場の手がかりを、事件の実データから生成する。
+// eyewitness/flaw は決定的な真の手がかり（フェアプレイ担保の対象）。
+function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: Set<string> } {
+  if (!t) return { cards: [], decisive: new Set() }
+  const eye = makeCard(t.eyewitness, 'alibi', null, true)
+  const sound = makeCard(t.sound, 'alibi', null, true)
+  const trace = makeCard(t.trace, 'physical', null, true)
+  const appearance = makeCard(`【一見の状況】${t.appearance}`, 'alibi', null, false)
+  const flaw = makeCard(`【トリックの綻び】${t.flaw}`, 'technical', null, true)
+  const misdir = makeCard(t.misdirection, 'alibi', null, false)
+  return { cards: [eye, sound, trace, appearance, flaw, misdir], decisive: new Set([eye.id, flaw.id]) }
+}
+
 export function dealCards(
   playerIds: string[],
   slots: CharacterSlot[],
@@ -160,6 +173,7 @@ export function dealCards(
   npcVictims: NpcVictim[] = [],
   outsideKiller = false,
   suicide = false,
+  mainTrick?: MainTrick,
 ): Record<string, EvidenceCard> {
   const killerSlots = killers.map(k => k.slot)
   const killerWeaponIds = killers.map(k => k.weapon.id)
@@ -226,13 +240,16 @@ export function dealCards(
   const npcCauseCards = generateNpcCauseCards(npcVictims)
   // secret passage / hidden room discovery hints
   const secretRouteCards = generateSecretRouteCards()
+  // コナン風トリック＋現場の手がかり（事件データから生成）
+  const trickResult = generateTrickCards(mainTrick)
 
-  // 決定的な真の手がかり（条件成立カード・犯人関連・NPC証言の真・死因の矛盾）
+  // 決定的な真の手がかり（条件成立カード・犯人関連・NPC証言の真・死因の矛盾・トリックの綻び）
   const keyIds = new Set<string>(decisiveIds)
   for (const c of npcCards) if (c.isTrue) keyIds.add(c.id)
   for (const c of npcCauseCards) if (c.isTrue && c.category === 'psychology') keyIds.add(c.id)
+  for (const id of trickResult.decisive) keyIds.add(id)
 
-  const allCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards]
+  const allCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards, ...trickResult.cards]
   const handCapacity = playerIds.length * cardsPerPlayer
   const totalNeeded = handCapacity + deckSize
 

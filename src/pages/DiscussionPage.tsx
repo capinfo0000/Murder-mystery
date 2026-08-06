@@ -431,6 +431,13 @@ function ProfileModal({
             </PSection>
           )}
 
+          {role === 'killer' && scenario.mainTrick && scenario.mainTrick.killerSlots.includes(slot) && (
+            <PSection title={`🎭 あなたが仕掛けたトリック：${scenario.mainTrick.name}`} accent="red">
+              <p className="text-red-100 text-sm leading-relaxed">{scenario.mainTrick.killerNote}</p>
+              <p className="text-red-300/60 text-xs mt-2 leading-relaxed">※このトリックがあなたのアリバイを作っている。綻びを突かれないよう立ち回ること。</p>
+            </PSection>
+          )}
+
           {alibis && (
             <PSection title="あなたの真実のアリバイ">
               <AlibiMatrix alibis={alibis} />
