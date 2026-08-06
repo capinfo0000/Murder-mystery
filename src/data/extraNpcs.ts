@@ -3,6 +3,7 @@ export interface ExtraNpcDef {
   role: string
   naturalDeathCause: string     // shown when unrelated to case
   disguisedMurderCause: string  // shown when killed (looks natural)
+  method: string                // 口封じの手段（犯人ハンドアウトの凶器表示＝NPCの死因と一致させる）
   deathLocation: string         // estimated place of death (shown to all players)
   deathTime: string             // estimated time of death (shown to all players)
   causeFinding: string          // 検死の公式所見（単体では事故/病死に見える・偽装）
@@ -18,6 +19,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: '専属料理人',
     naturalDeathCause: '持病による突発性心不全',
     disguisedMurderCause: '持病の急性増悪（心不全）',
+    method: '毒草エキス（食事に混入）',
     deathLocation: '調理場',
     deathTime: '事件翌日の昼過ぎ',
     causeFinding: '遺体には心臓発作の所見があり、かねてよりの持病による心不全と診断された。',
@@ -30,6 +32,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: '顧問弁護士',
     naturalDeathCause: '深夜の階段からの転落事故',
     disguisedMurderCause: '夜間の転落（足元が暗かったため）',
+    method: '階段からの突き落とし',
     deathLocation: '大階段の下',
     deathTime: '事件当夜 深夜1時頃',
     causeFinding: '死因は階段からの転落による頸部骨折とされた。',
@@ -42,6 +45,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: 'メイド（客間担当）',
     naturalDeathCause: '急性の食中毒による衰弱',
     disguisedMurderCause: '急性胃腸炎による衰弱死',
+    method: '毒物（食事に混入）',
     deathLocation: '使用人棟の自室',
     deathTime: '事件翌朝',
     causeFinding: '死因は急性の胃腸症状による衰弱死とされた。',
@@ -54,6 +58,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: '庭師の助手',
     naturalDeathCause: '農薬の誤飲（作業中の不注意）',
     disguisedMurderCause: '農薬吸引による急性中毒',
+    method: '劇薬（農薬のすり替え）',
     deathLocation: '裏庭の物置小屋',
     deathTime: '事件翌日の午前',
     causeFinding: '死因は作業中の農薬による急性中毒とされた。',
@@ -66,6 +71,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: '個人秘書',
     naturalDeathCause: '過労による急性脳梗塞',
     disguisedMurderCause: '突発性の脳血管障害',
+    method: '睡眠薬（多量投与）',
     deathLocation: '書斎脇の小部屋',
     deathTime: '事件当夜 深夜',
     causeFinding: '死因は突発性の脳血管障害（脳卒中）とされた。',
@@ -78,6 +84,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: '見習い執事',
     naturalDeathCause: 'アレルギーによるアナフィラキシー（食事中の事故）',
     disguisedMurderCause: '食事中のアレルギー反応（急性）',
+    method: 'アレルゲンの混入',
     deathLocation: '使用人用食堂',
     deathTime: '事件翌日の昼',
     causeFinding: '死因は食事中のアレルギーによるアナフィラキシーショックとされた。',
@@ -90,6 +97,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: 'メイド（寝室担当）',
     naturalDeathCause: '突発性の発作による転倒・頭部打撲',
     disguisedMurderCause: '転倒による頭部打撲（てんかん様発作）',
+    method: '撲殺（頭部強打）',
     deathLocation: '二階 主寝室付近の廊下',
     deathTime: '事件当夜',
     causeFinding: '死因は発作による転倒・頭部打撲とされた。',
@@ -102,6 +110,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: '専属運転手',
     naturalDeathCause: '車内での一酸化炭素中毒（整備不良）',
     disguisedMurderCause: '車両整備不良による一酸化炭素中毒',
+    method: '排気ガス（車両への細工）',
     deathLocation: '車庫（ガレージ）',
     deathTime: '事件翌朝',
     causeFinding: '死因は整備不良による車内での一酸化炭素中毒とされた。',
@@ -114,6 +123,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: '経理担当',
     naturalDeathCause: '長期的な飲酒による急性肝不全',
     disguisedMurderCause: '急性肝不全（既往歴あり）',
+    method: 'アルコールの強要',
     deathLocation: '自室',
     deathTime: '事件から数日後',
     causeFinding: '死因は飲酒による急性肝不全とされた。',
@@ -126,6 +136,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     role: '夜警',
     naturalDeathCause: '持病の心臓発作（巡回中）',
     disguisedMurderCause: '巡回中の突発性心停止',
+    method: '刺殺（背後から急所）',
     deathLocation: '地下へ続く廊下',
     deathTime: '事件当夜 深夜',
     causeFinding: '死因は巡回中の突発性の心停止とされた。',

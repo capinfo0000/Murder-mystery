@@ -412,30 +412,31 @@ export function generateScenario(
 
     let victimSlot: CharacterSlot | undefined
     let victimName: string | undefined
-    let location: typeof CRIME_SCENE_LOCATIONS[number] | 'master_bedroom'
+    let location: Location
+    let weapon
 
     if (mode === 'puzzle') {
       const idx = slots.indexOf(slot)
       victimSlot = slots[(idx + 1) % slots.length]
       victimName = CHARACTERS[victimSlot]?.name
       location = pickRandom(CRIME_SCENE_LOCATIONS)
+      weapon = pickRandom(WEAPONS.filter(w => !w.isEnvironmental))
     } else if (npcKillMap[slot]) {
-      // 口封じ犯：目撃したNPCを別室で殺害
+      // 口封じ犯：目撃したNPCを殺害。凶器・偽装死因はそのNPCの死因と一致させる
       victimName = npcKillMap[slot]
       location = pickRandom(CRIME_SCENE_LOCATIONS)
+      const def = EXTRA_NPCS.find(nn => nn.role === victimName)
+      weapon = def
+        ? { id: `npc_${def.id}`, name: def.method, disguisedAs: def.disguisedMurderCause }
+        : pickRandom(physicalWeapons)
     } else {
-      // 当主殺し：遺体が発見された自室で殺害
+      // 当主殺し：自室で発見・一見自然死に見える手口（毒物）に限定
       victimName = MAIN_VICTIM.name
       location = 'master_bedroom'
+      weapon = pickRandom(poisonWeapons)
     }
 
-    return {
-      slot,
-      victimSlot,
-      victimName,
-      weapon: pickRandom(WEAPONS.filter(w => !w.isEnvironmental)),
-      location,
-    }
+    return { slot, victimSlot, victimName, weapon, location }
   })
 
   // Fill trueMurderDetail for dual killer shared victim
@@ -575,7 +576,7 @@ function generateSynopsis(
   const playerCount = slots.length
 
   const npcLine = npcVictims.length > 0
-    ? `同じ夜、館の中でさらに複数の人物が変死しているのが発見された。`
+    ? `同じ数日のうちに、館では他にも数名が相次いで命を落としている。`
     : ''
 
   const commonParagraphs = [
@@ -624,7 +625,7 @@ function generateSynopsis(
       `事件直前、${n}が源太郎の部屋の方向をじっと見つめていたのを目撃されている。`,
     ]
   const hint = redHerrings[Math.floor(Math.random() * redHerrings.length)]
-  const lastParagraph = `そして最初の夜明け前、源太郎が自室で息絶えているのが発見された。室内に争った形跡はなく、目立った外傷も見当たらない——それでいて、自然な病死とは言い切れない不審さが残った。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
+  const lastParagraph = `そして最初の夜明け前、源太郎が自室で息絶えているのが発見された。第一発見者によれば、部屋に激しく争ったような乱れはなかったという——だが、その死を素直に事故や病死と片づけるには、どうにも腑に落ちない点が残った。${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
 
   return [...commonParagraphs, lastParagraph].join('\n\n')
 }
