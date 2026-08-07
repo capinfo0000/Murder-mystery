@@ -174,6 +174,9 @@ export interface MainTrick {
   framedName?: string          // 濡れ衣を着せられた人物
   framedSighting?: string      // ミスリード：濡れ衣の人物を現場付近で目撃（実は変装）
   framedAlibi?: string         // 真：濡れ衣の人物の本当の居場所（変装目撃と矛盾）
+  // ── 死体移動（発見場所≠犯行現場）のとき ──
+  movedApparent?: string       // ミスリード：発見場所で絶命したように見える
+  movedReveal?: string         // 真・決定的：死斑等から別の場所（＝真の犯行現場）で殺され動かされたと分かる
 }
 
 export interface Scenario {

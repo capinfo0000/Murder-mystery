@@ -179,6 +179,14 @@ function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: S
     decisive.add(framedAlibi.id)
   }
 
+  // 死体移動がある場合：発見場所での見かけ（ミスリード）と、死斑が示す真の犯行現場（決定的な真）。
+  if (t.movedApparent && t.movedReveal) {
+    const apparent = makeCard(`【発見時の状況】${t.movedApparent}`, 'physical', null, false)
+    const reveal = makeCard(`【検死所見】${t.movedReveal}`, 'technical', null, true)
+    cards.push(apparent, reveal)
+    decisive.add(reveal.id)
+  }
+
   return { cards, decisive }
 }
 
