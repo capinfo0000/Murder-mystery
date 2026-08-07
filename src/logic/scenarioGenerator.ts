@@ -788,6 +788,10 @@ export function generateScenario(
   for (const k of killers) {
     const a = alibis[k.slot]
     if (!a) continue
+    // 当主を21時台に殺した犯人だけ現場へそろえる。NPC殺し犯は「自分の秘密行動を
+    // 目撃され、後日その口を封じた」ので、事件当夜21時台は自分の秘密行動の場所にいた
+    // （＝無実者と同じアリバイのまま）。ここで上書きしない。
+    if (k.victimName !== MAIN_VICTIM.name) continue
     const secretSpot = CHARACTERS[k.slot].t2Location
     const isRemoteMain = remoteDevice && !k.isDualKiller && k.victimName === MAIN_VICTIM.name
     if (isRemoteMain) {
@@ -1086,16 +1090,23 @@ function generateTimelines(
         continue
       }
 
+      // NPC殺し犯：事件当夜は"自分の秘密行動"をしていて、それをNPCに目撃された。
+      // 口封じの殺害はその後（NPCの推定死亡時刻＝多くは翌日）に行われる別の出来事。
+      if (!isMain) {
+        result[slot] = [
+          { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `${LOCATION_NAMES[a.T1]}にいた。${arrival}` },
+          { period: PERIOD_T2, location: LOCATION_NAMES[a.T2], action: `人に言えない事情があり、ひそかに${LOCATION_NAMES[a.T2]}にいた。${secret}——だが、この秘密の行動を${victimName}に見られてしまった。この時点では、まだ源太郎の死にも${victimName}の死にも関わっていない。` },
+          { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}にいた。${late}（——そして後日、秘密を知った${victimName}を口封じのために手にかけることになる。）` },
+        ]
+        continue
+      }
+
       const isIncidental = isMain && isMainKillerHere && !mainTrick!.premeditated
       const hasTrick = isMainKillerHere && !!mainTrick!.appearance   // 実際に仕掛け／工作がある
-      const motive = !isMain
-        ? ''
-        : isIncidental
-          ? '秘密の行動を源太郎に目撃され、露見を恐れたあなたは、とっさに'
-          : (KILL_MOTIVE[slot] ?? '')
-      const t2Action = isMain
-        ? `${motive}${sceneName}で源太郎を手にかけた——これがこの事件の真の犯行時刻である。`
-        : `自分の秘密の行動を目撃されてしまい、口封じのため${sceneName}で${victimName}を手にかけた。`
+      const motive = isIncidental
+        ? '秘密の行動を源太郎に目撃され、露見を恐れたあなたは、とっさに'
+        : (KILL_MOTIVE[slot] ?? '')
+      const t2Action = `${motive}${sceneName}で源太郎を手にかけた——これがこの事件の真の犯行時刻である。`
       const t3Action = !hasTrick
         ? `${LOCATION_NAMES[a.T3]}へ移り、動揺を隠しながら何事もなかったように振る舞った。`
         : isIncidental
@@ -1153,7 +1164,12 @@ function generateStories(
     paras.push(night)
 
     // 3. 犯人なら、凶器・偽装・トリックまで語る（計画的／衝動的で語り口を変える）
-    if (isKiller && killer) {
+    if (isKiller && killer && killer.victimName !== MAIN_VICTIM.name) {
+      // NPC殺し犯：源太郎は手にかけていない。秘密の行動を目撃され、後日その口を封じた。
+      const v = killer.victimName ?? '相手'
+      paras.push(`——念のため言っておく。あなたは源太郎を手にかけてはいない。だが事件の夜、人には言えない秘密の行動をしているところを、${v}に見られてしまった。`)
+      paras.push(`放っておけば、その秘密からすべてが露見する。追い詰められたあなたは後日、口止めを図る${v}を「${killer.weapon.disguisedAs}」に見せかけて手にかけた（手段は「${killer.weapon.name}」）。館で起きたのは源太郎殺しだけではない——これもまた、まぎれもないもう一つの殺人だ。\n\n夜が明けて始まる犯人捜しでは、源太郎を殺した犯人だけでなく、${v}を手にかけたあなたのことも暴かれてはならない。`)
+    } else if (isKiller && killer) {
       const isMainKillerHere = !!mainTrick && mainTrick.killerSlots.includes(slot)
       const incidental = isMainKillerHere && !mainTrick!.premeditated
       const hasTrick = isMainKillerHere && !!mainTrick!.appearance
