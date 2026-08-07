@@ -23,6 +23,7 @@ import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { WEAPONS, killMethodSentence } from '../data/weapons'
 import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
 import { routeInfo, floorLabel, LOCATION_FLOOR } from '../data/manor'
+import { validateScenario } from './validateScenario'
 import { VICTIM_BACKGROUNDS } from '../data/victimBackgrounds'
 import { EXTRA_NPCS } from '../data/extraNpcs'
 import { generateAlibis } from './alibiGenerator'
@@ -917,13 +918,17 @@ export function generateScenario(
       // 廊下でのモブ目撃・大階段の足音・秘密通路の近道といった、図面と矛盾しない
       // 物理的な証拠を作る。徒歩の距離・階のまたぎもすべて図面どおりに一致する。
       const FLOOR_ORDER = { '2F': 2, '1F': 1, 'B1': 0 } as const
-      const MOBS = ['下働きの女中お梅', '下男の三次', '庭師の佐吉', '女中頭のトメ', '小間使いのハル']
+      // 目撃者はこのシナリオに実在する使用人・関係者（npcSurvivors）の役職名だけを使う。
+      // ヒントカードは彼らを役職名で呼ぶ規約（HandoutPage参照）なので、新しい人物を勝手に
+      // 作らない。生存者がいない場合のみ一般名詞にフォールバックする。
+      const witnessRoles = shuffle(npcSurvivors.map(n => n.role.replace(/（.*?）/g, '')))
+      const mob1 = witnessRoles[0] ?? '居合わせた使用人'
+      const mob2 = witnessRoles[1] ?? witnessRoles[0] ?? '別の使用人'
       const killerHome = alibis[mainKiller.slot]?.T1
       let routeClue: string | undefined
       if (killerHome && killerHome !== mainMurderLocation) {
         const ri = routeInfo(killerHome, mainMurderLocation)
         const fromName = LOCATION_NAMES[killerHome]
-        const [mob1, mob2] = shuffle(MOBS)
         // 廊下も階段も一切通らずに移動できた＝秘密通路の近道を使った場合のみ。
         // （通路が経路の端点になるだけで実際は廊下・階段を通る経路は下の分岐へ）
         const avoidedCorridors = ri.corridorFloors.length === 0 && !ri.usesStairs
@@ -1078,7 +1083,7 @@ export function generateScenario(
   // ── synopsis ──────────────────────────────────────────────────────────
   const synopsis = generateSynopsis(npcVictims, slots, deathDiscovery, discoveryScene)
 
-  return {
+  const scenario: Scenario = {
     discoveredBy,
     victims,
     npcVictims,
@@ -1101,6 +1106,15 @@ export function generateScenario(
     stories,
     crimeTime,
   }
+
+  // 開発時ハーネス：生成物にキャスト外の人物・時刻残骸・未マップ場所・経路矛盾が
+  // 紛れ込んでいないかを即座に警告する（本番ビルドでは無効）。
+  if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+    const issues = validateScenario(scenario)
+    if (issues.length) console.warn('[scenario harness] 不変条件違反:', issues)
+  }
+
+  return scenario
 }
 
 // 各キャラの事件当日の行動を時系列で組み立てる。アリバイ表・凶行・トリックと

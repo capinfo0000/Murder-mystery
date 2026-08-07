@@ -157,6 +157,33 @@ export function floorLabel(f: Floor): string {
   return FLOOR_LABEL[f]
 }
 
+// ── 見取り図の座標（ManorMap の描画と検査で共有する単一の出典）──────────
+// 当主の遺体発見場所（Location）→ 図面上の座標
+export const MAIN_LOC_COORDS: Partial<Record<Location, { x: number; y: number }>> = {
+  master_bedroom: { x: 152, y: 71 },
+  guest_room: { x: 52, y: 71 },
+  study: { x: 105, y: 325 },
+  library: { x: 43, y: 325 },
+  dining: { x: 204, y: 325 },
+  gallery: { x: 43, y: 411 },
+  greenhouse: { x: 109, y: 411 },
+  basement: { x: 78, y: 607 },
+}
+
+// NPCの死亡場所（deathLocation 文字列）→ 図面上の座標
+export const PIN_COORDS: Record<string, { x: number; y: number }> = {
+  '調理場': { x: 251, y: 326 },
+  '大階段の下': { x: 239, y: 436 },
+  '使用人棟の自室': { x: 300, y: 58 },
+  '裏庭の物置小屋': { x: 55, y: 492 },
+  '書斎脇の小部屋': { x: 158, y: 326 },
+  '使用人用食堂': { x: 174, y: 411 },
+  '二階 主寝室付近の廊下': { x: 140, y: 120 },
+  '車庫（ガレージ）': { x: 286, y: 492 },
+  '自室': { x: 300, y: 92 },
+  '地下へ続く廊下': { x: 150, y: 660 },
+}
+
 // 経路説明の短文（GM・解説用）。例「1階の廊下と大階段を通り、地下へ下りる」
 export function describeRoute(from: Location, to: Location): string {
   const r = routeInfo(from, to)
