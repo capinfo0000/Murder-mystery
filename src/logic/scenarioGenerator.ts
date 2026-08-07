@@ -264,7 +264,7 @@ const CAT_TRACE: Record<DeathCat, (loc: string) => string> = {
   natural: loc => `${loc}の源太郎の傍らに、飲みかけの杯が残されていた。底にわずかな沈殿物がある。`,
   fall: loc => `${loc}の手すりと床に、いちど拭き取ろうとした血の跡が残っていた。`,
   hang: loc => `${loc}の床に、吊るす前に何かを引きずったような擦れた跡が残っていた。`,
-  fire: loc => `${loc}の火元付近から、不自然に強い燃焼促進剤のにおいが検出された。`,
+  fire: loc => `${loc}の火元付近に、不自然に強い燃焼促進剤のようなにおいが残っていた。`,
 }
 
 // コナン風トリック。cats='any' は全カテゴリで使える。{n}=犯人名, {loc}=犯行場所
@@ -1002,8 +1002,10 @@ export function generateScenario(
       // 真の犯行現場（＝犯人が目撃された場所）へ捜査が戻る。
       if (bodyMoved) {
         const discoveryName = LOCATION_NAMES[mainVictimLocation]
-        mainTrick.movedApparent = `源太郎は${discoveryName}で発見された。その場の様子から、多くの者はそこで倒れて息絶えたと思い込んでいる。`
-        mainTrick.movedReveal = `だが源太郎の死斑は、発見時の姿勢では説明のつかない向きに出ていた——別の場所で絶命し、あとから${discoveryName}へ運ばれたのだ。遺体には${locName}特有の埃と匂いが付着しており、本当の犯行現場は${locName}だと分かる。`
+        // 1カード1情報：①発見場所での見かけ（偽）②死斑＝動かされた事実（真）③付着物＝真の現場を指す痕跡（真）
+        mainTrick.movedApparent = `源太郎は${discoveryName}で倒れて発見された。多くの者は、そこで息絶えたと思い込んでいる。`
+        mainTrick.movedReveal = `源太郎の死斑は、発見時の姿勢では説明のつかない向きに出ていた。この場所で死んだのではなく、別のどこかから運ばれてきたようだ。`
+        mainTrick.movedTrace = `源太郎の衣服には、${discoveryName}にはないはずの${locName}特有の埃と匂いが付いていた。`
         mainTrick.killerNote += `\n\nまた、あなたは犯行後、源太郎の遺体を${locName}から${discoveryName}へ運び、そこで倒れていたように見せかけて本当の犯行現場を隠した。だが死斑は動かした事実まで消してはくれない。`
       }
     }
@@ -1148,7 +1150,7 @@ function generateTimelines(
     } else {
       result[slot] = [
         { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `${LOCATION_NAMES[a.T1]}にいた。${arrival}` },
-        { period: PERIOD_T2, location: LOCATION_NAMES[a.T2], action: `人に言えない事情があり、ひそかに${LOCATION_NAMES[a.T2]}にいた。${secret}そのため、事件の時刻に何をしていたかを正直には話しづらい。` },
+        { period: PERIOD_T2, location: LOCATION_NAMES[a.T2], action: `人知れず、${secret}よりにもよって事件のあった時間にこんなことをしていたとは、とても正直には言い出せない。` },
         { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}にいた。${late}` },
       ]
     }
@@ -1187,7 +1189,7 @@ function generateStories(
 
     // 2. 事件当夜の物語（時系列を接続詞でつなぐ）
     let night = `事件のあった夜。20時を過ぎた頃、${t1.action}`
-    night += `\n\nそして21時——館の運命が変わる時刻が訪れた。${t2.action}`
+    night += `\n\nそして、事件が起きたとされる21時頃。${t2.action}`
     night += `\n\n22時を回る頃、${t3.action}`
     paras.push(night)
 

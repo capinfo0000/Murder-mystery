@@ -175,9 +175,10 @@ export interface MainTrick {
   framedName?: string          // 濡れ衣を着せられた人物
   framedSighting?: string      // ミスリード：濡れ衣の人物を現場付近で目撃（実は変装）
   framedAlibi?: string         // 真：濡れ衣の人物の本当の居場所（変装目撃と矛盾）
-  // ── 死体移動（発見場所≠犯行現場）のとき ──
+  // ── 死体移動（発見場所≠犯行現場）のとき ── ※1カード1情報で分割
   movedApparent?: string       // ミスリード：発見場所で絶命したように見える
-  movedReveal?: string         // 真・決定的：死斑等から別の場所（＝真の犯行現場）で殺され動かされたと分かる
+  movedReveal?: string         // 真：死斑の向きから「別の場所で死に、運ばれた」と分かる（場所は特定しない）
+  movedTrace?: string          // 真：遺体に付着した痕跡（真の犯行現場を指す）。movedRevealと合わせて現場が分かる
   // ── 遠隔・自動殺人装置（犯人は犯行時刻に不在）のとき ──
   remote?: boolean             // true=犯人は20時台に罠を設置し、犯行時刻(21時台)は別室にいた
 }

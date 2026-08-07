@@ -38,7 +38,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'ph_006',
-    content: '被害者の飲みかけのワイングラスから、かすかな苦味のする沈殿物が検出された。',
+    content: '被害者の飲みかけのワイングラスの底に、かすかな苦味のありそうな沈殿物がたまっていた。',
     category: 'physical', relatedSlot: null, baseIsTrue: true, condition: 'weapon:poison_wine',
   },
   {
@@ -78,7 +78,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'ph_014',
-    content: '書斎の引き出しに、Eの指紋が残っていた。（Eは定期的に書斎の掃除を担当している）',
+    content: '書斎の引き出しに、最近Eが手を触れたらしい跡があった。（Eは定期的に書斎の掃除を担当している）',
     category: 'physical', relatedSlot: 'E', baseIsTrue: false,
   },
   {
@@ -274,7 +274,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'bg_006',
-    content: '神条家の遺言書には、正規の相続人以外にも「隠された血縁者」への言及があると弁護士が漏らしていた。',
+    content: '神条家の遺言書には、正規の相続人以外にも「隠された血縁者」への言及があるらしい、という噂が以前から囁かれていた。',
     category: 'background', relatedSlot: 'G', baseIsTrue: true,
   },
   {
@@ -351,7 +351,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'vi_007',
-    content: '被害者の枕元に、意識を失いかけた状態で書いたとみられる4文字が残されていた。暗号か名前の一部か。',
+    content: '被害者の枕元に、就寝前に飲むはずの常備薬が手つかずのまま置かれていた。いつもの晩なら必ず飲んでいたものだという。',
     category: 'victim', relatedSlot: null, baseIsTrue: false,
   },
   {
@@ -376,7 +376,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'vi_org_002',
-    content: '被害者の手帳の最終ページに、暗号化された連絡先リストが挟まれていた。記号と数字だけで構成されており、人名は一切記されていない。',
+    content: '被害者の手帳の最終ページに、組織との連絡に使ったとみられる符牒のメモが挟まれていた。もはや古く、今となっては誰にもたどれない。',
     category: 'victim', relatedSlot: null, baseIsTrue: true,
   },
   {
@@ -411,7 +411,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'vi_fear_003',
-    content: '被害者は事件前夜、顧問弁護士に「もし自分に何かあれば、この封筒を開けてほしい」と手紙を預けていた。弁護士はその存在を認めたが、内容の開示を拒んでいる。',
+    content: '被害者は事件前夜、「もし自分に何かあれば開けてほしい」と封をした手紙を書き遺していたらしい。だが、その手紙は今も見つかっていない。',
     category: 'victim', relatedSlot: null, baseIsTrue: true,
   },
   {
@@ -465,37 +465,37 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   // ───── 全員無実の示唆（外部犯時のみ真）─────
   {
     id: 'innocent_A',
-    content: 'T2の時刻、Aが書斎にいたことは複数の目撃証言で裏付けられている。遺言書に触れていたのは事実だが、それは犯行とは無関係だった。',
+    content: '21時頃、Aは当主の居室とは離れた棟にいたようだ。現場付近でその姿を見かけた者はいない。',
     category: 'alibi', relatedSlot: 'A', baseIsTrue: false, condition: 'outside_killer',
   },
   {
     id: 'innocent_B',
-    content: 'BのT2の行動は書庫の使用記録と照合できる。カルテを持ち出していたのは確かだが、その時刻に犯行現場にいた形跡はない。',
+    content: '21時頃、Bは書庫のあたりにいたらしい。当主の部屋の方へ向かう姿は見られていない。',
     category: 'alibi', relatedSlot: 'B', baseIsTrue: false, condition: 'outside_killer',
   },
   {
     id: 'innocent_C',
-    content: 'CはT2の時間帯、絵画室で修復作業を続けていたとみられる。名画のすり替えを試みていたが、当主の死とは直接関わっていない。',
+    content: '21時頃、Cは絵画室にこもっていたようだ。廊下に出てくる姿を見た者はいない。',
     category: 'alibi', relatedSlot: 'C', baseIsTrue: false, condition: 'outside_killer',
   },
   {
     id: 'innocent_D',
-    content: 'Dが秘密通路を使っていたことは事実だが、T2の時刻に当主の部屋へ向かった証拠はない。通路内の足跡は別の方向を示していた。',
+    content: '21時頃、Dの姿は当主の部屋の方では見かけられていない。どこにいたのかは、はっきりしない。',
     category: 'alibi', relatedSlot: 'D', baseIsTrue: false, condition: 'outside_killer',
   },
   {
     id: 'innocent_E',
-    content: 'EはT2、金庫室に籠もって裏金の整理をしていたとみられる。金庫室の鍵の使用記録がその時刻を裏付けている。',
+    content: '21時頃、Eは金庫室のあたりにいたようで、当主の居室へ向かった様子はない。',
     category: 'alibi', relatedSlot: 'E', baseIsTrue: false, condition: 'outside_killer',
   },
   {
     id: 'innocent_F',
-    content: 'FがT2に隠し部屋にいたことは、残された毒草の葉片が証明している。部屋から当主の居室へ移動する時間はなかった。',
+    content: '21時頃、Fは館の奥まった一室にこもっていたらしく、当主の部屋の方には現れなかった。',
     category: 'alibi', relatedSlot: 'F', baseIsTrue: false, condition: 'outside_killer',
   },
   {
     id: 'innocent_G',
-    content: 'GはT2に書斎で権利証を探していた。書斎の乱れた形跡がその証拠だが、当主への接触はなかったと推測される。',
+    content: '21時頃、Gは書斎のあたりにいたようだが、当主に近づいた様子はなかった。',
     category: 'alibi', relatedSlot: 'G', baseIsTrue: false, condition: 'outside_killer',
   },
 
@@ -517,7 +517,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'sui_only_prints',
-    content: '源太郎の私室は内側から施錠され、窓にも出入りの細工の跡はなかった。室内から検出された指紋は、本人のものだけだった。',
+    content: '源太郎の私室は内側から施錠されており、窓も閉ざされていた。室内に、誰かが争ったり荒らしたりした様子は見当たらなかった。',
     category: 'physical', relatedSlot: null, baseIsTrue: false, condition: 'suicide',
   },
 
@@ -657,7 +657,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'te_013',
-    content: '筆跡鑑定の専門家によると、遺言書の一部の文字はインクの乾き具合が他の箇所と微妙に異なる。後から書き加えた可能性がある。',
+    content: '遺言書をよく見ると、一部の文字だけインクの乾き具合や色みが他と微妙に違って見える。',
     category: 'technical', relatedSlot: 'A', baseIsTrue: true,
   },
   {
@@ -677,7 +677,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'vi_011',
-    content: '被害者の寝室のグラスに残っていたワインを調べると、通常の銘柄と異なる微量成分が検出された。飲み残しは一口分だった。',
+    content: '被害者の寝室のグラスに残っていたワインは、口にすると舌を刺すような、いつもの銘柄にはない妙な後味がしたという。飲み残しは一口分だった。',
     category: 'victim', relatedSlot: 'E', baseIsTrue: true,
   },
   {
@@ -741,7 +741,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   // ───── 技術情報（technical）─────
   {
     id: 'te_001',
-    content: '問題の毒草から抽出したエキスは、ワインに溶かすと無色・無臭で検出が極めて困難とされる。',
+    content: '問題の毒草から抽出したエキスは、ワインに溶かすと無色・無臭になり、口にしてもまず気づけないという。',
     category: 'technical', relatedSlot: 'F', baseIsTrue: true,
   },
   {
@@ -766,7 +766,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'te_006',
-    content: '被害者の部屋の扉は内側からしか施錠できない。外から鍵をかけるには、特殊な工具が必要だ。',
+    content: '被害者の部屋の扉は、発見時に内側から施錠されていた。鍵は室内にあり、外からかけられる造りではないはずだった。',
     category: 'technical', relatedSlot: null, baseIsTrue: true,
   },
   {

@@ -29,22 +29,20 @@ export default function EvidenceCardView({
       {/* ── Card face (grid tile) ── */}
       <button
         onClick={() => setOpen(true)}
-        className={`relative flex flex-col text-left bg-[#1a0f2e] border rounded-xl overflow-hidden aspect-[3/4] transition-all hover:brightness-110 ${isPublic ? 'border-purple-500' : 'border-purple-900'}`}
+        className={`relative flex flex-col text-left bg-[#1a0f2e] border rounded-xl overflow-hidden min-h-[7rem] transition-all hover:brightness-110 ${isPublic ? 'border-purple-500' : 'border-purple-900'}`}
       >
         {/* accent strip */}
         <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: accent }} />
-        <div className="flex flex-col flex-1 min-h-0 p-3">
+        <div className="flex flex-col flex-1 p-3">
           {isPublic && (
             <div className="flex items-center justify-end mb-2">
               <span className="text-[10px] text-green-400 shrink-0">公開</span>
             </div>
           )}
-          <p className="text-[13px] text-purple-200 leading-snug flex-1 min-h-0 overflow-hidden line-clamp-5 break-words">
+          {/* 本文は全文表示（切り詰めない） */}
+          <p className="text-[13px] text-purple-200 leading-relaxed break-words whitespace-pre-wrap flex-1">
             {card.content}
           </p>
-          <div className="flex items-center justify-end mt-2 pt-2 border-t border-purple-900/60">
-            <span className="text-purple-600 text-[10px] shrink-0">詳細 ›</span>
-          </div>
         </div>
       </button>
 
