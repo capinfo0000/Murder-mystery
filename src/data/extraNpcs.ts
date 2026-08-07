@@ -6,7 +6,7 @@ export interface ExtraNpcDef {
   method: string                // 口封じの手段（犯人ハンドアウトの凶器表示＝NPCの死因と一致させる）
   deathLocation: string         // estimated place of death (shown to all players)
   deathTime: string             // estimated time of death (shown to all players)
-  causeFinding: string          // 検死の公式所見（単体では事故/病死に見える・偽装）
+  causeFinding: string          // 遺体をあらためた際の見立て（単体では事故/病死に見える・偽装）
   causeContradiction: string    // 所見と突き合わせて初めて他殺と分かる矛盾した事実
   trueMurderDetail: string      // revealed at result (player killer scenario)
   hitmanMurderDetail: string    // revealed at result (outside killer scenario)
@@ -23,7 +23,7 @@ export const EXTRA_NPCS: ExtraNpcDef[] = [
     method: '毒草エキス（夜食に混入）',
     deathLocation: '調理場',
     deathTime: '事件当夜 深夜',
-    causeFinding: '遺体には心臓発作の所見があり、かねてよりの持病による心不全と診断された。',
+    causeFinding: '遺体には心臓発作のような様子があり、かねてよりの持病による心不全と見られた。',
     causeContradiction: '常用していた心臓の薬の残量が、記録より不自然に減っていた。',
     trueMurderDetail: '夕食後の片付け中、犯人が現場から立ち去るのを目撃してしまった。口止め料をほのめかしてきた料理人を、犯人はその夜のうちに夜食の椀へ毒草エキスを仕込んで殺し、持病の心不全に見せかけた',
     hitmanMurderDetail: '夕食の配膳中に廊下で殺し屋とすれ違い、顔を見てしまった。その夜のうちに夜食へ毒を仕込まれ、持病の心不全を装って口封じされた',

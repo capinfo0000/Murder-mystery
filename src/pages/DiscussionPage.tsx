@@ -453,6 +453,12 @@ function ProfileModal({
                     : `${(scenario.npcVictims ?? []).find(v => v.killerSlot === slot)?.deathTime ?? '事件当夜'}（秘密を知られての口封じ）`
                 } />
               </div>
+              {killerInfo.weapon.howHint && killerInfo.victimName === MAIN_VICTIM.name && (
+                <div className="mt-3 pt-3 border-t border-red-900/40">
+                  <p className="text-red-400/70 text-xs mb-1">手口（どう殺し、どう偽装したか）</p>
+                  <p className="text-red-100 text-sm leading-relaxed">{killerInfo.weapon.howHint}</p>
+                </div>
+              )}
             </PSection>
           )}
 
