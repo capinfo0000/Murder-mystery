@@ -672,7 +672,10 @@ export function generateScenario(
     EXTRA_NPCS.filter(n => !usedNpcRoles.has(n.role))
   ).slice(0, 3).map(n => ({ role: n.role }))
 
-  // ── コナン風トリック（非二重・プレイヤー犯のみ）───────────────────────
+  // ── 当主殺しの手がかり（非二重・プレイヤー犯のみ）─────────────────────
+  // 計画的犯行か、目撃されての衝動的な口封じかで大きく分岐する。
+  //  ・計画的  … 事前に用意したコナン風トリック（録音・替え玉・変装など）あり
+  //  ・衝動的  … 「秘密の行動を見られたから殺した」。凝ったトリックは無い（矛盾防止）
   let mainTrick: MainTrick | undefined
   if (mainCat && !outsideKiller && !suicide && mode !== 'puzzle') {
     const mainKiller = killers.find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
@@ -680,38 +683,60 @@ export function generateScenario(
       const killerName = CHARACTERS[mainKiller.slot].name
       const locName = LOCATION_NAMES[mainVictimLocation]
       const innocentSlots = slots.filter(s => !killerSlots.includes(s))
-      // 濡れ衣を着せる相手（変装トリックを使う場合の対象）
-      const framedSlot = innocentSlots.length > 0 ? pickRandom(innocentSlots) : null
-      const framedName = framedSlot ? CHARACTERS[framedSlot].name : '館の使用人'
-      const usable = TRICKS.filter(t => t.cats === 'any' || t.cats.includes(mainCat!))
-      const trick = pickRandom(usable)
-      const built = trick.build(locName)
+      const premeditated = Math.random() < 0.5
       const eyeVariants = [
         `21時頃、${killerName}が${locName}の方へ急ぎ足で向かうのを廊下で見た、という証言がある。`,
         `21時頃、${killerName}が${locName}のあたりから出てくるのを見た者がいる。ひどく思いつめた様子だったという。`,
         `21時前後、${killerName}の姿だけが${locName}付近で見当たらなくなった時間がある、と複数の者が話している。`,
       ]
-      mainTrick = {
-        name: trick.name,
-        killerSlots: [mainKiller.slot],
-        killerNote: built.note,
-        eyewitness: pickRandom(eyeVariants),
-        sound: CAT_SOUND[mainCat](locName),
-        trace: CAT_TRACE[mainCat](locName),
-        appearance: built.appearance,
-        flaw: built.flaw,
-        misdirection: `21時頃、${framedName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
-      }
+      // 現場の物音・痕跡・目撃は、計画的でも衝動的でも共通の「真の手がかり」
+      const eyewitness = pickRandom(eyeVariants)
+      const sound = CAT_SOUND[mainCat](locName)
+      const trace = CAT_TRACE[mainCat](locName)
 
-      // 変装して無実の人物に濡れ衣を着せるトリック（コナン風）を一定確率で重ねる。
-      // 濡れ衣の相手の"本当のアリバイ"（21時台は自分の秘密行動の場所にいた）と
-      // 突き合わせれば、現場付近の目撃が変装だったと分かる——矛盾しない手がかりになる。
-      if (framedSlot && Math.random() < 0.4) {
-        const framedRealLoc = LOCATION_NAMES[alibis[framedSlot]?.T2 ?? CHARACTERS[framedSlot].t2Location]
-        mainTrick.framedName = framedName
-        mainTrick.framedSighting = `21時頃、${framedName}が${locName}のすぐ近くにいるのを見た、という証言がある。犯行現場のそばだ。`
-        mainTrick.framedAlibi = `だが${framedName}は21時頃、確かに${framedRealLoc}にいたことが別の証言から裏づけられている。${locName}付近で見かけられた「${framedName}」は、変装した何者かだった可能性が高い。`
-        mainTrick.killerNote += `\n\nさらにあなたは${framedName}の身なりを真似て変装し、わざと${locName}付近で目撃されることで、疑いを${framedName}へ向けようと仕組んだ。ただし${framedName}自身には21時頃の本当の居場所があり、そこを突かれると変装が露見する。`
+      if (premeditated) {
+        // 濡れ衣を着せる相手（変装トリックを使う場合の対象）
+        const framedSlot = innocentSlots.length > 0 ? pickRandom(innocentSlots) : null
+        const framedName = framedSlot ? CHARACTERS[framedSlot].name : '館の使用人'
+        const usable = TRICKS.filter(t => t.cats === 'any' || t.cats.includes(mainCat!))
+        const trick = pickRandom(usable)
+        const built = trick.build(locName)
+        mainTrick = {
+          name: trick.name,
+          premeditated: true,
+          killerSlots: [mainKiller.slot],
+          killerNote: built.note,
+          eyewitness,
+          sound,
+          trace,
+          appearance: built.appearance,
+          flaw: built.flaw,
+          misdirection: `21時頃、${framedName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+        }
+
+        // 変装して無実の人物に濡れ衣を着せるトリック（コナン風）を一定確率で重ねる。
+        // 濡れ衣の相手の"本当のアリバイ"（21時台は自分の秘密行動の場所にいた）と
+        // 突き合わせれば、現場付近の目撃が変装だったと分かる——矛盾しない手がかりになる。
+        if (framedSlot && Math.random() < 0.4) {
+          const framedRealLoc = LOCATION_NAMES[alibis[framedSlot]?.T2 ?? CHARACTERS[framedSlot].t2Location]
+          mainTrick.framedName = framedName
+          mainTrick.framedSighting = `21時頃、${framedName}が${locName}のすぐ近くにいるのを見た、という証言がある。犯行現場のそばだ。`
+          mainTrick.framedAlibi = `だが${framedName}は21時頃、確かに${framedRealLoc}にいたことが別の証言から裏づけられている。${locName}付近で見かけられた「${framedName}」は、変装した何者かだった可能性が高い。`
+          mainTrick.killerNote += `\n\nさらにあなたは${framedName}の身なりを真似て変装し、わざと${locName}付近で目撃されることで、疑いを${framedName}へ向けようと仕組んだ。ただし${framedName}自身には21時頃の本当の居場所があり、そこを突かれると変装が露見する。`
+        }
+      } else {
+        // 衝動的な口封じ：事前トリックは無い。現場は荒れ、慌てて痕跡を消した跡が残る。
+        const innocentName = innocentSlots.length > 0 ? CHARACTERS[pickRandom(innocentSlots)].name : '館の使用人'
+        mainTrick = {
+          name: '計画外の犯行（とっさの口封じ）',
+          premeditated: false,
+          killerSlots: [mainKiller.slot],
+          killerNote: `これは計画された殺人ではない。あなたが秘密の行動をしているところを源太郎に目撃され、露見を恐れてとっさに手を下してしまった。凝ったアリバイ工作をする余裕はなく、せいぜい現場に残った痕跡を慌てて拭い、その場を離れるのが精一杯だった。だからこそ、慌てて消し忘れた痕跡や、犯行時刻そのものを突かれると弱い。`,
+          eyewitness,
+          sound,
+          trace,
+          misdirection: `21時頃、${innocentName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+        }
       }
     }
   }
@@ -798,14 +823,20 @@ function generateTimelines(
       const sceneName = LOCATION_NAMES[killer.location]
       const isMain = killer.victimName === MAIN_VICTIM.name
       const victimName = killer.victimSlot ? (CHARACTERS[killer.victimSlot]?.name ?? '相手') : (killer.victimName ?? '相手')
-      const usesTrick = !!mainTrick && mainTrick.killerSlots.includes(slot)
-      const motive = isMain ? (KILL_MOTIVE[slot] ?? '') : ''
+      const isMainKillerHere = !!mainTrick && mainTrick.killerSlots.includes(slot)
+      const isIncidental = isMain && isMainKillerHere && !mainTrick!.premeditated
+      const usesTrick = isMainKillerHere && !!mainTrick!.premeditated
+      const motive = !isMain
+        ? ''
+        : isIncidental
+          ? '秘密の行動を源太郎に目撃され、露見を恐れたあなたは、とっさに'
+          : (KILL_MOTIVE[slot] ?? '')
       const t2Action = isMain
         ? `${motive}${sceneName}で源太郎を手にかけた——これがこの事件の真の犯行時刻である。`
         : `自分の秘密の行動を目撃されてしまい、口封じのため${sceneName}で${victimName}を手にかけた。`
       const t3Action = usesTrick
         ? `${LOCATION_NAMES[a.T3]}へ移り、仕掛けたトリックによって「その時刻には別の場所にいた」というアリバイが成立するよう振る舞った。`
-        : `${LOCATION_NAMES[a.T3]}へ移り、何事もなかったように振る舞った。`
+        : `${LOCATION_NAMES[a.T3]}へ移り、動揺を隠しながら何事もなかったように振る舞った。`
       result[slot] = [
         { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `人目を避けて${LOCATION_NAMES[a.T1]}に入り、${secret}この時点では、まだ最後の一線は越えていなかった。` },
         { period: PERIOD_T2, location: sceneName, action: t2Action },
@@ -857,11 +888,19 @@ function generateStories(
     night += `\n\n22時を回る頃、${t3.action}`
     paras.push(night)
 
-    // 3. 犯人なら、凶器・偽装・トリックまで語る
+    // 3. 犯人なら、凶器・偽装・トリックまで語る（計画的／衝動的で語り口を変える）
     if (isKiller && killer) {
-      let how = `——手にかけるのに使ったのは「${killer.weapon.name}」。この死が表向きは「${killer.weapon.disguisedAs}」として片づけられるよう、あなたは入念に細工を施した。`
-      if (mainTrick && mainTrick.killerSlots.includes(slot)) {
-        how += `\n\nそして何より、あなたには周到に用意した仕掛けがある。${mainTrick.killerNote}`
+      const isMainKillerHere = !!mainTrick && mainTrick.killerSlots.includes(slot)
+      const incidental = isMainKillerHere && !mainTrick!.premeditated
+      let how: string
+      if (incidental) {
+        how = `——断っておくが、これは計画された殺人ではなかった。あなたの本当の目的は別にあった。だがその秘密の行動の最中、よりにもよって源太郎に見咎められてしまう。露見すればすべてを失う——そう悟った瞬間、あなたはとっさに手を下していた。`
+        how += `\n\n使ったのは「${killer.weapon.name}」。とはいえ凝ったアリバイ工作をする余裕などなく、あなたはただ現場に残った痕跡を慌てて拭い、その場を離れるだけで精一杯だった。表向きは「${killer.weapon.disguisedAs}」として処理されるかもしれないが、それは仕組んだというより、ただの幸運にすぎない。`
+      } else {
+        how = `——手にかけるのに使ったのは「${killer.weapon.name}」。この死が表向きは「${killer.weapon.disguisedAs}」として片づけられるよう、あなたは入念に細工を施した。`
+        if (isMainKillerHere && mainTrick!.premeditated) {
+          how += `\n\nそして何より、あなたには周到に用意した仕掛けがある。${mainTrick!.killerNote}`
+        }
       }
       how += `\n\n夜が明ければ、この孤立した館で「犯人捜し」が始まる。あなたは無実の顔で、その輪の中に紛れ込まなければならない。`
       paras.push(how)

@@ -385,7 +385,7 @@ export default function HandoutPage() {
                 )}
               </Section>
             )}
-            {myRole === 'killer' && scenario.mainTrick && scenario.mainTrick.killerSlots.includes(viewSlot) && (
+            {myRole === 'killer' && scenario.mainTrick?.premeditated && scenario.mainTrick.killerSlots.includes(viewSlot) && (
               <Section title={`🎭 あなたが仕掛けたトリック：${scenario.mainTrick.name}`} accent="red">
                 <p className="text-red-100 text-sm leading-relaxed">{scenario.mainTrick.killerNote}</p>
                 <p className="text-red-300/60 text-xs mt-2 leading-relaxed">
