@@ -232,10 +232,10 @@ function generateCooperationChain(killerSlots: CharacterSlot[]): CooperationChai
 // これにより手口や場所を変えても、あらすじ・犯人ハンドアウト・マップが矛盾しない。
 type DeathCat = 'natural' | 'fall' | 'hang' | 'fire'
 const CAT_WEAPONS: Record<DeathCat, string[]> = {
-  natural: ['poison_herb', 'sedative', 'poison_wine'],   // 病死・自然死・中毒に見せる
-  fall: ['dagger', 'candlestick', 'stair_trap'],          // 転落事故に見せる（要・階段）
-  hang: ['strangling'],                                    // 首吊り自殺に見せる
-  fire: ['arson_setup'],                                   // 失火・焼死に見せる
+  natural: ['poison_herb', 'sedative', 'poison_wine', 'digitalis', 'arsenic', 'tainted_tea'],  // 病死・自然死・中毒に見せる
+  fall: ['dagger', 'candlestick', 'poker', 'marble_paperweight', 'wine_bottle', 'stair_trap'],  // 転落・外傷事故に見せる
+  hang: ['strangling', 'cord', 'scarf'],                   // 首吊り自殺に見せる
+  fire: ['arson_setup', 'oil_lamp'],                       // 失火・焼死に見せる
 }
 // 手口ごとに「その死が起こりうる／偽装が成立する」場所だけを許可
 const CAT_LOCS: Record<DeathCat, Location[]> = {
