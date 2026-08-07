@@ -101,10 +101,13 @@ function generateNpcTestimonyCards(
 
     if (prof) {
       const hint = prof.observableHint.replace(/。$/, '')
+      // NPCが犯人の秘密を目撃した場所＝犯人の秘密行動の場所（t2Location）。
+      // NPCの死亡場所ではなく、犯人が実際に秘密を行っていた部屋に合わせる。
+      const witnessSpot = LOCATION_NAMES[CHARACTERS[killerSlot]?.t2Location] ?? '館の一角'
       // Cipher: 癖の描写のみ（名前なし）。「秘密を見てしまった」文脈を添える。
       const cipherVariants = [
         `死亡した${victim.role}の手帳に走り書きが残されていた。『あの夜、${hint}人物の秘密を見てしまった。気づかれていないといいが』——誰のことを指しているのか。`,
-        `死亡した${victim.role}の遺品にメモがあった。『${hint}者の、人に言えない行いを${place}の近くで目にした』とだけ記されていた。人物は特定されていない。`,
+        `死亡した${victim.role}の遺品にメモがあった。『${hint}者の、人に言えない行いを${witnessSpot}の近くで目にした』とだけ記されていた。人物は特定されていない。`,
       ]
       cards.push(makeCard(cipherVariants[hint.length % cipherVariants.length], 'alibi', killerSlot, true))
       // Decoder: 名前＋同じ癖
