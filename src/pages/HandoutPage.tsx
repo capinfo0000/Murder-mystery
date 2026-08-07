@@ -7,6 +7,7 @@ import { LOCATION_NAMES } from '../data/locations'
 import AlibiMatrix from '../components/AlibiMatrix'
 import EvidenceCardView from '../components/EvidenceCard'
 import ManorMap from '../components/ManorMap'
+import { naturalizeTime } from '../logic/timeText'
 
 const ROUND1_PHASE = 'round1'
 
@@ -318,7 +319,7 @@ export default function HandoutPage() {
                 {myKillerInfo.isDualKiller && (
                   <div className="mt-3 pt-3 border-t border-red-900/40">
                     <p className="text-red-200/80 text-xs leading-relaxed">
-                      {(() => {
+                      {naturalizeTime((() => {
                         const v = myKillerInfo.victimName ?? '被害者'
                         const pat = scenario.dualKillerInfo?.type
                         const isFirst = (scenario.killers ?? []).findIndex(k => k.slot === viewSlot) === 0
@@ -357,7 +358,7 @@ export default function HandoutPage() {
                           return `T2、${myKillerInfo.weapon.name}を手に${v}のもとへ向かうと、${v}はすでに傷を負い苦しんでいた。誰かが先に手を下したのかもしれない——あなたは構わず凶器で止めを刺した。罠が仕掛けられていたとは知らなかった。`
                         }
                         return `T2に${v}の元へ向かい、凶器で致命傷を与えた。${v}の様子に違和感があったかもしれないが、あなたは凶器による一撃しか知らない。`
-                      })()}
+                      })())}
                     </p>
                   </div>
                 )}

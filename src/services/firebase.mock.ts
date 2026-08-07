@@ -77,8 +77,8 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
 
   const playersMap = state.players ?? {}
   const humanPlayers = Object.entries(playersMap).filter(([, p]) => !p.isNPC)
-  const totalCount = state.playerCount
-  const npcCount = Math.min(totalCount - humanPlayers.length, 3)
+  const CAST_COUNT = 7   // 常に7人の名前付きキャラをキャスト（不足分はNPC）
+  const npcCount = Math.max(0, CAST_COUNT - humanPlayers.length)
   const existingNPCs = Object.values(playersMap).filter(p => p.isNPC).length
   for (let i = existingNPCs; i < npcCount; i++) {
     const npcId = `npc_${uuid().slice(0, 6)}`
@@ -86,7 +86,7 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   }
 
   const allIds = Object.keys(state.players)
-  const slots = getSlotsForCount(totalCount)
+  const slots = getSlotsForCount(CAST_COUNT)
   const shuffled = [...slots]
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -94,7 +94,7 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   }
   allIds.forEach((pid, i) => { state.players[pid].characterSlot = shuffled[i] })
 
-  const scenario = generateScenario(totalCount, state.mode)
+  const scenario = generateScenario(CAST_COUNT, state.mode)
   state.scenario = scenario
 
   const humanIds = allIds.filter(id => !state.players[id].isNPC)

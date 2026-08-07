@@ -117,20 +117,19 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   const playersMap = state.players ?? {}
   const humanPlayers = Object.entries(playersMap).filter(([, p]) => !p.isNPC)
   const humanCount = humanPlayers.length
-  const totalCount = state.playerCount
-  const isDebug = totalCount < 4
-  const needed = Math.max(0, totalCount - humanCount)
-  const npcCount = isDebug ? needed : Math.min(needed, 3)
+  // キャストは常に7人の名前付きキャラ（A〜G）。人間で埋まらない分はNPCが演じる。
+  const CAST_COUNT = 7
+  const needed = Math.max(0, CAST_COUNT - humanCount)
 
-  // fill missing slots with NPCs (debug: all slots, production: max 3)
+  // fill missing slots with NPCs up to the full 7-character cast
   const existingNPCs = Object.keys(playersMap).filter(id => playersMap[id].isNPC).length
-  for (let i = existingNPCs; i < npcCount; i++) {
+  for (let i = existingNPCs; i < needed; i++) {
     await joinGame(gameId, `npc_${uuid().slice(0, 6)}`, `NPC${i + 1}`, true)
   }
 
   // assign character slots
   const allPlayers = (await get(ref(db, `games/${gameId}/players`))).val() as GameState['players']
-  const slots = getSlotsForCount(totalCount)
+  const slots = getSlotsForCount(CAST_COUNT)
   const shuffledSlots = [...slots]
   for (let i = shuffledSlots.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -146,7 +145,7 @@ export async function startGame(gameId: string, hostId: string): Promise<void> {
   })
 
   // generate scenario
-  const scenario = generateScenario(totalCount, state.mode)
+  const scenario = generateScenario(CAST_COUNT, state.mode)
 
   // deal cards
   const humanIds = playerIds.filter(id => !allPlayers[id].isNPC)
