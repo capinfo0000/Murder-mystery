@@ -4,7 +4,7 @@ import { CARD_TEMPLATES } from '../data/cardTemplates'
 import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
-import { isBloodyWeapon } from '../data/weapons'
+import { isBloodyWeapon, isBloodPlausible } from '../data/weapons'
 import { naturalizeTime } from './timeText'
 
 function shuffle<T>(arr: T[]): T[] {
@@ -395,7 +395,26 @@ export function dealCards(
   for (const id of trickResult.decisive) keyIds.add(id)
   for (const id of traceResult.decisive) keyIds.add(id)
 
-  const allCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards, ...trickResult.cards, ...traceResult.cards]
+  const candidateCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards, ...trickResult.cards, ...traceResult.cards]
+
+  // ── 真相ゲート：確定した真相（凶器・手口・配役）に矛盾するカードは配らない ──────
+  // 真相を先に固め、それに合わないカードは物理的にありえない／役柄と食い違うものとして
+  // 場に出さない。テンプレートが将来ずれても、矛盾カードがプレイヤーに届かないことを保証する。
+  const bloodPlausible = mainKiller ? isBloodPlausible(mainKiller.weapon.id) : true
+  const poisonMurder = !!mainKiller?.weapon.isPoison
+  const innocentSet = new Set(slots.filter(s => !killerSlots.includes(s)))
+  const PHYS_BLOOD = /血痕|返り血|血の付いた|血が付いた|血を洗|血の跡/
+  const PHYS_POISON = /舌を刺すような|苦味のありそうな沈殿|毒のような後味|いつもの銘柄にはない妙な後味/
+  const INNOCENT_MURDER = /手にかけ|殺害した|返り血|死斑|トリックの綻び/
+  const allCards = candidateCards.filter(c => {
+    // 出血のない死因なのに血の手がかり → 物理的にありえない
+    if (!bloodPlausible && PHYS_BLOOD.test(c.content)) return false
+    // 毒殺でない死因なのに毒物混入を断定する手がかり
+    if (!poisonMurder && PHYS_POISON.test(c.content)) return false
+    // 無実の人物に殺人そのものを示す手がかり（濡れ衣の「現場近くで目撃」等の誘導は別で許容）
+    if (c.relatedSlot && innocentSet.has(c.relatedSlot) && INNOCENT_MURDER.test(c.content)) return false
+    return true
+  })
   const handCapacity = playerIds.length * cardsPerPlayer
   const totalNeeded = handCapacity + deckSize
 
