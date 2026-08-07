@@ -53,10 +53,16 @@ export default function HandoutPage() {
   const char = CHARACTERS[viewSlot]
   const myRole = scenario.roles[viewSlot]
   const myKillerInfo = (scenario.killers ?? []).find(k => k.slot === viewSlot)
+  const myKilledNpc = myKillerInfo && myKillerInfo.victimName !== MAIN_VICTIM.name
+    ? (scenario.npcVictims ?? []).find(v => v.killerSlot === viewSlot)
+    : undefined
   const myKillTime = myKillerInfo
     ? (myKillerInfo.victimName === MAIN_VICTIM.name
         ? '事件のあった夜（21:00〜22:00頃）'
-        : `${(scenario.npcVictims ?? []).find(v => v.killerSlot === viewSlot)?.deathTime ?? '後日'}（秘密を知られての口封じ）`)
+        : `${myKilledNpc?.deathTime ?? '事件当夜'}（秘密を知られての口封じ）`)
+    : ''
+  const myKillPlace = myKillerInfo
+    ? (myKilledNpc?.deathLocation ?? LOCATION_NAMES[myKillerInfo.location])
     : ''
   const myAlibis = scenario.alibis[viewSlot]
   const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === viewUid)
@@ -338,7 +344,7 @@ export default function HandoutPage() {
                       : (myKillerInfo.victimName ?? '？')
                   } />
                   <Row label={myKillerInfo.method === 'poison' ? '毒物' : myKillerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={myKillerInfo.weapon.name} />
-                  <Row label="場所" value={LOCATION_NAMES[myKillerInfo.location]} />
+                  <Row label="場所" value={myKillPlace} />
                   <Row label="偽装死因" value={myKillerInfo.weapon.disguisedAs} />
                   <Row label="時刻" value={myKillTime} />
                 </div>

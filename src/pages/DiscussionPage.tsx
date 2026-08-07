@@ -441,12 +441,16 @@ function ProfileModal({
               <div className="space-y-2 text-sm">
                 <PRow label="被害者" value={killerInfo.victimSlot ? (CHARACTERS[killerInfo.victimSlot]?.name ?? '？') : (killerInfo.victimName ?? '？')} />
                 <PRow label={killerInfo.method === 'poison' ? '毒物' : killerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={killerInfo.weapon.name} />
-                <PRow label="場所" value={LOCATION_NAMES[killerInfo.location]} />
+                <PRow label="場所" value={
+                  killerInfo.victimName === MAIN_VICTIM.name
+                    ? LOCATION_NAMES[killerInfo.location]
+                    : ((scenario.npcVictims ?? []).find(v => v.killerSlot === slot)?.deathLocation ?? LOCATION_NAMES[killerInfo.location])
+                } />
                 <PRow label="偽装死因" value={killerInfo.weapon.disguisedAs} />
                 <PRow label="時刻" value={
                   killerInfo.victimName === MAIN_VICTIM.name
                     ? '事件のあった夜（21:00〜22:00頃）'
-                    : `${(scenario.npcVictims ?? []).find(v => v.killerSlot === slot)?.deathTime ?? '後日'}（秘密を知られての口封じ）`
+                    : `${(scenario.npcVictims ?? []).find(v => v.killerSlot === slot)?.deathTime ?? '事件当夜'}（秘密を知られての口封じ）`
                 } />
               </div>
             </PSection>
