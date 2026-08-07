@@ -53,7 +53,7 @@ export async function createGame(
   await set(gameRef, {
     hostId,
     playerCount: settings?.playerCount ?? 5,
-    mode: settings?.mode ?? (['normal', 'hard', 'puzzle'] as const)[Math.floor(Math.random() * 3)],
+    mode: settings?.mode ?? (['normal', 'hard'] as const)[Math.floor(Math.random() * 2)],
     phase: 'lobby',
     hasGM: settings?.hasGM ?? false,
     totalRounds: settings?.totalRounds ?? 3,

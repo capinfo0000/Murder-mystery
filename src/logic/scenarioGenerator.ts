@@ -477,6 +477,10 @@ export function generateScenario(
   playerCount: number,
   mode: GameMode
 ): Scenario {
+  // ネームド（プレイヤー）は絶対に殺害されない。死ぬのは源太郎とモブNPCのみ。
+  // 「全員犯人（プレイヤー同士が殺し合う）」パズルモードは廃止し、通常シナリオとして扱う。
+  // （型は widen したまま：以降のパズル分岐は到達しない死コードとして無害に残す）
+  mode = (mode === 'puzzle' ? 'normal' : mode) as GameMode
   const slots = getSlotsForCount(playerCount)
   const shuffledSlots = shuffle(slots)
 
@@ -1120,12 +1124,24 @@ function generateTimelines(
         continue
       }
 
+      // パズル（連鎖殺人）：全員が別の誰かを手にかける。目撃・口封じの構図ではないので
+      // 「見られてしまった」系の文言は使わない（被害者の居場所と矛盾するため）。
+      if (killer.victimSlot) {
+        const kloc = LOCATION_NAMES[a.T2]
+        result[slot] = [
+          { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `${LOCATION_NAMES[a.T1]}にいた。${arrival}` },
+          { period: PERIOD_T2, location: kloc, action: `${kloc}で${victimName}を手にかけた。この夜、館では複数の者がそれぞれ別の相手に手をかけていた——連鎖する惨劇だった。` },
+          { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}へ移り、自らの行いを隠しながら過ごした。` },
+        ]
+        continue
+      }
+
       // NPC殺し犯：事件当夜は"自分の秘密行動"をしていて、それをNPCに目撃された。
-      // 口封じの殺害はその後（NPCの推定死亡時刻＝多くは翌日）に行われる別の出来事。
+      // 口封じの殺害はその後（NPCの推定死亡時刻）に行われる別の出来事。
       if (!isMain) {
         result[slot] = [
           { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `${LOCATION_NAMES[a.T1]}にいた。${arrival}` },
-          { period: PERIOD_T2, location: LOCATION_NAMES[a.T2], action: `人に言えない事情があり、ひそかに${LOCATION_NAMES[a.T2]}にいた。${secret}——だが、この秘密の行動を${victimName}に見られてしまった。露見すれば破滅だ。` },
+          { period: PERIOD_T2, location: LOCATION_NAMES[a.T2], action: `人知れず、${secret}——だが、その姿を${victimName}に見られてしまった。露見すれば、すべてが破滅だ。` },
           { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}にいた。${late}（——そして秘密を知った${victimName}を、危険が去らぬうちにと、その夜のうちに口封じのため手にかけることになる。）` },
         ]
         continue
@@ -1194,8 +1210,13 @@ function generateStories(
     paras.push(night)
 
     // 3. 犯人なら、凶器・偽装・トリックまで語る（計画的／衝動的で語り口を変える）
-    if (isKiller && killer && killer.victimName !== MAIN_VICTIM.name) {
-      // NPC殺し犯：源太郎は手にかけていない。秘密の行動を目撃され、後日その口を封じた。
+    if (isKiller && killer && killer.victimSlot) {
+      // パズル（連鎖殺人）：全員が別の誰かを手にかける。目撃・口封じの構図は使わない。
+      const vn = CHARACTERS[killer.victimSlot]?.name ?? '相手'
+      paras.push(`この夜、館では異常なことが起きていた——居合わせた者たちが、それぞれ別の相手にひそかに手をかけたのだ。あなたもまた、${vn}を手にかけた一人だった。`)
+      paras.push(`だが、あなた自身もいずれ誰かの手にかかる。全員が加害者であり、全員が被害者——誰が誰を手にかけたのか、その連鎖を一つひとつ解き明かさなければ真相にはたどり着けない。`)
+    } else if (isKiller && killer && killer.victimName !== MAIN_VICTIM.name) {
+      // NPC殺し犯：源太郎は手にかけていない。秘密の行動を目撃され、その夜のうちに口を封じた。
       const v = killer.victimName ?? '相手'
       paras.push(`——念のため言っておく。あなたは源太郎を手にかけてはいない。だが事件の夜、人には言えない秘密の行動をしているところを、${v}に見られてしまった。`)
       paras.push(`放っておけば、その秘密からすべてが露見する。時間を置けば置くほど危うい——追い詰められたあなたは、危険が去らぬその夜のうちに、口止めを図る${v}を「${killer.weapon.disguisedAs}」に見せかけて手にかけた（手段は「${killer.weapon.name}」）。館で起きたのは源太郎殺しだけではない——これもまた、まぎれもないもう一つの殺人だ。\n\n夜が明けて始まる犯人捜しでは、源太郎を殺した犯人だけでなく、${v}を手にかけたあなたのことも暴かれてはならない。`)
