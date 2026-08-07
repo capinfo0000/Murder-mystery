@@ -194,6 +194,7 @@ export interface Scenario {
   mainVictimLocation?: Location  // 当主の遺体が発見された場所（マップの★位置）
   mainTrick?: MainTrick          // コナン風アリバイ工作（プレイヤー犯の場合）
   timelines?: Record<CharacterSlot, TimelineEntry[]>  // 各キャラの事件当日の行動（時系列）
+  stories?: Record<CharacterSlot, string>  // 各キャラの個別ハンドアウトを物語として綴った文章
 }
 
 export interface EvidenceCard {

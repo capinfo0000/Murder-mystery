@@ -220,6 +220,18 @@ export default function HandoutPage() {
         {/* CHARACTER tab */}
         {tab === 'character' && (
           <div className="space-y-4">
+            {scenario.stories?.[viewSlot] && (
+              <Section title="あなたの物語（厳重に秘密）" accent="amber">
+                <p className="text-amber-400/70 text-xs mb-3 leading-relaxed">
+                  あなたが知る真実を、物語として綴ったものです。この先の要約欄と合わせて確認してください。
+                </p>
+                <div className="space-y-3">
+                  {scenario.stories[viewSlot].split('\n\n').map((para, i) => (
+                    <p key={i} className="text-amber-100 text-sm leading-relaxed">{para}</p>
+                  ))}
+                </div>
+              </Section>
+            )}
             <Section title="背景">
               <p className="text-purple-200 text-sm leading-relaxed">{char.background}</p>
             </Section>

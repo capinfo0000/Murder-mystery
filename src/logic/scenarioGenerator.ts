@@ -718,6 +718,8 @@ export function generateScenario(
 
   // ── タイムライン（各キャラの事件当日の行動＝唯一の真実）──────────────
   const timelines = generateTimelines(slots, alibis, secretActions, killers, mainTrick)
+  // ── 物語（個別ハンドアウトを一人称の物語として綴る）────────────────────
+  const stories = generateStories(slots, timelines, killers, mainTrick, connections, cooperationChain ?? undefined)
 
   // ── synopsis ──────────────────────────────────────────────────────────
   const synopsis = generateSynopsis(npcVictims, slots, deathDiscovery)
@@ -741,6 +743,7 @@ export function generateScenario(
     mainVictimLocation,
     mainTrick,
     timelines,
+    stories,
   }
 }
 
@@ -760,6 +763,18 @@ const LATE_ACTIONS = [
   '寝つけぬまま、雨の音を聞いて過ごしていた。',
   'ひとり、落ち着かない気持ちを持て余していた。',
 ]
+
+// 当主(源太郎)を手にかけた動機。凶器・場所・手口はランダムで変わるため、
+// 手口に依存しない「なぜ殺したのか」だけを書く（矛盾を防ぐ）。
+const KILL_MOTIVE: Record<CharacterSlot, string> = {
+  A: '会社の巨額赤字と自らの廃嫡を父・源太郎に知られ、すべてを失うことへの恐怖から、真実を知る源太郎の口を封じた。',
+  B: '過去の重大な医療ミスを源太郎に握られ、脅迫されていた。公表と医師免許の剥奪を恐れ、脅迫者である源太郎を手にかけた。',
+  C: '館の名画を偽物にすり替える計画を源太郎に気づかれた。すべてを暴露されまいと、証人となる源太郎を口封じした。',
+  D: '長年にわたり源太郎から受け続けた陰湿な虐待——その積年の恨みを晴らすための復讐だった。',
+  E: '源太郎の悪事に加担させられ、裏金で口止めされていた。全容を暴露すると脅され、逆に源太郎を消して自らの保身を図った。',
+  F: '突然呼び戻された末に廃嫡・絶縁を宣告され、源太郎への怒りが頂点に達した。',
+  G: '源太郎の隠し子である自分の存在を、源太郎自身が隠蔽しようとした。正当な相続の権利を奪われまいと、源太郎を手にかけた。',
+}
 
 function generateTimelines(
   slots: CharacterSlot[],
@@ -784,14 +799,15 @@ function generateTimelines(
       const isMain = killer.victimName === MAIN_VICTIM.name
       const victimName = killer.victimSlot ? (CHARACTERS[killer.victimSlot]?.name ?? '相手') : (killer.victimName ?? '相手')
       const usesTrick = !!mainTrick && mainTrick.killerSlots.includes(slot)
+      const motive = isMain ? (KILL_MOTIVE[slot] ?? '') : ''
       const t2Action = isMain
-        ? `${sceneName}で${MAIN_VICTIM.name}を手にかけた。これがこの事件の真の犯行時刻である。`
-        : `${sceneName}で、自分の秘密を目撃した${victimName}を口封じのため手にかけた。`
+        ? `${motive}${sceneName}で源太郎を手にかけた——これがこの事件の真の犯行時刻である。`
+        : `自分の秘密の行動を目撃されてしまい、口封じのため${sceneName}で${victimName}を手にかけた。`
       const t3Action = usesTrick
         ? `${LOCATION_NAMES[a.T3]}へ移り、仕掛けたトリックによって「その時刻には別の場所にいた」というアリバイが成立するよう振る舞った。`
         : `${LOCATION_NAMES[a.T3]}へ移り、何事もなかったように振る舞った。`
       result[slot] = [
-        { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `人目を避けて${LOCATION_NAMES[a.T1]}に入り、${secret}この隠し事が、のちの行動の伏線になる。` },
+        { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `人目を避けて${LOCATION_NAMES[a.T1]}に入り、${secret}この時点では、まだ最後の一線は越えていなかった。` },
         { period: PERIOD_T2, location: sceneName, action: t2Action },
         { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: t3Action },
       ]
@@ -804,6 +820,65 @@ function generateTimelines(
     }
   }
   return result
+}
+
+// 個別ハンドアウト（背景・秘密・時系列・動機・凶行・トリック・密約）を
+// 一人称視点の"物語"として綴る。タイムライン等と同じ実データから導出するので矛盾しない。
+function generateStories(
+  slots: CharacterSlot[],
+  timelines: Record<CharacterSlot, TimelineEntry[]>,
+  killers: KillerInfo[],
+  mainTrick: MainTrick | undefined,
+  connections: PlayerConnection[],
+  cooperationChain: CooperationChain | undefined,
+): Record<CharacterSlot, string> {
+  const stories = {} as Record<CharacterSlot, string>
+  const killerBySlot = new Map(killers.map(k => [k.slot, k] as const))
+
+  for (const slot of slots) {
+    const char = CHARACTERS[slot]
+    const tl = timelines[slot]
+    if (!char || !tl) continue
+    const killer = killerBySlot.get(slot)
+    const isKiller = !!killer
+    const [t1, t2, t3] = tl
+    const hasPact =
+      connections.some(c => c.fromSlot === slot || c.toSlot === slot) ||
+      !!cooperationChain?.links.some(l => l.fromSlot === slot || l.toSlot === slot)
+
+    const paras: string[] = []
+
+    // 1. 自己紹介と背景
+    paras.push(`あなたは${char.name}——${char.role}。${char.background}`)
+
+    // 2. 事件当夜の物語（時系列を接続詞でつなぐ）
+    let night = `事件のあった夜。20時を過ぎた頃、${t1.action}`
+    night += `\n\nそして21時——館の運命が変わる時刻が訪れた。${t2.action}`
+    night += `\n\n22時を回る頃、${t3.action}`
+    paras.push(night)
+
+    // 3. 犯人なら、凶器・偽装・トリックまで語る
+    if (isKiller && killer) {
+      let how = `——手にかけるのに使ったのは「${killer.weapon.name}」。この死が表向きは「${killer.weapon.disguisedAs}」として片づけられるよう、あなたは入念に細工を施した。`
+      if (mainTrick && mainTrick.killerSlots.includes(slot)) {
+        how += `\n\nそして何より、あなたには周到に用意した仕掛けがある。${mainTrick.killerNote}`
+      }
+      how += `\n\n夜が明ければ、この孤立した館で「犯人捜し」が始まる。あなたは無実の顔で、その輪の中に紛れ込まなければならない。`
+      paras.push(how)
+    } else {
+      paras.push(`あなたは誰も手にかけてなどいない。だが、事件の時刻に人には言えない行動をとっていたことだけは事実だ。それを正直に明かせば身の破滅——かといって黙っていれば、疑いの目はあなたに向く。夜明けとともに始まる犯人捜しを、どう切り抜けるかはあなた次第だ。`)
+    }
+
+    // 4. 密約・指令があれば、物語として触れる（詳細は下記の該当欄を参照）
+    if (hasPact) {
+      paras.push(isKiller
+        ? 'なお、この凶行の影では、あなたと他の誰かとのあいだに今夜かぎりの密約が交わされている（詳しくは下の「密約／秘密の指令」を参照）。その約束が守られるか裏切られるかは、討議の行方しだいだ。'
+        : 'そしてこの夜、あなたは他の誰かと今夜かぎりの密約を交わしている（詳しくは下の「密約／秘密の指令」を参照）。それを表沙汰にできない事情もまた、あなたの口を重くさせる。')
+    }
+
+    stories[slot] = paras.join('\n\n')
+  }
+  return stories
 }
 
 function generateSynopsis(
