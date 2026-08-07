@@ -1,8 +1,8 @@
 import { v4 as uuid } from 'uuid'
-import type { CardCategory, EvidenceCard, CharacterSlot, KillerInfo, NpcSurvivor, NpcVictim, VictimInfo, MainTrick } from '../types/game'
+import type { CardCategory, EvidenceCard, CharacterSlot, KillerInfo, NpcSurvivor, NpcVictim, VictimInfo, MainTrick, Location } from '../types/game'
 import { CARD_TEMPLATES } from '../data/cardTemplates'
 import { PAST_PROFESSIONS } from '../data/pastProfessions'
-import { CHARACTERS } from '../data/characters'
+import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
 import { naturalizeTime } from './timeText'
 
@@ -182,6 +182,59 @@ function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: S
   return { cards, decisive }
 }
 
+// 現場に残った痕跡（庭の花・血痕の付いた品など）から犯人を割り出す決定的手がかり。
+// 「痕跡カード」＋「その品の出所＝犯人を名指す解読カード」の2枚で成立する（暗号・解読方式）。
+// 犯人が現場にいた前提を、目撃証言とは別の形で担保する（決定的手がかりの多様化）。
+const SPOT_TRACE: Partial<Record<Location, string>> = {
+  study: '万年筆の青いインクの染み',
+  library: '古い蔵書票の切れ端と黴の匂い',
+  gallery: '乾いた絵の具と画溶液の匂い',
+  secret_passage: '通路にしか積もらない特有の埃と蜘蛛の糸',
+  safe_room: '金属の錆と機械油の匂い',
+  hidden_room: 'この館では珍しい草花の花弁',
+  greenhouse: '温室にしか咲かない花の花弁',
+  basement: '地下室の黴と湿った土の匂い',
+  master_bedroom: '当主の私室でしか焚かれない香の移り香',
+  dining: '食堂の燭台の蝋の垂れ跡',
+  guest_room: '客間にだけ置かれた便箋の繊維',
+}
+
+function generateSceneTraceCards(killers: KillerInfo[]): { cards: EvidenceCard[]; decisive: Set<string> } {
+  const mainKiller = killers.find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
+  if (!mainKiller) return { cards: [], decisive: new Set() }
+  // 毎回は出さない（目撃証言型の事件も残す）。約半数で採用。
+  if (Math.random() < 0.5) return { cards: [], decisive: new Set() }
+
+  const killerName = CHARACTERS[mainKiller.slot].name
+  const spot = CHARACTERS[mainKiller.slot].t2Location   // 犯人が20時台に秘密行動をしていた部屋
+  const spotName = LOCATION_NAMES[spot]
+  const traceThing = SPOT_TRACE[spot] ?? `${spotName}特有の匂い`
+
+  if (Math.random() < 0.5) {
+    // 血痕の付いた品：犯人が返り血を拭って隠した物が、犯人の部屋の物陰から出る
+    const trace = makeCard(
+      `源太郎の血が付いた布切れが、遺体のある部屋から少し離れた物陰に隠すように捨てられていた。犯人が返り血や手を拭ったものらしい。`,
+      'physical', mainKiller.slot, true,
+    )
+    const decoder = makeCard(
+      `その血の付いた布が見つかったのは${spotName}の物陰だった。事件の夜、そこにひそかに出入りしていたのは${killerName}である。`,
+      'background', mainKiller.slot, true,
+    )
+    return { cards: [trace, decoder], decisive: new Set([trace.id, decoder.id]) }
+  }
+
+  // 場所固有の痕跡（庭の花など）が現場に持ち込まれている
+  const trace = makeCard(
+    `源太郎の遺体のそばに、${traceThing}が残されていた。この館の中でも、限られた者しか立ち入らない一室から持ち込まれたものだ。`,
+    'physical', mainKiller.slot, true,
+  )
+  const decoder = makeCard(
+    `${traceThing}の出どころは${spotName}だ。事件の夜、そこにひそかに出入りしていたのは${killerName}——遺体のそばに残された痕跡は、そこから運ばれたものと符合する。`,
+    'background', mainKiller.slot, true,
+  )
+  return { cards: [trace, decoder], decisive: new Set([trace.id, decoder.id]) }
+}
+
 export function dealCards(
   playerIds: string[],
   slots: CharacterSlot[],
@@ -263,14 +316,17 @@ export function dealCards(
   const secretRouteCards = generateSecretRouteCards()
   // コナン風トリック＋現場の手がかり（事件データから生成）
   const trickResult = generateTrickCards(mainTrick)
+  // 現場に残った痕跡（庭の花・血痕の付いた品など）＝目撃証言とは別型の決定的手がかり
+  const traceResult = generateSceneTraceCards(killers)
 
-  // 決定的な真の手がかり（条件成立カード・犯人関連・NPC証言の真・死因の矛盾・トリックの綻び）
+  // 決定的な真の手がかり（条件成立カード・犯人関連・NPC証言の真・死因の矛盾・トリックの綻び・現場痕跡）
   const keyIds = new Set<string>(decisiveIds)
   for (const c of npcCards) if (c.isTrue) keyIds.add(c.id)
   for (const c of npcCauseCards) if (c.isTrue && c.category === 'psychology') keyIds.add(c.id)
   for (const id of trickResult.decisive) keyIds.add(id)
+  for (const id of traceResult.decisive) keyIds.add(id)
 
-  const allCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards, ...trickResult.cards]
+  const allCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards, ...trickResult.cards, ...traceResult.cards]
   const handCapacity = playerIds.length * cardsPerPlayer
   const totalNeeded = handCapacity + deckSize
 
