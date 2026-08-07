@@ -313,7 +313,7 @@ export default function HandoutPage() {
                   <Row label={myKillerInfo.method === 'poison' ? '毒物' : myKillerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={myKillerInfo.weapon.name} />
                   <Row label="場所" value={LOCATION_NAMES[myKillerInfo.location]} />
                   <Row label="偽装死因" value={myKillerInfo.weapon.disguisedAs} />
-                  <Row label="時刻" value="T2（21:00〜22:00頃）" />
+                  <Row label="時刻" value="事件のあった夜（21:00〜22:00頃）" />
                 </div>
                 {myKillerInfo.isDualKiller && (
                   <div className="mt-3 pt-3 border-t border-red-900/40">

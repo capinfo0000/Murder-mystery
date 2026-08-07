@@ -6,9 +6,9 @@ interface Props {
 }
 
 const TIME_SLOTS = [
-  { key: 'T1', label: 'T1  20:00〜21:00' },
-  { key: 'T2', label: 'T2  21:00〜22:00 ⚠️' },
-  { key: 'T3', label: 'T3  22:00〜23:00' },
+  { key: 'T1', label: '宵のうち  20:00〜21:00' },
+  { key: 'T2', label: '事件の時間帯  21:00〜22:00 ⚠️' },
+  { key: 'T3', label: '夜更け  22:00〜23:00' },
 ] as const
 
 export default function AlibiMatrix({ alibis }: Props) {
