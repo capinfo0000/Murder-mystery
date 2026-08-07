@@ -537,6 +537,8 @@ export function generateScenario(
   // non-puzzle: no player characters die — only NPCs
   let victims: VictimInfo[] = []
   let npcVictims: NpcVictim[] = []
+  // 二重犯行（当主を2人が独立に手にかける）のパターン。NPC記録に埋め込まず独立管理する。
+  let dualPatternChosen: DualKillerPattern | undefined
 
   // helper: build a NpcVictim from an EXTRA_NPCS entry (guarantees location/time fields)
   type ExtraNpc = (typeof EXTRA_NPCS)[number]
@@ -582,31 +584,20 @@ export function generateScenario(
 
     if (dualActive) {
       type DualCategory = 'poison' | 'physical' | 'environmental'
-      const POISON_NPC_IDS = ['cook', 'maid_haru', 'gardener', 'secretary', 'footman', 'accountant']
-      const PHYSICAL_NPC_IDS = ['lawyer', 'maid_tsuki', 'night_guard']
-      const ENVIRONMENTAL_NPC_IDS = ['driver']
       const PATTERNS_BY_CATEGORY: Record<DualCategory, DualKillerPattern[]> = {
         poison: ['poison_then_weapon', 'weapon_found_dead', 'weapon_then_poison', 'poison_failed_weapon_killed'],
         physical: ['double_weapon_first_failed', 'double_weapon_overlap'],
         environmental: ['environment_then_weapon'],
       }
       const chosenCategory = pickRandom<DualCategory>(['poison', 'physical', 'environmental'])
-      const preferredIds = chosenCategory === 'poison' ? POISON_NPC_IDS
-        : chosenCategory === 'physical' ? PHYSICAL_NPC_IDS
-        : ENVIRONMENTAL_NPC_IDS
-      const sharedNpc = shuffledNpcs.find(n => preferredIds.includes(n.id)) ?? shuffledNpcs[0]
-      const remainingNpcs = shuffledNpcs.filter(n => n.id !== sharedNpc.id)
-      const soloNpcs = remainingNpcs.slice(0, numKillers - 2)  // killers[2+]
-      const naturalNpcs = remainingNpcs.slice(numKillers - 2, numKillers - 2 + Math.floor(Math.random() * 3))
-      const chosenDualPattern = pickRandom(PATTERNS_BY_CATEGORY[chosenCategory])
+      // 二重犯行の被害者は"当主"であってNPCではない。NPCを被害者に仕立てると
+      // 幻の他殺（誰も手にかけていないNPCの死）が生じるため、パターンだけを独立に決める。
+      dualPatternChosen = pickRandom(PATTERNS_BY_CATEGORY[chosenCategory])
+      // killers[0],[1] は当主を二重に手にかける。killers[2+] は口封じでNPCを殺す。
+      const soloNpcs = shuffledNpcs.slice(0, numKillers - 2)  // killers[2+]
+      const naturalNpcs = shuffledNpcs.slice(numKillers - 2, numKillers - 2 + Math.floor(Math.random() * 3))
 
       npcVictims = [
-        mkNpc(sharedNpc, true, {
-          trueMurderDetail: undefined,  // filled after killers are built
-          killerSlot: killerSlots[0],
-          secondKillerSlot: killerSlots[1],
-          dualKillerPattern: chosenDualPattern,
-        }),
         ...soloNpcs.map((npc, i) => mkNpc(npc, true, {
           trueMurderDetail: npc.trueMurderDetail,
           killerSlot: killerSlots[i + 2],
@@ -633,7 +624,7 @@ export function generateScenario(
   const poisonWeapons = WEAPONS.filter(w => w.isPoison)
   const physicalWeapons = WEAPONS.filter(w => !w.isPoison && !w.isEnvironmental)
   const environmentalWeapons = WEAPONS.filter(w => w.isEnvironmental)
-  const dualPattern = npcVictims[0]?.dualKillerPattern
+  const dualPattern = dualPatternChosen
 
   // 在席プレイヤーの秘密行動の場所(21時台)。犯行現場がここと重なると、無実の者が
   // 犯行と同じ部屋・同じ時刻に居合わせた＝目撃者になってしまうため、現場から除外する。
@@ -762,8 +753,10 @@ export function generateScenario(
     return { slot, victimSlot, victimName, weapon, location, method }
   })
 
-  // Fill trueMurderDetail for dual killer shared victim
-  if (dualPattern && npcVictims[0].dualKillerPattern) {
+  // 二重犯行の真相文（当主がどう二人に手にかけられたか）。NPC記録ではなく
+  // dualKillerInfo に持たせ、結果画面の「真犯人」欄で表示する。
+  let dualDetail: string | undefined
+  if (dualPattern && killers.length >= 2) {
     const k1 = killers[0]
     const k2 = killers[1]
     const k1Name = CHARACTERS[k1.slot].name
@@ -794,10 +787,7 @@ export function generateScenario(
         detail = `${k1Name}がT2より前に${LOCATION_NAMES[k1.location]}で${k1.weapon.name}を仕掛け、${v}が罠にかかり負傷した。その場を立ち去った後、事情を知らない${k2Name}が${k2.weapon.name}を手に現れ止めを刺した。ふたりは互いの計画を知らない。`
         break
     }
-    npcVictims[0] = { ...npcVictims[0], trueMurderDetail: naturalizeTime(detail) }
-    if (dualPattern === 'environment_then_weapon') {
-      npcVictims[0] = { ...npcVictims[0], apparentCause: killers[0].weapon.disguisedAs }
-    }
+    dualDetail = naturalizeTime(detail)
   }
 
   // ── alibis ────────────────────────────────────────────────
@@ -856,7 +846,8 @@ export function generateScenario(
       type: dualPattern,
       poisonKillerSlot: killers[0].slot,
       weaponKillerSlot: killers[1].slot,
-      victimName: npcVictims[0].role,
+      victimName: MAIN_VICTIM.name,
+      detail: dualDetail,
     }
   }
 
