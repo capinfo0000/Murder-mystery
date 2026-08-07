@@ -135,12 +135,12 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'al_006',
-    content: '温室の方から土の香りが漂ってきた。夜中に植物の世話をしている者がいたようだ。',
-    category: 'alibi', relatedSlot: 'F', baseIsTrue: true,
+    content: 'T2頃、館の奥まった隠し部屋のあたりから、湿った土と青い草の匂いがかすかに漂っていた。誰かがひそかに植物の世話をしていたようだ。',
+    category: 'alibi', relatedSlot: 'F', baseIsTrue: true, secretSpotAlibi: true,
   },
   {
     id: 'al_007',
-    content: 'T2の時間帯、客室の廊下側の扉が少し開いていた。中から書類を漁る音がした。',
+    content: 'T2の時間帯、書斎で誰かが引き出しや書類をひそかに漁るような物音がした。何かを探している気配だった。',
     category: 'alibi', relatedSlot: 'G', baseIsTrue: true, secretSpotAlibi: true,
   },
   {
