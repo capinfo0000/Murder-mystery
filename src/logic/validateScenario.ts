@@ -128,7 +128,27 @@ export function scenarioNarrativeTexts(scenario: Scenario): string[] {
       for (const e of entries) texts.push(e.action)
     }
   }
+  // 協力犯の密約・指令文（プレイヤーに直接表示される）も検査対象に含める
+  for (const link of scenario.cooperationChain?.links ?? []) {
+    if (link.fromText) texts.push(link.fromText)
+    if (link.toText) texts.push(link.toText)
+  }
   return texts
+}
+
+// プレイヤー向けテキストに、名前へ解決されなかった生のスロット記号(A〜G)が
+// 紛れていないか。孤立した1文字のA〜Gはテンプレートのトークン漏れの兆候。
+function checkRawSlotTokens(texts: (string | undefined)[]): string[] {
+  const out: string[] = []
+  // resolveNames と同じ判定：ASCII英数字に挟まれていない孤立した A〜G は
+  // 名前へ解決されるはずのトークン。最終テキストに残っていれば漏れ。
+  const RAW = /(^|[^A-Za-z0-9])([A-G])(?![A-Za-z0-9])/
+  for (const t of texts) {
+    if (!t) continue
+    const m = t.match(RAW)
+    if (m) out.push(`生のスロット記号「${m[2]}」がテキストに露出: ${t.slice(0, 44)}…`)
+  }
+  return out
 }
 
 // ── 追加の不変条件チェック ───────────────────────────────────────────────
@@ -349,6 +369,7 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   const allTexts = [...narrative, ...cardTexts]
 
   for (const p of findUnknownPersons(allTexts, scenario)) problems.push(`未知の人物参照: ${p}`)
+  for (const p of checkRawSlotTokens(allTexts)) problems.push(p)
   for (const p of checkTextResidue(allTexts)) problems.push(p)
   for (const p of checkLocationsMapped(scenario)) problems.push(p)
   for (const p of checkRouteClue(scenario)) problems.push(p)

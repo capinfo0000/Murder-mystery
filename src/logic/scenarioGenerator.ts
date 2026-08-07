@@ -159,7 +159,7 @@ function buildChainLink(
   const senderKnown = method === 'blackmail_face'
 
   const relayInstructionFrom = relayTo && relayToName
-    ? `また、${relayToName}に対しても${relayMethod === 'anonymous_letter' ? '差出人不明の手紙を届けるよう' : relayMethod === 'blackmail_face' ? '直接接触するよう' : '声を変えて電話するよう'}命じた。${toName}があなたとの繋がりを${relayToName}に明かすことはない——あなたとCとの直接の繋がりは存在しない。`
+    ? `また、${relayToName}に対しても${relayMethod === 'anonymous_letter' ? '差出人不明の手紙を届けるよう' : relayMethod === 'blackmail_face' ? '直接接触するよう' : '声を変えて電話するよう'}命じた。${toName}があなたとの繋がりを${relayToName}に明かすことはない——あなたと${relayToName}との直接の繋がりは存在しない。`
     : ''
 
   const relayReceiveText = relayTo && relayToName
