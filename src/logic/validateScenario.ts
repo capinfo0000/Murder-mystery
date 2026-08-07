@@ -12,6 +12,8 @@ import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { EXTRA_NPCS } from '../data/extraNpcs'
 import { LOCATION_NAMES } from '../data/locations'
 import { PIN_COORDS, MAIN_LOC_COORDS, routeInfo } from '../data/manor'
+import { isBloodPlausible } from '../data/weapons'
+import { CANONICAL_SLOT_PROFESSION } from '../data/pastProfessions'
 
 // テンプレートで使われる一般名詞（役割・集合・関係を表す語）。個人名ではない。
 const GENERIC_PERSONS = [
@@ -184,6 +186,19 @@ function checkRouteClue(scenario: Scenario): string[] {
   return out
 }
 
+// 「計画外の衝動的犯行」に、事前準備の要る手口（毒殺・放火や階段の仕掛け）が
+// 使われていないか。とっさに毒を盛ったり放火装置を組むことはできない。
+function checkImprovisedMethod(scenario: Scenario): string[] {
+  const t = scenario.mainTrick
+  if (!t || t.premeditated) return []
+  const mk = (scenario.killers ?? []).find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
+  if (!mk) return []
+  if (mk.weapon.isPoison || mk.weapon.isEnvironmental) {
+    return [`計画外の犯行なのに事前準備の要る手口(${mk.weapon.name})が使われている`]
+  }
+  return []
+}
+
 // 犯人の到達経路（廊下／秘密通路／遠隔）と、配布される目撃証言が矛盾しないか。
 //  passage: 秘密通路で廊下を通らなかったのに「廊下で犯人を目撃」する証言が混じっていないか
 //  remote : 犯行時刻に現場不在なのに、その時刻に現場付近で犯人を見た証言が混じっていないか
@@ -222,6 +237,57 @@ function checkApproachConsistency(scenario: Scenario, texts: (string | undefined
   return out
 }
 
+// 凶器の性質と物的手がかりが整合するか（真の手がかりのみ対象）。
+//  ・出血のない死因（毒殺・絞殺・焼死）なのに血痕・返り血の手がかりがある
+//  ・遠隔犯（現場不在）なのに、犯人が遺体のそばで残した痕跡がある
+const BLOOD_RE = /血痕|返り血|血の付いた|血が付いた|血を洗|血の跡/
+// ワイン等への毒物混入を"死因として"断定する手がかり（被害者の恐怖・警戒の描写は除く）
+const POISON_ASSERT_RE = /舌を刺すような|苦味のありそうな沈殿|毒のような後味|いつもの銘柄にはない妙な後味/
+function checkPhysicalPlausibility(scenario: Scenario, trueTexts: (string | undefined)[]): string[] {
+  const out: string[] = []
+  const mk = (scenario.killers ?? []).find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
+  if (!mk) return out
+  const bloodOK = isBloodPlausible(mk.weapon.id)
+  const poisonMurder = !!mk.weapon.isPoison
+  const remote = !!scenario.mainTrick?.remote
+  for (const txt of trueTexts) {
+    if (!txt) continue
+    if (!bloodOK && BLOOD_RE.test(txt)) {
+      out.push(`出血のない死因(${mk.weapon.disguisedAs})なのに血の手がかり: ${txt.slice(0, 40)}…`)
+    }
+    if (!poisonMurder && POISON_ASSERT_RE.test(txt)) {
+      out.push(`毒殺でない死因(${mk.weapon.disguisedAs})なのに毒物混入を断定する手がかり: ${txt.slice(0, 40)}…`)
+    }
+    if (remote && /返り血|遺体のそばに.{0,20}(残されて|持ち込|符合)|遺体のある部屋から.{0,10}物陰/.test(txt)) {
+      out.push(`遠隔犯（現場不在）なのに犯人が残した現場痕跡: ${txt.slice(0, 40)}…`)
+    }
+  }
+  return out
+}
+
+// 当主殺しの犯人を、犯行時刻(21時台)に現場以外の部屋へ置く"真の手がかり"がないか。
+// （犯人の秘密行動は20時台なので、21時台に別室にいる真クルーは現場での犯行と矛盾）
+function checkKillerAtSceneAtCrimeTime(scenario: Scenario, trueCards: EvidenceCard[]): string[] {
+  const out: string[] = []
+  const t = scenario.mainTrick
+  if (!t || t.remote) return out // 遠隔犯は別ロジック（不在が正）
+  const mainKillers = (scenario.killers ?? []).filter(k => k.victimName === MAIN_VICTIM.name)
+  for (const mk of mainKillers) {
+    const sceneName = LOCATION_NAMES[mk.location]
+    for (const c of trueCards) {
+      if (c.relatedSlot !== mk.slot) continue
+      // 21時台(犯行時刻)を指し、かつ現場以外の部屋名を含む真クルーは矛盾
+      if (!/21時|事件のあった時間/.test(c.content) || /20時/.test(c.content)) continue
+      const otherRoom = (Object.values(LOCATION_NAMES) as string[])
+        .find(name => name !== sceneName && c.content.includes(name))
+      if (otherRoom) {
+        out.push(`犯人を犯行時刻に現場外(${otherRoom})へ置く真クルー: ${c.content.slice(0, 40)}…`)
+      }
+    }
+  }
+  return out
+}
+
 // 犯行時刻が設定され、目撃・時系列で共通に使われているか。
 function checkCrimeTime(scenario: Scenario): string[] {
   const out: string[] = []
@@ -230,6 +296,21 @@ function checkCrimeTime(scenario: Scenario): string[] {
   // 遠隔装置は犯行時刻に犯人不在のため目撃文の時刻規約が異なる。それ以外で確認。
   if (ct && t && !t.remote && t.eyewitness && !t.eyewitness.includes(ct)) {
     out.push(`目撃証言が犯行時刻(${ct})を参照していない`)
+  }
+  return out
+}
+
+// 過去職業が各スロットの"正体"に対応しているか（ヒントカードの素性と一致するか）。
+// ずれると同一人物に別々の隠れた過去が割り当てられ矛盾する。
+function checkProfessionConsistency(scenario: Scenario): string[] {
+  const out: string[] = []
+  const assigned = scenario.assignedProfessions ?? {}
+  for (const slot of Object.keys(assigned) as (keyof typeof assigned)[]) {
+    const got = assigned[slot]
+    const want = CANONICAL_SLOT_PROFESSION[slot]
+    if (got && got !== want) {
+      out.push(`${slot} の過去職業(${got})が正体(${want})と不一致——素性ヒントと矛盾`)
+    }
   }
   return out
 }
@@ -248,6 +329,13 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   for (const p of checkRouteClue(scenario)) problems.push(p)
   for (const p of checkApproachConsistency(scenario, allTexts)) problems.push(p)
   for (const p of checkCrimeTime(scenario)) problems.push(p)
+  // 血痕・返り血の整合は"真の手がかり"のみで判定（偽の赤ニシンは対象外）
+  const trueCards = (opts?.cards ?? []).filter(c => c.isTrue)
+  const trueTexts = [...narrative, ...trueCards.map(c => c.content)]
+  for (const p of checkPhysicalPlausibility(scenario, trueTexts)) problems.push(p)
+  if (opts?.cards) for (const p of checkKillerAtSceneAtCrimeTime(scenario, trueCards)) problems.push(p)
+  for (const p of checkProfessionConsistency(scenario)) problems.push(p)
+  for (const p of checkImprovisedMethod(scenario)) problems.push(p)
 
   // 決定的手がかり（目撃証言）が配布カードに含まれているか（cards指定時のみ）
   if (opts?.cards && scenario.mainTrick?.eyewitness) {

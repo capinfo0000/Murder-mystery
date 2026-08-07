@@ -41,6 +41,19 @@ export const WEAPONS: Weapon[] = [
     howHint: 'ランプの油に引火させて火を放ち、源太郎を巻き込んで「失火による焼死」に見せかけた。' },
 ]
 
+// 出血を伴う凶器（鈍器・刃物）。毒物・絞殺・放火・仕掛けは血痕・返り血を残さない。
+// 「書斎の血痕」「返り血を拭った布」等の血の手がかりは、この凶器のときだけ整合する。
+const BLOODY_WEAPON_IDS = new Set(['dagger', 'candlestick', 'poker', 'marble_paperweight', 'wine_bottle'])
+export function isBloodyWeapon(weaponId: string): boolean {
+  return BLOODY_WEAPON_IDS.has(weaponId)
+}
+
+// 現場に血痕が生じうる死因（鈍器・刃物に加え、転落＝頭部の裂傷でも出血しうる）。
+// 毒殺・絞殺・焼死では現場に血は出ない。ハーネスの血痕整合チェックで使う。
+export function isBloodPlausible(weaponId: string): boolean {
+  return BLOODY_WEAPON_IDS.has(weaponId) || weaponId === 'stair_trap'
+}
+
 // 凶器→偽装死因の「手口」を一文で返す（犯人ハンドアウト・物語で使用）。
 export function killMethodSentence(w: Weapon): string {
   return w.howHint ?? `${w.name}で源太郎を手にかけ、「${w.disguisedAs}」に見せかけた。`

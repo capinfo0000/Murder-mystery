@@ -7,6 +7,11 @@ export interface CardTemplate {
   relatedSlot: CharacterSlot | null
   baseIsTrue: boolean
   condition?: string
+  bloodyOnly?: boolean  // 出血を伴う凶器（鈍器・刃物）のときだけ成立する血痕系の手がかり
+  // 「そのキャラが秘密行動の場所(t2Location)にいた」ことを示すアリバイ手がかり。
+  // 無実者は21時台(T2)にそこにいるが、当主殺しの犯人だけは秘密行動が20時台(T1)へ
+  // 前倒しされ、21時台は現場にいる。犯人のときは時刻をT1へ読み替える（配布時に処理）。
+  secretSpotAlibi?: boolean
 }
 
 export const CARD_TEMPLATES: CardTemplate[] = [
@@ -14,7 +19,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'ph_001',
     content: '書斎の絨毯に乾いた血痕が発見された。家具の影に隠れており、拭き取った形跡がある。',
-    category: 'physical', relatedSlot: null, baseIsTrue: true, condition: 'crime_scene:study',
+    category: 'physical', relatedSlot: null, baseIsTrue: true, condition: 'crime_scene:study', bloodyOnly: true,
   },
   {
     id: 'ph_002',
@@ -49,7 +54,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'ph_008',
     content: '温室の水やりバケツに、布製の手袋が浸けられていた。血が洗い落とされた形跡がある。',
-    category: 'physical', relatedSlot: null, baseIsTrue: true, condition: 'crime_scene:greenhouse',
+    category: 'physical', relatedSlot: null, baseIsTrue: true, condition: 'crime_scene:greenhouse', bloodyOnly: true,
   },
   {
     id: 'ph_009',
@@ -106,22 +111,22 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'al_001',
     content: '私はT2の時間帯に書斎の前を通った際、中から紙をめくる音が聞こえたのを確かに覚えている。',
-    category: 'alibi', relatedSlot: 'A', baseIsTrue: true,
+    category: 'alibi', relatedSlot: 'A', baseIsTrue: true, secretSpotAlibi: true,
   },
   {
     id: 'al_002',
     content: 'T2頃、図書室の明かりが点いていた。誰かが本棚を漁っているような物音も聞こえた。',
-    category: 'alibi', relatedSlot: 'B', baseIsTrue: true,
+    category: 'alibi', relatedSlot: 'B', baseIsTrue: true, secretSpotAlibi: true,
   },
   {
     id: 'al_003',
-    content: '夜の11時頃、絵画室から重い物を動かす音がした。扉の隙間から明かりが漏れていた。',
-    category: 'alibi', relatedSlot: 'C', baseIsTrue: true,
+    content: 'T2頃、絵画室から重い物を動かす音がした。扉の隙間から明かりが漏れていた。',
+    category: 'alibi', relatedSlot: 'C', baseIsTrue: true, secretSpotAlibi: true,
   },
   {
     id: 'al_004',
     content: 'T2の時刻、廊下の壁がかすかに振動した。誰かが秘密通路を移動していたのではないか。',
-    category: 'alibi', relatedSlot: 'D', baseIsTrue: true,
+    category: 'alibi', relatedSlot: 'D', baseIsTrue: true, secretSpotAlibi: true,
   },
   {
     id: 'al_005',
@@ -136,7 +141,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'al_007',
     content: 'T2の時間帯、客室の廊下側の扉が少し開いていた。中から書類を漁る音がした。',
-    category: 'alibi', relatedSlot: 'G', baseIsTrue: true,
+    category: 'alibi', relatedSlot: 'G', baseIsTrue: true, secretSpotAlibi: true,
   },
   {
     id: 'al_008',
@@ -678,7 +683,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: 'vi_011',
     content: '被害者の寝室のグラスに残っていたワインは、口にすると舌を刺すような、いつもの銘柄にはない妙な後味がしたという。飲み残しは一口分だった。',
-    category: 'victim', relatedSlot: 'E', baseIsTrue: true,
+    category: 'victim', relatedSlot: 'E', baseIsTrue: true, condition: 'weapon:poison_wine',
   },
   {
     id: 'ps_019',

@@ -4,6 +4,7 @@ import { CARD_TEMPLATES } from '../data/cardTemplates'
 import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
+import { isBloodyWeapon } from '../data/weapons'
 import { naturalizeTime } from './timeText'
 
 function shuffle<T>(arr: T[]): T[] {
@@ -231,9 +232,16 @@ const SPOT_TRACE: Partial<Record<Location, string>> = {
   guest_room: '客間にだけ置かれた便箋の繊維',
 }
 
-function generateSceneTraceCards(killers: KillerInfo[]): { cards: EvidenceCard[]; decisive: Set<string> } {
+function generateSceneTraceCards(
+  killers: KillerInfo[],
+  bloodyMurder: boolean,
+  remote: boolean,
+): { cards: EvidenceCard[]; decisive: Set<string> } {
   const mainKiller = killers.find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
   if (!mainKiller) return { cards: [], decisive: new Set() }
+  // 遠隔・自動殺人装置の犯人は犯行時刻に現場へ来ていない。返り血も"現場へ持ち込んだ
+  // 痕跡"も生じないため、この手の現場痕跡カードは一切出さない（アリバイと矛盾させない）。
+  if (remote) return { cards: [], decisive: new Set() }
   // 毎回は出さない（目撃証言型の事件も残す）。約半数で採用。
   if (Math.random() < 0.5) return { cards: [], decisive: new Set() }
 
@@ -242,7 +250,9 @@ function generateSceneTraceCards(killers: KillerInfo[]): { cards: EvidenceCard[]
   const spotName = LOCATION_NAMES[spot]
   const traceThing = SPOT_TRACE[spot] ?? `${spotName}特有の匂い`
 
-  if (Math.random() < 0.5) {
+  // 返り血の手がかりは出血を伴う凶器のときだけ。毒殺・絞殺・焼死では場所固有の
+  // 痕跡（花弁・匂いなど）に限る（血の付いた布は物理的にありえない）。
+  if (bloodyMurder && Math.random() < 0.5) {
     // 血痕の付いた品：犯人が返り血を拭って隠した物が、犯人の部屋の物陰から出る
     const trace = makeCard(
       `源太郎の血が付いた布切れが、遺体のある部屋から少し離れた物陰に隠すように捨てられていた。犯人が返り血や手を拭ったものらしい。`,
@@ -286,9 +296,28 @@ export function dealCards(
   const crimeLocations = killers.map(k => k.location)
   const victimSlots = victims.map(v => v.slot)
 
+  // 当主殺しの凶器が出血を伴うか（血痕・返り血の手がかりが成立するか）。
+  const mainKiller = killers.find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
+  const bloodyMurder = mainKiller ? isBloodyWeapon(mainKiller.weapon.id) : false
+  // 当主を手にかけた犯人の全スロット（二重犯を含む）。この者たちは秘密行動が
+  // 20時台(T1)へ前倒しされ、21時台(T2)は現場にいる。秘密の間アリバイ手がかりの
+  // 時刻を T1 に読み替える対象。
+  const mainKillerSlots = new Set(
+    killers.filter(k => k.victimName === MAIN_VICTIM.name).map(k => k.slot),
+  )
+
   // resolve each template into a card with a concrete isTrue value
   const decisiveIds = new Set<string>()  // 決定的な真の手がかり（必ず手札へ）
-  const resolved: EvidenceCard[] = CARD_TEMPLATES.map(t => {
+  const resolved: EvidenceCard[] = CARD_TEMPLATES.flatMap(t => {
+    // 血痕系の手がかりは出血を伴う凶器のときだけ成立。毒殺・絞殺・焼死では
+    // 物理的にありえないので、山札からも除外する（偽の血痕で盤面を濁らせない）。
+    if (t.bloodyOnly && !bloodyMurder) return []
+    // 秘密の間アリバイ：犯人のときは秘密行動が20時台なので時刻をT1へ読み替える。
+    // （無実者は21時台のままで正しい）
+    let rawContent = t.content
+    if (t.secretSpotAlibi && t.relatedSlot && mainKillerSlots.has(t.relatedSlot)) {
+      rawContent = rawContent.replace(/T2/g, 'T1')
+    }
     let isTrue = t.baseIsTrue
 
     if (t.condition) {
@@ -297,15 +326,20 @@ export function dealCards(
       } else if (t.condition === 'outside_killer') {
         isTrue = outsideKiller
       } else if (t.condition.startsWith('crime_scene:')) {
+        // 当主殺しの現場に依存する手がかり。NPC殺しの現場ではなく"当主の犯行現場"で判定する。
         const loc = t.condition.replace('crime_scene:', '')
-        isTrue = crimeLocations.some(l => l === loc)
+        isTrue = mainKiller ? mainKiller.location === loc : crimeLocations.some(l => l === loc)
       } else if (t.condition.startsWith('weapon:')) {
+        // 当主殺しの凶器に依存する手がかり。NPC殺しの凶器で誤成立させない。
         const wid = t.condition.replace('weapon:', '')
-        isTrue = killerWeaponIds.includes(wid)
+        isTrue = mainKiller ? mainKiller.weapon.id === wid : killerWeaponIds.includes(wid)
       }
     }
 
-    if (t.relatedSlot && killerSlots.includes(t.relatedSlot) && t.baseIsTrue) isTrue = true
+    // 犯人に紐づく真カードは確実に真にする。ただし条件付きカード（凶器・現場・
+    // 自殺等）は、その条件の判定を優先する（例：毒入りワインの手がかりは、犯人が
+    // その相手でも"当主の凶器が毒入りワインのとき"だけ真）。
+    if (!t.condition && t.relatedSlot && killerSlots.includes(t.relatedSlot) && t.baseIsTrue) isTrue = true
     if (t.relatedSlot && victimSlots.includes(t.relatedSlot) && t.category === 'victim') isTrue = t.baseIsTrue
 
     const id = uuid()
@@ -313,7 +347,7 @@ export function dealCards(
     if (decisive) decisiveIds.add(id)
     return {
       id,
-      content: resolveNames(t.content),
+      content: resolveNames(rawContent),
       category: t.category,
       relatedSlot: t.relatedSlot,
       isTrue,
@@ -349,7 +383,7 @@ export function dealCards(
   // コナン風トリック＋現場の手がかり（事件データから生成）
   const trickResult = generateTrickCards(mainTrick)
   // 現場に残った痕跡（庭の花・血痕の付いた品など）＝目撃証言とは別型の決定的手がかり
-  const traceResult = generateSceneTraceCards(killers)
+  const traceResult = generateSceneTraceCards(killers, bloodyMurder, !!mainTrick?.remote)
 
   // 決定的な真の手がかり（条件成立カード・犯人関連・NPC証言の真・死因の矛盾・トリックの綻び・現場痕跡）
   const keyIds = new Set<string>(decisiveIds)
