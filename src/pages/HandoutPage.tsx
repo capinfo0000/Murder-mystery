@@ -58,7 +58,7 @@ export default function HandoutPage() {
     : undefined
   const myKillTime = myKillerInfo
     ? (myKillerInfo.victimName === MAIN_VICTIM.name
-        ? '事件のあった夜（21:00〜22:00頃）'
+        ? `${scenario.crimeTime ?? '21時'}頃（事件のあった夜）`
         : `${myKilledNpc?.deathTime ?? '事件当夜'}（秘密を知られての口封じ）`)
     : ''
   const myKillPlace = myKillerInfo

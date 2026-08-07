@@ -204,6 +204,7 @@ export interface Scenario {
   timelines?: Record<CharacterSlot, TimelineEntry[]>  // 各キャラの事件当日の行動（時系列）
   stories?: Record<CharacterSlot, string>  // 各キャラの個別ハンドアウトを物語として綴った文章
   discoveredBy?: string  // 第一発見者（遺体を最初に見つけた人物の役職・名前）
+  crimeTime?: string     // 当主殺しの犯行時刻（例「21時25分」）。目撃・時系列・凶行欄で共通に使う
 }
 
 export interface EvidenceCard {
