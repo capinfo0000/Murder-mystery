@@ -385,8 +385,8 @@ export default function HandoutPage() {
                 )}
               </Section>
             )}
-            {myRole === 'killer' && scenario.mainTrick?.premeditated && scenario.mainTrick.killerSlots.includes(viewSlot) && (
-              <Section title={`🎭 あなたが仕掛けたトリック：${scenario.mainTrick.name}`} accent="red">
+            {myRole === 'killer' && scenario.mainTrick?.appearance && scenario.mainTrick.killerSlots.includes(viewSlot) && (
+              <Section title={`🎭 ${scenario.mainTrick.premeditated ? 'あなたが仕掛けたトリック' : 'あなたがとっさに施した工作'}：${scenario.mainTrick.name}`} accent="red">
                 <p className="text-red-100 text-sm leading-relaxed">{scenario.mainTrick.killerNote}</p>
                 <p className="text-red-300/60 text-xs mt-2 leading-relaxed">
                   ※このトリックがあなたのアリバイを作っている。綻び（手がかり）を突かれないよう立ち回ること。
