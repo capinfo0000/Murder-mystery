@@ -19,7 +19,7 @@ import type {
   VictimInfo,
 } from '../types/game'
 import { CHARACTERS, MAIN_VICTIM, getSlotsForCount } from '../data/characters'
-import { PAST_PROFESSIONS } from '../data/pastProfessions'
+import { CANONICAL_SLOT_PROFESSION } from '../data/pastProfessions'
 import { WEAPONS, killMethodSentence } from '../data/weapons'
 import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
 import { routeInfo, floorLabel, LOCATION_FLOOR } from '../data/manor'
@@ -857,29 +857,12 @@ export function generateScenario(
       ? generateCooperationChain(killerSlots)
       : undefined
 
-  // ── profession assignment (killer aligned with weapon category) ──────
-  const POISON_PROF_IDS = ['sommelier', 'herbalist', 'pharma_researcher', 'perfumer']
-  const PHYSICAL_PROF_IDS = ['locksmith', 'architect_assistant', 'acrobat', 'performer']
-  const shuffledProfessions = shuffle([...PAST_PROFESSIONS])
-  const assignedProfessionIds = new Set<string>()
-
-  function pickProfForCategory(preferIds: string[]): string {
-    const preferred = shuffledProfessions.find(p => preferIds.includes(p.id) && !assignedProfessionIds.has(p.id))
-    if (preferred) { assignedProfessionIds.add(preferred.id); return preferred.id }
-    const any = shuffledProfessions.find(p => !assignedProfessionIds.has(p.id))!
-    assignedProfessionIds.add(any.id); return any.id
-  }
-
+  // ── profession assignment（各スロットの"正体"に一致する固定の過去職業）──────
+  // ランダムに割り当てるとヒントカード（bg_015〜ph_026 等が示す素性）と食い違い、
+  // 「同じ人物に別々の隠れた過去」という矛盾が生じる。正体に対応する職業へ固定する。
   const assignedProfessions: Partial<Record<CharacterSlot, string>> = {}
-  for (const killer of killers) {
-    const prefIds = killer.weapon.isPoison ? POISON_PROF_IDS : PHYSICAL_PROF_IDS
-    assignedProfessions[killer.slot] = pickProfForCategory(prefIds)
-  }
   for (const slot of slots) {
-    if (assignedProfessions[slot]) continue
-    const prof = shuffledProfessions.find(p => !assignedProfessionIds.has(p.id))!
-    assignedProfessionIds.add(prof.id)
-    assignedProfessions[slot] = prof.id
+    assignedProfessions[slot] = CANONICAL_SLOT_PROFESSION[slot]
   }
 
   // ── npc survivors (manor staff not selected as victims) ───────────────

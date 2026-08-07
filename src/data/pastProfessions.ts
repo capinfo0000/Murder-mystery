@@ -1,4 +1,4 @@
-import type { CardCategory } from '../types/game'
+import type { CardCategory, CharacterSlot } from '../types/game'
 
 export interface ProfessionCard {
   content: string     // {name} をキャラクター名に置換して使用
@@ -232,3 +232,18 @@ export const PAST_PROFESSIONS: PastProfession[] = [
     ],
   },
 ]
+
+// 各キャラの"正体"に対応する過去職業（固定）。ヒントカード（cardTemplates の
+// bg_015〜ph_026 など）が示す隠れた素性と一致させ、過去職業カードと矛盾させない。
+//  A=署名/骨董=文書偽造, B=薬品=製薬研究, C=特殊メイク/変装=マジック助手,
+//  D=錠前=錠前師, E=ワイン/ホテル=ソムリエ, F=舞台/身体=役者的パフォーマー,
+//  G=改名/経歴詐称=役者。（12種のうち各スロット一意に割り当て）
+export const CANONICAL_SLOT_PROFESSION: Record<CharacterSlot, string> = {
+  A: 'forger',
+  B: 'pharma_researcher',
+  C: 'magician_assistant',
+  D: 'locksmith',
+  E: 'sommelier',
+  F: 'performer',
+  G: 'actor',
+}
