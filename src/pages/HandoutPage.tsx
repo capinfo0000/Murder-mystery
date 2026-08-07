@@ -232,6 +232,34 @@ export default function HandoutPage() {
         {/* CHARACTER tab */}
         {tab === 'character' && (
           <div className="space-y-4">
+            {(() => {
+              const viewRole = scenario.roles?.[viewSlot] ?? 'innocent'
+              const isKiller = viewRole === 'killer'
+              return (
+                <div
+                  className={`rounded-lg p-3 border ${isKiller ? 'bg-red-950/40 border-red-800' : 'bg-emerald-950/30 border-emerald-800'}`}
+                >
+                  <p className={`text-sm font-bold mb-1 ${isKiller ? 'text-red-300' : 'text-emerald-300'}`} style={{ fontFamily: 'serif' }}>
+                    {isKiller ? '🔪 あなたの立場：犯人（殺人を犯した）' : '👁 あなたの立場：無実（誰も殺していない）'}
+                  </p>
+                  {isKiller ? (
+                    <p className="text-red-100/90 text-xs leading-relaxed">
+                      あなたはこの事件で人を手にかけました（詳細は下の「凶行」欄）。目的は、正体を隠し通し、
+                      無実の人々へ疑いを逸らして最後まで<strong>逃げ切ること</strong>。
+                      あなたの凶行の証拠を突き合わせられても、言い逃れできるよう慎重に立ち回りましょう。
+                    </p>
+                  ) : (
+                    <p className="text-emerald-100/90 text-xs leading-relaxed">
+                      あなたは<strong>誰も殺していません</strong>。あなたが隠したいのは下の「秘密」——窃盗や偽造といった
+                      後ろ暗い事情だけで、<strong>殺人とは無関係</strong>です。このゲームの目的は
+                      <strong>当主や使用人を手にかけた“殺人犯”を全員見つけ出すこと</strong>。
+                      「悪事を働いた人」ではなく「人を殺した人」を暴くのが勝利条件です。
+                      自分の秘密で濡れ衣を着せられないよう用心しつつ、証拠を持ち寄って真犯人を追い詰めましょう。
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
             {scenario.stories?.[viewSlot] && (
               <Section title="あなたの物語（厳重に秘密）" accent="amber">
                 <p className="text-amber-400/70 text-xs mb-3 leading-relaxed">
