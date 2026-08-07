@@ -177,6 +177,8 @@ export interface MainTrick {
   // ── 死体移動（発見場所≠犯行現場）のとき ──
   movedApparent?: string       // ミスリード：発見場所で絶命したように見える
   movedReveal?: string         // 真・決定的：死斑等から別の場所（＝真の犯行現場）で殺され動かされたと分かる
+  // ── 遠隔・自動殺人装置（犯人は犯行時刻に不在）のとき ──
+  remote?: boolean             // true=犯人は20時台に罠を設置し、犯行時刻(21時台)は別室にいた
 }
 
 export interface Scenario {

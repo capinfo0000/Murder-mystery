@@ -659,6 +659,7 @@ export function generateScenario(
   let mainMurderWeapon: Weapon | null = null   // 非二重・プレイヤー犯の当主殺しに使う凶器
   let mainCat: DeathCat | null = null          // 当主殺しの手口カテゴリ（トリック生成に使う）
   let bodyMoved = false
+  let remoteDevice = false   // 遠隔・自動殺人装置：犯人は犯行時刻に現場不在
   // 死体を移す可能性のある発見場所（人目につく／運び込みやすい部屋）
   const DISCOVERY_LOCS: Location[] = ['study', 'library', 'dining', 'gallery', 'greenhouse', 'guest_room', 'master_bedroom']
   if (mode === 'puzzle') {
@@ -677,10 +678,12 @@ export function generateScenario(
     const cat = pickRandom(DEATH_CATS)
     mainCat = cat
     const murderLoc = pickRandom(CAT_LOCS[cat])
-    const wid = pickRandom(CAT_WEAPONS[cat])
+    // 遠隔・自動殺人装置：転落系のときのみ、一定確率で。犯人は罠を仕掛け犯行時は不在。
+    remoteDevice = cat === 'fall' && Math.random() < 0.35
+    const wid = remoteDevice ? 'stair_trap' : pickRandom(CAT_WEAPONS[cat])
     mainMurderWeapon = WEAPONS.find(w => w.id === wid) ?? pickRandom(poisonWeapons)
-    // 約25%で死体移動：犯行現場と別の部屋で"発見"される
-    bodyMoved = Math.random() < 0.25
+    // 約25%で死体移動：犯行現場と別の部屋で"発見"される（遠隔装置とは併発させない）
+    bodyMoved = !remoteDevice && Math.random() < 0.25
     const discoveryLoc = bodyMoved
       ? pickRandom(DISCOVERY_LOCS.filter(l => l !== murderLoc))
       : murderLoc
@@ -786,10 +789,22 @@ export function generateScenario(
     const a = alibis[k.slot]
     if (!a) continue
     const secretSpot = CHARACTERS[k.slot].t2Location
-    alibis[k.slot] = {
-      T1: secretSpot,
-      T2: k.location,
-      T3: a.T3 === k.location ? a.T1 : a.T3,
+    const isRemoteMain = remoteDevice && !k.isDualKiller && k.victimName === MAIN_VICTIM.name
+    if (isRemoteMain) {
+      // 遠隔犯：20時台に現場で罠を設置、21時台は別室（秘密行動の場所）でアリバイ
+      const scene = k.location
+      const away = secretSpot !== scene ? secretSpot : (a.T3 !== scene ? a.T3 : a.T1)
+      alibis[k.slot] = {
+        T1: scene,
+        T2: away,
+        T3: a.T3 !== scene && a.T3 !== away ? a.T3 : a.T1,
+      }
+    } else {
+      alibis[k.slot] = {
+        T1: secretSpot,
+        T2: k.location,
+        T3: a.T3 === k.location ? a.T1 : a.T3,
+      }
     }
   }
 
@@ -879,7 +894,24 @@ export function generateScenario(
       const sound = CAT_SOUND[mainCat](locName)
       const trace = CAT_TRACE[mainCat](locName)
 
-      if (premeditated) {
+      const innocentNameG = innocentSlots.length > 0 ? CHARACTERS[pickRandom(innocentSlots)].name : '館の使用人'
+      if (remoteDevice) {
+        // 遠隔・自動殺人装置：犯人は20時台に現場で罠を仕掛け、犯行時刻(21時台)は別室。
+        // 決定的手がかりは「装置の痕跡」＋「20時台に現場で仕掛けを設置していた目撃」。
+        mainTrick = {
+          name: '遠隔・自動殺人装置トリック',
+          premeditated: true,
+          remote: true,
+          killerSlots: [mainKiller.slot],
+          killerNote: `あなたは事前に${locName}へ、源太郎が通りかかると自動で作動する仕掛け（重りと糸で凶器が落ちる罠など）を設置した。そして源太郎が罠にかかった21時、あなた自身は別室で他の者と一緒にいた——犯行の瞬間に現場にいないことが、あなたの鉄壁のアリバイになっている。ただし仕掛けを固定した釘穴や糸、滑車の残骸を回収し損ねると、遠隔殺人だと露見する。`,
+          eyewitness: `20時頃、${killerName}が${locName}のあたりで何かを仕掛けるように屈み込んでいるのを見た、という証言がある。`,
+          sound,
+          trace,
+          appearance: `犯行の時刻、${killerName}は別室で他の者たちと一緒にいた。だから${killerName}に犯行は不可能だ——多くの者がそう考えている。`,
+          flaw: `だが${locName}には、何かを固定するために打たれた真新しい釘穴と、切れた糸の端が残っていた。人の手を借りずに凶器が動いた——自動で作動する仕掛けがあったのだ。`,
+          misdirection: `21時頃、${innocentNameG}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+        }
+      } else if (premeditated) {
         // 濡れ衣を着せる相手（変装トリックを使う場合の対象）
         const framedSlot = innocentSlots.length > 0 ? pickRandom(innocentSlots) : null
         const framedName = framedSlot ? CHARACTERS[framedSlot].name : '館の使用人'
@@ -1041,6 +1073,19 @@ function generateTimelines(
       const isMain = killer.victimName === MAIN_VICTIM.name
       const victimName = killer.victimSlot ? (CHARACTERS[killer.victimSlot]?.name ?? '相手') : (killer.victimName ?? '相手')
       const isMainKillerHere = !!mainTrick && mainTrick.killerSlots.includes(slot)
+      const isRemote = isMainKillerHere && !!mainTrick!.remote
+
+      if (isRemote) {
+        // 遠隔犯：20時台に現場(a.T1)で罠を設置、21時台は別室(a.T2)。犯行時に現場不在。
+        const awayName = LOCATION_NAMES[a.T2]
+        result[slot] = [
+          { period: PERIOD_T1, location: sceneName, action: `${sceneName}へひそかに向かい、源太郎が通りかかれば自動で作動する仕掛けを施した。あとは待つだけだった。` },
+          { period: PERIOD_T2, location: awayName, action: `${awayName}で人目を避けて過ごしていた（${secret}）。——まさにその頃、${sceneName}に仕掛けた装置が源太郎の命を奪った。あなたは現場にいなかった。これがこの事件の犯行時刻である。` },
+          { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}へ移り、仕掛けた装置の痕跡が見つからないことを祈りながら、何食わぬ顔で過ごした。` },
+        ]
+        continue
+      }
+
       const isIncidental = isMain && isMainKillerHere && !mainTrick!.premeditated
       const hasTrick = isMainKillerHere && !!mainTrick!.appearance   // 実際に仕掛け／工作がある
       const motive = !isMain
@@ -1113,9 +1158,12 @@ function generateStories(
       const incidental = isMainKillerHere && !mainTrick!.premeditated
       const hasTrick = isMainKillerHere && !!mainTrick!.appearance
       const moved = isMainKillerHere && !!mainTrick!.movedReveal   // 死体を移動して発見場所を偽装した
+      const isRemote = isMainKillerHere && !!mainTrick!.remote      // 遠隔・自動殺人装置（犯行時不在）
       const movedNote = '\n\nさらにあなたは犯行後、源太郎の遺体を別の部屋へ運び、そこで倒れていたように見せかけて本当の犯行現場を隠した（詳しくは下の検死・発見の手がかりを参照）。だが死斑は、動かした事実まで消してはくれない。'
       let how: string
-      if (incidental) {
+      if (isRemote) {
+        how = `——あなたは源太郎に直接手を下してはいない。事前に犯行現場へ、源太郎が通りかかれば自動で作動する仕掛け（凶器は「${killer.weapon.name}」）を仕込んでおいたのだ。そして罠が作動した時刻、あなたは別室で他の者と一緒にいた。犯行の瞬間に現場にいなかったことこそ、あなたの鉄壁のアリバイである（詳しくは下の「仕掛けたトリック」欄を参照）。だが装置を固定した釘穴や糸の残骸を残していれば、遠隔殺人だと露見する。`
+      } else if (incidental) {
         how = `——断っておくが、これは計画された殺人ではなかった。あなたの本当の目的は別にあった。だがその秘密の行動の最中、よりにもよって源太郎に見咎められてしまう。露見すればすべてを失う——そう悟った瞬間、あなたはとっさに手を下していた。使ったのは「${killer.weapon.name}」。`
         if (hasTrick) {
           how += `\n\nそのまま逃げれば真っ先に疑われる。我に返ったあなたは、その場でできる工作をとっさに施し、少しでも追及を逸らそうとした（詳しくは下の「とっさに施した工作」欄を参照）。だが用意した計画ではない、即席の細工だ。綻びを残していないか気が気ではない。`
