@@ -53,6 +53,11 @@ export default function HandoutPage() {
   const char = CHARACTERS[viewSlot]
   const myRole = scenario.roles[viewSlot]
   const myKillerInfo = (scenario.killers ?? []).find(k => k.slot === viewSlot)
+  const myKillTime = myKillerInfo
+    ? (myKillerInfo.victimName === MAIN_VICTIM.name
+        ? '事件のあった夜（21:00〜22:00頃）'
+        : `${(scenario.npcVictims ?? []).find(v => v.killerSlot === viewSlot)?.deathTime ?? '後日'}（秘密を知られての口封じ）`)
+    : ''
   const myAlibis = scenario.alibis[viewSlot]
   const myCards = Object.values(game.cards ?? {}).filter(c => c.ownerId === viewUid)
   const isHost = game.hostId === uid
@@ -335,7 +340,7 @@ export default function HandoutPage() {
                   <Row label={myKillerInfo.method === 'poison' ? '毒物' : myKillerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={myKillerInfo.weapon.name} />
                   <Row label="場所" value={LOCATION_NAMES[myKillerInfo.location]} />
                   <Row label="偽装死因" value={myKillerInfo.weapon.disguisedAs} />
-                  <Row label="時刻" value="事件のあった夜（21:00〜22:00頃）" />
+                  <Row label="時刻" value={myKillTime} />
                 </div>
                 {myKillerInfo.isDualKiller && (
                   <div className="mt-3 pt-3 border-t border-red-900/40">

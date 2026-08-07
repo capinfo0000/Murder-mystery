@@ -109,6 +109,11 @@ export default function VotingPage() {
         <p className="text-purple-500 text-xs mt-0.5">
           {isPuzzle ? '各死亡者を殺した犯人を一人ずつ選んでください' : '犯人と思う人物をチェックしてください（複数可）'}
         </p>
+        {!isPuzzle && (
+          <p className="text-amber-400/80 text-xs mt-1 leading-relaxed">
+            ※当主・源太郎を殺した犯人だけでなく、秘密を知られて口封じされた使用人を手にかけた犯人も別にいるかもしれません。すべての犯人を見つけましょう。
+          </p>
+        )}
       </div>
 
       <div className="max-w-md mx-auto px-4 py-4 space-y-4">
