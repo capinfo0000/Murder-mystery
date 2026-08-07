@@ -22,6 +22,7 @@ import { CHARACTERS, MAIN_VICTIM, getSlotsForCount } from '../data/characters'
 import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { WEAPONS, killMethodSentence } from '../data/weapons'
 import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
+import { routeInfo, floorLabel, LOCATION_FLOOR } from '../data/manor'
 import { VICTIM_BACKGROUNDS } from '../data/victimBackgrounds'
 import { EXTRA_NPCS } from '../data/extraNpcs'
 import { generateAlibis } from './alibiGenerator'
@@ -910,6 +911,39 @@ export function generateScenario(
       const trace = CAT_TRACE[mainCat](locName)
 
       const innocentNameG = innocentSlots.length > 0 ? CHARACTERS[pickRandom(innocentSlots)].name : '館の使用人'
+
+      // ── 移動経路の手がかり（館の空間モデル manor.ts から導出）──────────
+      // 犯人が犯行前にいた場所(T1)から現場までの最短経路を計算し、そこで通る
+      // 廊下でのモブ目撃・大階段の足音・秘密通路の近道といった、図面と矛盾しない
+      // 物理的な証拠を作る。徒歩の距離・階のまたぎもすべて図面どおりに一致する。
+      const FLOOR_ORDER = { '2F': 2, '1F': 1, 'B1': 0 } as const
+      const MOBS = ['下働きの女中お梅', '下男の三次', '庭師の佐吉', '女中頭のトメ', '小間使いのハル']
+      const killerHome = alibis[mainKiller.slot]?.T1
+      let routeClue: string | undefined
+      if (killerHome && killerHome !== mainMurderLocation) {
+        const ri = routeInfo(killerHome, mainMurderLocation)
+        const fromName = LOCATION_NAMES[killerHome]
+        const [mob1, mob2] = shuffle(MOBS)
+        // 廊下も階段も一切通らずに移動できた＝秘密通路の近道を使った場合のみ。
+        // （通路が経路の端点になるだけで実際は廊下・階段を通る経路は下の分岐へ）
+        const avoidedCorridors = ri.corridorFloors.length === 0 && !ri.usesStairs
+        if (avoidedCorridors) {
+          const fromIsPassage = killerHome === 'secret_passage' || killerHome === 'hidden_room'
+          routeClue = fromIsPassage
+            ? `${fromName}から${locName}へは廊下に出ずに直接移れる。犯行の前後、廊下で${killerName}を見た者が誰もいないのはそのためだ——この抜け道を知る者にしか、人目を避けたこの移動はできない。`
+            : `${fromName}から${locName}へは、廊下を通らずとも秘密通路で直につながっている。犯行の前後、廊下で${killerName}を見た者が誰もいないのはそのためだ——通路の存在を知る者にしか、人目を避けたこの移動はできない。`
+        } else {
+          const floors = [...new Set(ri.corridorFloors)]
+          const floorsLabel = floors.length ? floors.map(floorLabel).join('・') + 'の廊下' : 'その廊下'
+          let s = `${fromName}から${locName}へ向かうには${floorsLabel}を通らねばならない。${crimeTime}の少し前、そこを足早に過ぎていく${killerName}らしい人影を、${mob1}が見ている。`
+          if (ri.usesStairs) {
+            const goingUp = FLOOR_ORDER[LOCATION_FLOOR[mainMurderLocation]] > FLOOR_ORDER[LOCATION_FLOOR[killerHome]]
+            s += `途中の大階段を${goingUp ? '駆け上がる' : '駆け下りる'}足音も、近くにいた${mob2}の耳に残っている。`
+          }
+          routeClue = s
+        }
+      }
+
       if (remoteDevice) {
         // 遠隔・自動殺人装置：犯人は20時台に現場で罠を仕掛け、犯行時刻(21時台)は別室。
         // 決定的手がかりは「装置の痕跡」＋「20時台に現場で仕掛けを設置していた目撃」。
@@ -1017,6 +1051,10 @@ export function generateScenario(
         mainTrick.movedTrace = `源太郎の衣服には、${discoveryName}にはないはずの${locName}特有の埃と匂いが付いていた。`
         mainTrick.killerNote += `\n\nまた、あなたは犯行後、源太郎の遺体を${locName}から${discoveryName}へ運び、そこで倒れていたように見せかけて本当の犯行現場を隠した。だが死斑は動かした事実まで消してはくれない。`
       }
+
+      // 移動経路の手がかりを付与（現場に居合わせた遠隔装置トリック以外）。
+      // 犯人が犯行時刻に現場へ来たことを、目撃証言とは別の物理的経路から裏づける。
+      if (mainTrick && !mainTrick.remote && routeClue) mainTrick.routeClue = routeClue
     }
   }
 

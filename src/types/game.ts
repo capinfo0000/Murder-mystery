@@ -181,6 +181,8 @@ export interface MainTrick {
   movedTrace?: string          // 真：遺体に付着した痕跡（真の犯行現場を指す）。movedRevealと合わせて現場が分かる
   // ── 遠隔・自動殺人装置（犯人は犯行時刻に不在）のとき ──
   remote?: boolean             // true=犯人は20時台に罠を設置し、犯行時刻(21時台)は別室にいた
+  // ── 移動経路の手がかり（館の空間モデルから導出／matで整合）──
+  routeClue?: string           // 真：犯人が犯行前に現場へ至った経路。廊下でのモブ目撃・階段の足音・秘密通路など
 }
 
 export interface Scenario {

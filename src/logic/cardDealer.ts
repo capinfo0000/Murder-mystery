@@ -157,6 +157,12 @@ function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: S
   const cards = [eye, sound, trace, misdir]
   const decisive = new Set<string>([eye.id])
 
+  // 移動経路の手がかり（空間モデルから導出。廊下でのモブ目撃・階段の足音・秘密通路）。
+  // 目撃証言を"どの経路で現場へ来たか"の面から裏づける真の手がかり。
+  if (t.routeClue) {
+    cards.push(makeCard(`【移動の跡】${t.routeClue}`, 'alibi', null, true))
+  }
+
   // トリック（事前の仕掛け／犯行後の即席工作）があるときだけ、
   // その錯覚（ミスリード）と綻び（決定的な真）を配る。ただ逃げただけの犯行には無い。
   if (t.appearance && t.flaw) {
