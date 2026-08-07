@@ -1,6 +1,7 @@
 import type { NpcVictim, Location } from '../types/game'
 import { MAIN_VICTIM } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
+import { routeInfo } from '../data/manor'
 
 // 当主の遺体発見場所（Location）→ 図面上の座標
 const MAIN_LOC_COORDS: Partial<Record<Location, { x: number; y: number }>> = {
@@ -61,6 +62,18 @@ export default function ManorMap({
 }) {
   const mainCoord = (mainVictimLocation && MAIN_LOC_COORDS[mainVictimLocation]) || { x: 152, y: 71 }
   const mainLocName = mainVictimLocation ? LOCATION_NAMES[mainVictimLocation] : '主寝室'
+
+  // 現場（★＝当主の発見場所）までの徒歩時間。図面の空間モデルから算出する共通の指標。
+  // 「その部屋にいた者が5分で現場へ行けたか」「走れば足音が出るか」を推理する足がかり。
+  const sceneLoc: Location = mainVictimLocation ?? 'master_bedroom'
+  const TRAVEL_ROOMS: Location[] = [
+    'study', 'library', 'dining', 'gallery', 'greenhouse',
+    'guest_room', 'master_bedroom', 'basement', 'safe_room', 'secret_passage',
+  ]
+  const travel = TRAVEL_ROOMS
+    .filter(l => l !== sceneLoc)
+    .map(l => ({ loc: l, name: LOCATION_NAMES[l], ri: routeInfo(l, sceneLoc) }))
+    .sort((a, b) => a.ri.walkMin - b.ri.walkMin)
   const pins = npcVictims.map((v, i) => ({
     n: i + 1,
     role: v.role,
@@ -215,6 +228,26 @@ export default function ManorMap({
             ) : (
               <p className="text-xs" style={{ color: C.faint }}>館内の死亡者はいません。</p>
             )}
+          </div>
+
+          {/* 現場までの移動時間（空間モデルから算出） */}
+          <div className="px-4 pt-1 pb-3 border-t" style={{ borderColor: C.border }}>
+            <div className="text-xs font-bold mb-1.5 mt-2" style={{ color: C.text, fontFamily: 'serif' }}>
+              各室から{mainLocName}（現場）までの移動時間
+            </div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+              {travel.map(t => (
+                <div key={t.loc} className="flex items-baseline justify-between text-xs" style={{ color: C.text }}>
+                  <span>{t.name}</span>
+                  <span style={{ color: t.ri.reachableWalkIn5 ? C.label : '#a15a3a' }}>
+                    徒歩{t.ri.walkMinRounded}分{t.ri.usesSecretPassage ? '（通路）' : t.ri.mustRun ? '・要駆け足' : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] leading-snug mt-1.5" style={{ color: C.faint }}>
+              ※ 徒歩でおよそ5分を超える経路は、犯行時刻に間に合わせるには駆け足になり、廊下や大階段で足音・人影を残しやすい。秘密通路は廊下を通らずに移動できる。
+            </p>
           </div>
 
           {/* legend */}
