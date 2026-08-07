@@ -84,7 +84,7 @@ export default function LobbyPage() {
         {/* Settings summary (read-only) */}
         <div className="bg-[#1a0f2e] border border-purple-900 rounded-2xl px-4 py-3 mb-4 flex gap-4 text-xs text-purple-500 flex-wrap">
           <span>{game.playerCount}人</span>
-          <span>{game.mode === 'normal' ? 'ノーマル' : game.mode === 'hard' ? 'ハード' : 'パズル'}</span>
+          <span>{game.mode === 'hard' ? 'ハード' : 'ノーマル'}</span>
           <span>{game.hasGM ? 'GMあり' : 'GMなし'}</span>
           <span>討議{game.roundDurationMinutes}分 × {game.totalRounds}R</span>
         </div>
