@@ -650,10 +650,17 @@ export function generateScenario(
   })()
 
   // ── 当主殺しの発見状況（手口・場所・描写を整合させる）──────────────
+  // mainVictimLocation = 遺体の"発見"場所（マップ★・あらすじ）
+  // mainMurderLocation = 実際の"犯行"現場（犯人がいた場所）。通常は発見場所と同じだが、
+  //   死体移動トリックのときだけ別室になる（死斑の手がかりで露見する）。
   let mainVictimLocation: Location
+  let mainMurderLocationOpt: Location | null = null  // 犯行現場（死体移動時のみ発見場所と別。それ以外はnull→発見場所を使う）
   let deathDiscovery: string
   let mainMurderWeapon: Weapon | null = null   // 非二重・プレイヤー犯の当主殺しに使う凶器
   let mainCat: DeathCat | null = null          // 当主殺しの手口カテゴリ（トリック生成に使う）
+  let bodyMoved = false
+  // 死体を移す可能性のある発見場所（人目につく／運び込みやすい部屋）
+  const DISCOVERY_LOCS: Location[] = ['study', 'library', 'dining', 'gallery', 'greenhouse', 'guest_room', 'master_bedroom']
   if (mode === 'puzzle') {
     mainVictimLocation = 'master_bedroom'
     deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で事切れているのが発見された。その死には不審な点が残った。`
@@ -669,11 +676,22 @@ export function generateScenario(
   } else {
     const cat = pickRandom(DEATH_CATS)
     mainCat = cat
-    mainVictimLocation = pickRandom(CAT_LOCS[cat])
+    const murderLoc = pickRandom(CAT_LOCS[cat])
     const wid = pickRandom(CAT_WEAPONS[cat])
     mainMurderWeapon = WEAPONS.find(w => w.id === wid) ?? pickRandom(poisonWeapons)
-    deathDiscovery = CAT_DISCOVERY[cat](LOCATION_NAMES[mainVictimLocation])
+    // 約25%で死体移動：犯行現場と別の部屋で"発見"される
+    bodyMoved = Math.random() < 0.25
+    const discoveryLoc = bodyMoved
+      ? pickRandom(DISCOVERY_LOCS.filter(l => l !== murderLoc))
+      : murderLoc
+    mainMurderLocationOpt = murderLoc
+    mainVictimLocation = discoveryLoc
+    deathDiscovery = bodyMoved
+      ? `源太郎が${LOCATION_NAMES[discoveryLoc]}で倒れているのが発見された。だが床には何かを引きずったような跡が残り、本当にこの場所で息絶えたのか、どうにも腑に落ちない点があった。`
+      : CAT_DISCOVERY[cat](LOCATION_NAMES[murderLoc])
   }
+  // 犯行現場：死体移動シナリオのみ発見場所と異なる。それ以外は発見場所＝犯行現場。
+  const mainMurderLocation: Location = mainMurderLocationOpt ?? mainVictimLocation
 
   // 口封じでNPCを殺した犯人（slot→NPC役職）。二重犯行の当主殺し(dualKillerPattern付き)は除外
   const npcKillMap: Partial<Record<CharacterSlot, string>> = {}
@@ -707,9 +725,9 @@ export function generateScenario(
         ? { id: `npc_${def.id}`, name: def.method, disguisedAs: def.disguisedMurderCause }
         : pickRandom(physicalWeapons)
     } else {
-      // 当主殺し：手口プロファイルで選んだ凶器・場所（発見状況と一致）
+      // 当主殺し：手口プロファイルで選んだ凶器・場所（＝実際の犯行現場。死体移動時は発見場所と別）
       victimName = MAIN_VICTIM.name
-      location = mainVictimLocation
+      location = mainMurderLocation
       weapon = mainMurderWeapon ?? pickRandom(poisonWeapons)
     }
 
@@ -847,7 +865,8 @@ export function generateScenario(
     const mainKiller = killers.find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
     if (mainKiller) {
       const killerName = CHARACTERS[mainKiller.slot].name
-      const locName = LOCATION_NAMES[mainVictimLocation]
+      // 目撃・物音・痕跡・トリックはすべて"実際の犯行現場"を基準にする（死体移動時は発見場所と別）
+      const locName = LOCATION_NAMES[mainMurderLocation]
       const innocentSlots = slots.filter(s => !killerSlots.includes(s))
       const premeditated = Math.random() < 0.5
       const eyeVariants = [
@@ -926,6 +945,15 @@ export function generateScenario(
             misdirection: `21時頃、${innocentName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
           }
         }
+      }
+
+      // 死体移動シナリオ：発見場所と犯行現場が別。死斑の手がかりで「動かされた」と分かり、
+      // 真の犯行現場（＝犯人が目撃された場所）へ捜査が戻る。
+      if (bodyMoved) {
+        const discoveryName = LOCATION_NAMES[mainVictimLocation]
+        mainTrick.movedApparent = `源太郎は${discoveryName}で発見された。その場の様子から、多くの者はそこで倒れて息絶えたと思い込んでいる。`
+        mainTrick.movedReveal = `だが源太郎の死斑は、発見時の姿勢では説明のつかない向きに出ていた——別の場所で絶命し、あとから${discoveryName}へ運ばれたのだ。遺体には${locName}特有の埃と匂いが付着しており、本当の犯行現場は${locName}だと分かる。`
+        mainTrick.killerNote += `\n\nまた、あなたは犯行後、源太郎の遺体を${locName}から${discoveryName}へ運び、そこで倒れていたように見せかけて本当の犯行現場を隠した。だが死斑は動かした事実まで消してはくれない。`
       }
     }
   }
@@ -1084,17 +1112,23 @@ function generateStories(
       const isMainKillerHere = !!mainTrick && mainTrick.killerSlots.includes(slot)
       const incidental = isMainKillerHere && !mainTrick!.premeditated
       const hasTrick = isMainKillerHere && !!mainTrick!.appearance
+      const moved = isMainKillerHere && !!mainTrick!.movedReveal   // 死体を移動して発見場所を偽装した
+      const movedNote = '\n\nさらにあなたは犯行後、源太郎の遺体を別の部屋へ運び、そこで倒れていたように見せかけて本当の犯行現場を隠した（詳しくは下の検死・発見の手がかりを参照）。だが死斑は、動かした事実まで消してはくれない。'
       let how: string
       if (incidental) {
         how = `——断っておくが、これは計画された殺人ではなかった。あなたの本当の目的は別にあった。だがその秘密の行動の最中、よりにもよって源太郎に見咎められてしまう。露見すればすべてを失う——そう悟った瞬間、あなたはとっさに手を下していた。使ったのは「${killer.weapon.name}」。`
-        how += hasTrick
-          ? `\n\nそのまま逃げれば真っ先に疑われる。我に返ったあなたは、その場でできる工作をとっさに施し、少しでも追及を逸らそうとした（詳しくは下の「とっさに施した工作」欄を参照）。だが用意した計画ではない、即席の細工だ。綻びを残していないか気が気ではない。`
-          : ` とはいえ凝ったアリバイ工作をする余裕などなく、あなたはただ現場に残った痕跡を慌てて拭い、その場を離れるだけで精一杯だった。表向きは「${killer.weapon.disguisedAs}」として処理されるかもしれないが、それは仕組んだというより、ただの幸運にすぎない。`
+        if (hasTrick) {
+          how += `\n\nそのまま逃げれば真っ先に疑われる。我に返ったあなたは、その場でできる工作をとっさに施し、少しでも追及を逸らそうとした（詳しくは下の「とっさに施した工作」欄を参照）。だが用意した計画ではない、即席の細工だ。綻びを残していないか気が気ではない。`
+        } else if (!moved) {
+          how += ` とはいえ凝ったアリバイ工作をする余裕などなく、あなたはただ現場に残った痕跡を慌てて拭い、その場を離れるだけで精一杯だった。表向きは「${killer.weapon.disguisedAs}」として処理されるかもしれないが、それは仕組んだというより、ただの幸運にすぎない。`
+        }
+        if (moved) how += movedNote
       } else {
         how = `——手にかけるのに使ったのは「${killer.weapon.name}」。この死が表向きは「${killer.weapon.disguisedAs}」として片づけられるよう、あなたは入念に細工を施した。`
         if (hasTrick) {
           how += `\n\nそして何より、あなたには周到に用意した仕掛けがある——それがあなたのアリバイを作っている（詳しくは下の「仕掛けたトリック」欄を参照）。`
         }
+        if (moved) how += movedNote
       }
       how += `\n\n夜が明ければ、この孤立した館で「犯人捜し」が始まる。あなたは無実の顔で、その輪の中に紛れ込まなければならない。`
       paras.push(how)
