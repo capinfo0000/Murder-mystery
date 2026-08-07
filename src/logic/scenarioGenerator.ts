@@ -635,9 +635,17 @@ export function generateScenario(
   const environmentalWeapons = WEAPONS.filter(w => w.isEnvironmental)
   const dualPattern = npcVictims[0]?.dualKillerPattern
 
+  // 在席プレイヤーの秘密行動の場所(21時台)。犯行現場がここと重なると、無実の者が
+  // 犯行と同じ部屋・同じ時刻に居合わせた＝目撃者になってしまうため、現場から除外する。
+  const occupiedSpots = new Set<Location>(slots.map(sl => CHARACTERS[sl].t2Location))
+  const avoidOccupied = (locs: Location[]): Location[] => {
+    const free = locs.filter(l => !occupiedSpots.has(l))
+    return free.length ? free : locs
+  }
+
   // 二重犯行も当主殺し。凶行＝遺体発見場所（毎回ランダムに変え、あらすじ・ハンドアウトと一致させる）
   const DUAL_LOCS: Location[] = ['study', 'library', 'dining', 'gallery', 'greenhouse', 'guest_room', 'basement', 'master_bedroom']
-  const sharedLocation: Location | null = dualPattern ? pickRandom(DUAL_LOCS) : null
+  const sharedLocation: Location | null = dualPattern ? pickRandom(avoidOccupied(DUAL_LOCS)) : null
 
   // Pre-build the dual pair so weapon[1] can avoid repeating weapon[0]
   type DualPair = [KillerInfo, KillerInfo]
@@ -677,10 +685,10 @@ export function generateScenario(
     mainVictimLocation = 'master_bedroom'
     deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で事切れているのが発見された。その死には不審な点が残った。`
   } else if (suicide) {
-    mainVictimLocation = pickRandom(CAT_LOCS.natural)
+    mainVictimLocation = pickRandom(avoidOccupied(CAT_LOCS.natural))
     deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で事切れているのが発見された。取り乱した様子はなく、一見おだやかな死のようにも見えるが、その死にはどうにも腑に落ちない点が残った。`
   } else if (outsideKiller) {
-    mainVictimLocation = pickRandom(CAT_LOCS.natural)
+    mainVictimLocation = pickRandom(avoidOccupied(CAT_LOCS.natural))
     deathDiscovery = `源太郎が${LOCATION_NAMES[mainVictimLocation]}で倒れているのが発見された。表向きは急な発作のようだが、現場には見過ごせない不審な点が残った。`
   } else if (dualPattern) {
     mainVictimLocation = sharedLocation!
@@ -688,7 +696,7 @@ export function generateScenario(
   } else {
     const cat = pickRandom(DEATH_CATS)
     mainCat = cat
-    const murderLoc = pickRandom(CAT_LOCS[cat])
+    const murderLoc = pickRandom(avoidOccupied(CAT_LOCS[cat]))
     // 遠隔・自動殺人装置：転落系のときのみ、一定確率で。犯人は罠を仕掛け犯行時は不在。
     remoteDevice = cat === 'fall' && Math.random() < 0.35
     const wid = remoteDevice ? 'stair_trap' : pickRandom(CAT_WEAPONS[cat])
@@ -698,7 +706,7 @@ export function generateScenario(
     // 病死・中毒（natural）だけは死の外見が場所非依存なので、移動しても偽装が成立する。
     bodyMoved = !remoteDevice && cat === 'natural' && Math.random() < 0.35
     const discoveryLoc = bodyMoved
-      ? pickRandom(DISCOVERY_LOCS.filter(l => l !== murderLoc))
+      ? pickRandom(avoidOccupied(DISCOVERY_LOCS.filter(l => l !== murderLoc)))
       : murderLoc
     mainMurderLocationOpt = murderLoc
     mainVictimLocation = discoveryLoc
@@ -793,7 +801,7 @@ export function generateScenario(
   }
 
   // ── alibis ────────────────────────────────────────────────
-  const alibis = generateAlibis(slots)
+  const alibis = generateAlibis(slots, [mainMurderLocation, mainVictimLocation])
 
   // 犯人のアリバイ整合：犯行時刻(21時台)は必ず犯行現場にいた、という真実にそろえる。
   // 秘密行動の場所(t2Location)は20時台へ移す。これでアリバイ表・タイムライン・
