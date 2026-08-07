@@ -49,6 +49,7 @@ export interface Weapon {
   id: string
   name: string
   disguisedAs: string
+  howHint?: string          // 「どう殺し、どう偽装したか」の具体的な手口（凶器→偽装死因の橋渡し）
   isPoison?: boolean        // true for poison/drug weapons
   isEnvironmental?: boolean // true for environmental traps (arson, stair tampering, etc.)
 }
@@ -70,7 +71,7 @@ export interface NpcVictim {
   apparentCause: string      // official recorded cause (may disguise murder as natural death)
   deathLocation: string      // estimated place of death — shown to all players
   deathTime: string          // estimated time of death — shown to all players
-  causeFinding?: string      // 検死の公式所見（偽装・単体では事故/病死に見える）
+  causeFinding?: string      // 遺体の状況の見立て（偽装・単体では事故/病死に見える）
   causeContradiction?: string // 所見と突き合わせて他殺と分かる矛盾した事実
   isRelatedToCase: boolean   // truth: was this actually murder?
   trueMurderDetail?: string  // revealed at result when isRelatedToCase=true
@@ -201,6 +202,7 @@ export interface Scenario {
   mainTrick?: MainTrick          // コナン風アリバイ工作（プレイヤー犯の場合）
   timelines?: Record<CharacterSlot, TimelineEntry[]>  // 各キャラの事件当日の行動（時系列）
   stories?: Record<CharacterSlot, string>  // 各キャラの個別ハンドアウトを物語として綴った文章
+  discoveredBy?: string  // 第一発見者（遺体を最初に見つけた人物の役職・名前）
 }
 
 export interface EvidenceCard {

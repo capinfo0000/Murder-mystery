@@ -116,15 +116,15 @@ function generateNpcCauseCards(npcVictims: NpcVictim[]): EvidenceCard[] {
     const where = v.deathLocation ? `${v.deathLocation}で発見` : '発見'
     const finding = v.causeFinding ?? `死因は「${v.apparentCause}」とされた。`
     if (v.isRelatedToCase) {
-      // 1枚目: 検死の公式所見（＝偽装。単体では事故・病死に見える → ミスリード）
-      cards.push(makeCard(`【検死所見】${v.role}（${where}）。${finding}`, 'victim', null, false))
-      // 2枚目: 所見と矛盾する事実（真の手がかり）。2枚を突き合わせて初めて他殺と分かる
+      // 1枚目: 遺体の状況（＝偽装。単体では事故・病死に見える → ミスリード）
+      cards.push(makeCard(`【遺体の状況】${v.role}（${where}）。${finding}`, 'victim', null, false))
+      // 2枚目: 状況と矛盾する事実（真の手がかり）。2枚を突き合わせて初めて他殺と分かる
       if (v.causeContradiction) {
         cards.push(makeCard(`【関係者の証言・記録】${v.role}について——${v.causeContradiction}`, 'psychology', null, true))
       }
     } else {
-      // 自然死: 所見のみ（真）。矛盾する事実は存在しない
-      cards.push(makeCard(`【検死所見】${v.role}（${where}）。${finding}争った跡や不審な点は確認されず、事故・病死とみて矛盾はない。`, 'victim', null, true))
+      // 自然死: 状況のみ（真）。矛盾する事実は存在しない
+      cards.push(makeCard(`【遺体の状況】${v.role}（${where}）。${finding}争った跡や不審な点は見当たらず、事故・病死とみて矛盾はない。`, 'victim', null, true))
     }
   }
   return cards
@@ -178,7 +178,7 @@ function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: S
   // 死体移動がある場合：発見場所での見かけ（ミスリード）と、死斑が示す真の犯行現場（決定的な真）。
   if (t.movedApparent && t.movedReveal) {
     const apparent = makeCard(`【発見時の状況】${t.movedApparent}`, 'physical', null, false)
-    const reveal = makeCard(`【検死所見】${t.movedReveal}`, 'technical', null, true)
+    const reveal = makeCard(`【遺体の状況】${t.movedReveal}`, 'technical', null, true)
     cards.push(apparent, reveal)
     decisive.add(reveal.id)
   }

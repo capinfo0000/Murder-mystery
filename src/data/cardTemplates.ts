@@ -448,7 +448,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'org_poison',
-    content: '組織の毒物専門家は「自然死に見せかけた殺害」を得意とする。持病を悪化させる遅効性の毒、アレルギー反応を誘発する薬物——どれも解剖しても判別が難しいものばかりだ。',
+    content: '組織の毒物専門家は「自然死に見せかけた殺害」を得意とする。持病を悪化させる遅効性の毒、アレルギー反応を誘発する薬物——どれも、たとえ念入りに調べても判別が難しいものばかりだ。',
     category: 'background', relatedSlot: null, baseIsTrue: false, condition: 'outside_killer',
   },
   {
@@ -512,7 +512,7 @@ export const CARD_TEMPLATES: CardTemplate[] = [
   },
   {
     id: 'sui_hesitation',
-    content: '源太郎の手の内側に、ためらったような浅い傷が複数あった。他者につけられたにしては角度が不自然だと検死担当は言う。',
+    content: '源太郎の手の内側に、ためらったような浅い傷が複数あった。他者につけられたにしては、その角度がどこか不自然だ。',
     category: 'physical', relatedSlot: null, baseIsTrue: false, condition: 'suicide',
   },
   {

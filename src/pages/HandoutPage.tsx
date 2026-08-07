@@ -94,9 +94,10 @@ export default function HandoutPage() {
             <p className="text-purple-200 text-sm leading-relaxed">{MAIN_VICTIM.background}</p>
           </Section>
           {((scenario.npcVictims ?? []).length > 0 || (scenario.npcSurvivors ?? []).length > 0) && (
-            <Section title="館で見つかった死亡者・生存者">
+            <Section title="館の使用人・関係者（死亡者・生存者）">
               <p className="text-purple-500 text-xs mb-3 leading-relaxed">
-                この夜、館の内外で複数の人物が死亡した。判明しているのは「どこで」「いつ頃」亡くなったと推定されるかのみ。
+                源太郎に仕える使用人や、館に出入りしていた関係者たち。ヒントカードは彼らをこの役職名（例：経理担当、顧問弁護士）で呼ぶ。
+                この夜、そのうち何人かが死亡した。判明しているのは「どこで」「いつ頃」亡くなったと推定されるかのみ——
                 死因や、事故なのか殺人なのかは、討議やカードの手がかりから各自で推理すること。
               </p>
               <div className="space-y-2.5">
@@ -348,6 +349,12 @@ export default function HandoutPage() {
                   <Row label="偽装死因" value={myKillerInfo.weapon.disguisedAs} />
                   <Row label="時刻" value={myKillTime} />
                 </div>
+                {myKillerInfo.weapon.howHint && myKillerInfo.victimName === MAIN_VICTIM.name && (
+                  <div className="mt-3 pt-3 border-t border-red-900/40">
+                    <p className="text-red-400/70 text-xs mb-1">手口（どう殺し、どう偽装したか）</p>
+                    <p className="text-red-100 text-sm leading-relaxed">{myKillerInfo.weapon.howHint}</p>
+                  </div>
+                )}
                 {myKillerInfo.isDualKiller && (
                   <div className="mt-3 pt-3 border-t border-red-900/40">
                     <p className="text-red-200/80 text-xs leading-relaxed">

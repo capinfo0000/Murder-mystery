@@ -1,36 +1,9 @@
 import { useState } from 'react'
 import type { EvidenceCard } from '../types/game'
 
-const CATEGORY_LABELS: Record<string, string> = {
-  physical: '物的証拠',
-  alibi: 'アリバイ',
-  psychology: '心理・感情',
-  background: '背景情報',
-  victim: '被害者情報',
-  motive: '動機',
-  technical: '技術情報',
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  physical: 'bg-amber-900/30 text-amber-300 border-amber-800/50',
-  alibi: 'bg-blue-900/30 text-blue-300 border-blue-800/50',
-  psychology: 'bg-pink-900/30 text-pink-300 border-pink-800/50',
-  background: 'bg-slate-800/50 text-slate-300 border-slate-700/50',
-  victim: 'bg-red-900/30 text-red-300 border-red-800/50',
-  motive: 'bg-orange-900/30 text-orange-300 border-orange-800/50',
-  technical: 'bg-cyan-900/30 text-cyan-300 border-cyan-800/50',
-}
-
-// Top accent strip color per category
-const CATEGORY_ACCENT: Record<string, string> = {
-  physical: '#d97706',
-  alibi: '#2563eb',
-  psychology: '#db2777',
-  background: '#64748b',
-  victim: '#dc2626',
-  motive: '#ea580c',
-  technical: '#0891b2',
-}
+// カードの種類（カテゴリ）はプレイヤーに一切見せない。色でも判別できないよう、
+// アクセント帯は全カード共通の白で固定する。
+const ACCENT = '#e8e8ea'
 
 interface Props {
   card: EvidenceCard
@@ -48,10 +21,8 @@ export default function EvidenceCardView({
   onSecretSend,
 }: Props) {
   const [open, setOpen] = useState(false)
-  const colorClass = CATEGORY_COLORS[card.category] ?? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
-  const accent = CATEGORY_ACCENT[card.category] ?? '#7c3aed'
+  const accent = ACCENT
   const isPublic = (card.sharedWith ?? []).includes('all')
-  const label = CATEGORY_LABELS[card.category] ?? card.category
 
   return (
     <>
@@ -63,10 +34,11 @@ export default function EvidenceCardView({
         {/* accent strip */}
         <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: accent }} />
         <div className="flex flex-col flex-1 min-h-0 p-3">
-          <div className="flex items-center justify-between gap-1 mb-2">
-            <span className={`text-[11px] px-2 py-0.5 rounded-full border ${colorClass}`}>{label}</span>
-            {isPublic && <span className="text-[10px] text-green-400 shrink-0">公開</span>}
-          </div>
+          {isPublic && (
+            <div className="flex items-center justify-end mb-2">
+              <span className="text-[10px] text-green-400 shrink-0">公開</span>
+            </div>
+          )}
           <p className="text-[13px] text-purple-200 leading-snug flex-1 min-h-0 overflow-hidden line-clamp-5 break-words">
             {card.content}
           </p>
@@ -88,10 +60,11 @@ export default function EvidenceCardView({
           >
             <div className="h-2 w-full" style={{ backgroundColor: accent }} />
             <div className="p-4">
-              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${colorClass}`}>{label}</span>
-                {isPublic && <span className="text-xs text-green-400">公開済み</span>}
-              </div>
+              {isPublic && (
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs text-green-400">公開済み</span>
+                </div>
+              )}
               <p className="text-[15px] text-purple-100 leading-relaxed break-words">{card.content}</p>
 
               {showActions && !isPublic && (onShareAll || onSecretSend) && (

@@ -20,7 +20,7 @@ import type {
 } from '../types/game'
 import { CHARACTERS, MAIN_VICTIM, getSlotsForCount } from '../data/characters'
 import { PAST_PROFESSIONS } from '../data/pastProfessions'
-import { WEAPONS } from '../data/weapons'
+import { WEAPONS, killMethodSentence } from '../data/weapons'
 import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
 import { VICTIM_BACKGROUNDS } from '../data/victimBackgrounds'
 import { EXTRA_NPCS } from '../data/extraNpcs'
@@ -682,8 +682,10 @@ export function generateScenario(
     remoteDevice = cat === 'fall' && Math.random() < 0.35
     const wid = remoteDevice ? 'stair_trap' : pickRandom(CAT_WEAPONS[cat])
     mainMurderWeapon = WEAPONS.find(w => w.id === wid) ?? pickRandom(poisonWeapons)
-    // 約25%で死体移動：犯行現場と別の部屋で"発見"される（遠隔装置とは併発させない）
-    bodyMoved = !remoteDevice && Math.random() < 0.25
+    // 死体移動：発見場所を犯行現場と別室にする。ただし転落・首吊り・焼死は
+    // 偽装が場所（階段・梁・火元）に依存するため移動させると破綻する。
+    // 病死・中毒（natural）だけは死の外見が場所非依存なので、移動しても偽装が成立する。
+    bodyMoved = !remoteDevice && cat === 'natural' && Math.random() < 0.35
     const discoveryLoc = bodyMoved
       ? pickRandom(DISCOVERY_LOCS.filter(l => l !== murderLoc))
       : murderLoc
@@ -758,7 +760,7 @@ export function generateScenario(
         detail = `${k1Name}がT2に遅効性の毒（${k1.weapon.name}）で${v}を毒殺した。その後、${k2Name}が凶器（${k2.weapon.name}）を持って部屋へ乗り込んだとき、すでに遺体となっていた。凶器は使われなかった。`
         break
       case 'weapon_then_poison':
-        detail = `${k2Name}がT2に${v}を${k2.weapon.name}で傷つけ立ち去った。瀕死の${v}のもとへその後${k1Name}が現れ、毒（${k1.weapon.name}）を用いて止めを刺した。どちらが致命傷を与えたかは法医学的にも曖昧である。`
+        detail = `${k2Name}がT2に${v}を${k2.weapon.name}で傷つけ立ち去った。瀕死の${v}のもとへその後${k1Name}が現れ、毒（${k1.weapon.name}）を用いて止めを刺した。どちらが致命傷を与えたかは、遺体の傷を見比べても判然としない。`
         break
       case 'poison_failed_weapon_killed':
         detail = `${k1Name}がT2より前に${v}に毒（${k1.weapon.name}）を盛ったが、量が足りず死に至らなかった。独立して${v}を狙っていた${k2Name}がT2に${k2.weapon.name}で殺害した。${k1Name}は自分の毒が効いたと信じているが、実際の死因は凶器による外傷である。`
@@ -767,7 +769,7 @@ export function generateScenario(
         detail = `${k1Name}がT2に${k1.weapon.name}で${v}を攻撃し、動かなくなったのを見て立ち去った。しかし${v}はまだ息があり、後から現れた${k2Name}が${k2.weapon.name}で致命傷を与えた。ふたりは互いの存在を知らない。`
         break
       case 'double_weapon_overlap':
-        detail = `${k1Name}と${k2Name}が、それぞれ独立に${v}を狙っていた。T2前後に両者がほぼ同時期に接触し、それぞれ別の凶器（${k1.weapon.name}と${k2.weapon.name}）で攻撃した。どちらの一撃が致命傷となったかは法医学的にも断定できない。`
+        detail = `${k1Name}と${k2Name}が、それぞれ独立に${v}を狙っていた。T2前後に両者がほぼ同時期に接触し、それぞれ別の凶器（${k1.weapon.name}と${k2.weapon.name}）で攻撃した。どちらの一撃が致命傷となったかは、遺体の傷を見比べても断定できない。`
         break
       case 'environment_then_weapon':
         detail = `${k1Name}がT2より前に${LOCATION_NAMES[k1.location]}で${k1.weapon.name}を仕掛け、${v}が罠にかかり負傷した。その場を立ち去った後、事情を知らない${k2Name}が${k2.weapon.name}を手に現れ止めを刺した。ふたりは互いの計画を知らない。`
@@ -1012,10 +1014,23 @@ export function generateScenario(
   // ── 物語（個別ハンドアウトを一人称の物語として綴る）────────────────────
   const stories = generateStories(slots, timelines, killers, mainTrick, connections, cooperationChain ?? undefined)
 
+  // ── 第一発見者と発見の経緯 ───────────────────────────────────────────
+  // 生き残った使用人が朝いちばんに主人を見つけ、その報せで一同が集まる（古典的な導入）。
+  const discovererRole = npcSurvivors[0]?.role ?? '早くに目を覚ました使用人'
+  const discoveryReason = pickRandom([
+    '朝の支度のため',
+    '主人が朝の呼びかけに応じないのを不審に思い',
+    '夜明け前の見回りの途中で',
+    '灯りが点いたままなのに気づいて',
+  ])
+  const discoveredBy = discovererRole
+  const discoveryScene = `第一発見者は${discovererRole}だった。${discoveryReason}${LOCATION_NAMES[mainVictimLocation]}をのぞいたところ、変わり果てた源太郎を見つけて悲鳴をあげ、その声に居合わせた者たちが次々と駆けつけて事件は明るみに出た。`
+
   // ── synopsis ──────────────────────────────────────────────────────────
-  const synopsis = generateSynopsis(npcVictims, slots, deathDiscovery)
+  const synopsis = generateSynopsis(npcVictims, slots, deathDiscovery, discoveryScene)
 
   return {
+    discoveredBy,
     victims,
     npcVictims,
     killers,
@@ -1188,7 +1203,7 @@ function generateStories(
       const hasTrick = isMainKillerHere && !!mainTrick!.appearance
       const moved = isMainKillerHere && !!mainTrick!.movedReveal   // 死体を移動して発見場所を偽装した
       const isRemote = isMainKillerHere && !!mainTrick!.remote      // 遠隔・自動殺人装置（犯行時不在）
-      const movedNote = '\n\nさらにあなたは犯行後、源太郎の遺体を別の部屋へ運び、そこで倒れていたように見せかけて本当の犯行現場を隠した（詳しくは下の検死・発見の手がかりを参照）。だが死斑は、動かした事実まで消してはくれない。'
+      const movedNote = '\n\nさらにあなたは犯行後、源太郎の遺体を別の部屋へ運び、そこで倒れていたように見せかけて本当の犯行現場を隠した（詳しくは下の「遺体の状況」の手がかりを参照）。だが死斑は、動かした事実まで消してはくれない。'
       let how: string
       if (isRemote) {
         how = `——あなたは源太郎に直接手を下してはいない。事前に犯行現場へ、源太郎が通りかかれば自動で作動する仕掛け（凶器は「${killer.weapon.name}」）を仕込んでおいたのだ。そして罠が作動した時刻、あなたは別室で他の者と一緒にいた。犯行の瞬間に現場にいなかったことこそ、あなたの鉄壁のアリバイである（詳しくは下の「仕掛けたトリック」欄を参照）。だが装置を固定した釘穴や糸の残骸を残していれば、遠隔殺人だと露見する。`
@@ -1201,7 +1216,7 @@ function generateStories(
         }
         if (moved) how += movedNote
       } else {
-        how = `——手にかけるのに使ったのは「${killer.weapon.name}」。この死が表向きは「${killer.weapon.disguisedAs}」として片づけられるよう、あなたは入念に細工を施した。`
+        how = `——${killMethodSentence(killer.weapon)}`
         if (hasTrick) {
           how += `\n\nそして何より、あなたには周到に用意した仕掛けがある——それがあなたのアリバイを作っている（詳しくは下の「仕掛けたトリック」欄を参照）。`
         }
@@ -1229,6 +1244,7 @@ function generateSynopsis(
   npcVictims: NpcVictim[],
   slots: CharacterSlot[],
   deathDiscovery: string,
+  discoveryScene: string,
 ): string {
   const playerCount = slots.length
 
@@ -1282,9 +1298,10 @@ function generateSynopsis(
       `事件直前、${n}が源太郎の部屋の方向をじっと見つめていたのを目撃されている。`,
     ]
   const hint = redHerrings[Math.floor(Math.random() * redHerrings.length)]
-  const lastParagraph = `そして最初の夜明け前、${deathDiscovery}${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
+  const discoveryParagraph = `そして最初の夜明け前、${deathDiscovery}${discoveryScene}`
+  const lastParagraph = `${hint}${npcLine}救急も警察も呼べないなか、その場に居合わせた${playerCount}名で、この孤立した数日のあいだに何が起きたのかを明らかにしなければならない。`
 
-  return [...commonParagraphs, lastParagraph].join('\n\n')
+  return [...commonParagraphs, discoveryParagraph, lastParagraph].join('\n\n')
 }
 
 export { getSlotsForCount }
