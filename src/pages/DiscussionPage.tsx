@@ -426,7 +426,7 @@ function ProfileModal({
                 <PRow label={killerInfo.method === 'poison' ? '毒物' : killerInfo.method === 'environmental' ? '仕掛け' : '凶器'} value={killerInfo.weapon.name} />
                 <PRow label="場所" value={LOCATION_NAMES[killerInfo.location]} />
                 <PRow label="偽装死因" value={killerInfo.weapon.disguisedAs} />
-                <PRow label="時刻" value="T2（21:00〜22:00頃）" />
+                <PRow label="時刻" value="事件のあった夜（21:00〜22:00頃）" />
               </div>
             </PSection>
           )}
