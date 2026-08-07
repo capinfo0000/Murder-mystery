@@ -157,11 +157,18 @@ function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: S
   const eye = makeCard(t.eyewitness, 'alibi', null, true)
   const sound = makeCard(t.sound, 'alibi', null, true)
   const trace = makeCard(t.trace, 'physical', null, true)
-  const appearance = makeCard(`【一見の状況】${t.appearance}`, 'alibi', null, false)
-  const flaw = makeCard(`【トリックの綻び】${t.flaw}`, 'technical', null, true)
   const misdir = makeCard(t.misdirection, 'alibi', null, false)
-  const cards = [eye, sound, trace, appearance, flaw, misdir]
-  const decisive = new Set<string>([eye.id, flaw.id])
+  const cards = [eye, sound, trace, misdir]
+  const decisive = new Set<string>([eye.id])
+
+  // 計画的犯行のときだけ、トリックの錯覚（ミスリード）とその綻び（決定的な真）を配る。
+  // 衝動的な口封じ（premeditated=false）には事前トリックが無いので出さない。
+  if (t.premeditated && t.appearance && t.flaw) {
+    const appearance = makeCard(`【一見の状況】${t.appearance}`, 'alibi', null, false)
+    const flaw = makeCard(`【トリックの綻び】${t.flaw}`, 'technical', null, true)
+    cards.push(appearance, flaw)
+    decisive.add(flaw.id)
+  }
 
   // 変装による濡れ衣トリックがある場合：
   // 現場付近での「目撃」（ミスリード）と、その人物の本当のアリバイ（決定的な真）を配る。

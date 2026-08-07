@@ -160,14 +160,15 @@ export interface TimelineEntry {
 // コナン風トリック：犯人がアリバイ工作に使った手口と、その綻び（手がかり）。
 // すべて事件の実データ（犯人・場所・凶器・タイムライン）から生成し、矛盾させない。
 export interface MainTrick {
-  name: string                 // トリック名
+  name: string                 // トリック名（計画外の犯行では「計画外の犯行」等）
+  premeditated: boolean        // true=計画的犯行（事前トリックあり） / false=目撃されての衝動的口封じ（トリックなし）
   killerSlots: CharacterSlot[] // 実行した犯人
   killerNote: string           // 犯人ハンドアウトに表示する説明
   eyewitness: string           // 真・決定的：犯行時刻に犯人を現場付近で目撃
   sound: string                // 真：物音・におい（凶器の手口に一致）
   trace: string                // 真：物的痕跡（凶器の手口に一致）
-  appearance: string           // ミスリード：トリックが作り出した錯覚
-  flaw: string                 // 真・決定的：トリックの綻び
+  appearance?: string          // ミスリード：トリックが作り出した錯覚（計画的犯行のみ）
+  flaw?: string                // 真・決定的：トリックの綻び（計画的犯行のみ）
   misdirection: string         // ミスリード：無実の人物を指す目撃証言
   // ── 濡れ衣（変装）トリックのとき ──
   framedName?: string          // 濡れ衣を着せられた人物
