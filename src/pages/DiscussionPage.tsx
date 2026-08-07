@@ -370,6 +370,16 @@ function ProfileModal({
             <span className="text-purple-600 text-[10px] tracking-widest">── ここからあなただけの情報 ──</span>
           </div>
 
+          {scenario.stories?.[slot] && (
+            <PSection title="あなたの物語（厳重に秘密）" accent="amber">
+              <div className="space-y-3">
+                {scenario.stories[slot].split('\n\n').map((para, i) => (
+                  <p key={i} className="text-amber-100 text-sm leading-relaxed">{para}</p>
+                ))}
+              </div>
+            </PSection>
+          )}
+
           <PSection title="背景">
             <p className="text-purple-200 text-sm leading-relaxed">{char.background}</p>
           </PSection>
