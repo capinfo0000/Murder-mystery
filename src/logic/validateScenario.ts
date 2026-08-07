@@ -186,6 +186,19 @@ function checkRouteClue(scenario: Scenario): string[] {
   return out
 }
 
+// 「計画外の衝動的犯行」に、事前準備の要る手口（毒殺・放火や階段の仕掛け）が
+// 使われていないか。とっさに毒を盛ったり放火装置を組むことはできない。
+function checkImprovisedMethod(scenario: Scenario): string[] {
+  const t = scenario.mainTrick
+  if (!t || t.premeditated) return []
+  const mk = (scenario.killers ?? []).find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
+  if (!mk) return []
+  if (mk.weapon.isPoison || mk.weapon.isEnvironmental) {
+    return [`計画外の犯行なのに事前準備の要る手口(${mk.weapon.name})が使われている`]
+  }
+  return []
+}
+
 // 犯人の到達経路（廊下／秘密通路／遠隔）と、配布される目撃証言が矛盾しないか。
 //  passage: 秘密通路で廊下を通らなかったのに「廊下で犯人を目撃」する証言が混じっていないか
 //  remote : 犯行時刻に現場不在なのに、その時刻に現場付近で犯人を見た証言が混じっていないか
@@ -322,6 +335,7 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   for (const p of checkPhysicalPlausibility(scenario, trueTexts)) problems.push(p)
   if (opts?.cards) for (const p of checkKillerAtSceneAtCrimeTime(scenario, trueCards)) problems.push(p)
   for (const p of checkProfessionConsistency(scenario)) problems.push(p)
+  for (const p of checkImprovisedMethod(scenario)) problems.push(p)
 
   // 決定的手がかり（目撃証言）が配布カードに含まれているか（cards指定時のみ）
   if (opts?.cards && scenario.mainTrick?.eyewitness) {

@@ -883,7 +883,12 @@ export function generateScenario(
       // 目撃・物音・痕跡・トリックはすべて"実際の犯行現場"を基準にする（死体移動時は発見場所と別）
       const locName = LOCATION_NAMES[mainMurderLocation]
       const innocentSlots = slots.filter(s => !killerSlots.includes(s))
-      const premeditated = Math.random() < 0.5
+      // 「衝動的な口封じ（計画外）」にできるのは、その場で手を下せる手口だけ。
+      // 毒殺（毒の入手・投与の準備が要る）や仕掛け（放火・階段細工など事前設置）は
+      // 本質的に計画的。鈍器・刃物（fall）と絞殺（hang）のときのみ計画外を許す。
+      const canImprovise = mainCat === 'hang'
+        || (mainCat === 'fall' && !mainKiller.weapon.isEnvironmental)
+      const premeditated = canImprovise ? Math.random() < 0.5 : true
 
       // ── 犯人の現場への到達経路（空間モデル manor.ts）を先に確定させ、
       //    目撃・物音・経路の手がかりをこの経路と矛盾しないように作る。──────
