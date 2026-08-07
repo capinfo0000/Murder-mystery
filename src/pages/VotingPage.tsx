@@ -13,6 +13,7 @@ export default function VotingPage() {
   const [game, setGame] = useState<GameState | null>(null)
   const [killerSlots, setKillerSlots] = useState<CharacterSlot[]>([])
   const [suicideVote, setSuicideVote] = useState(false)
+  const [outsideVote, setOutsideVote] = useState(false)
   // puzzle mode: victimSlot → killerSlot mapping
   const [puzzleAnswer, setPuzzleAnswer] = useState<Partial<Record<CharacterSlot, CharacterSlot>>>({})
   const [submitted, setSubmitted] = useState(false)
@@ -39,16 +40,31 @@ export default function VotingPage() {
   const allVoted = totalVoted >= totalVoters
   const isPuzzle = game.mode === 'puzzle'
 
+  // 各キャラを演じているプレイヤー名（NPCは「NPC」）
+  function playerNameForSlot(slot: CharacterSlot): string | null {
+    const p = Object.values(game!.players).find(pl => pl.characterSlot === slot)
+    if (!p) return null
+    return p.isNPC ? 'NPC' : p.name
+  }
+
   function toggleKiller(slot: CharacterSlot) {
     setSuicideVote(false)
+    setOutsideVote(false)
     setKillerSlots(prev =>
       prev.includes(slot) ? prev.filter(s => s !== slot) : [...prev, slot]
     )
   }
 
-  function toggleSuicide() {
+  function selectSuicide() {
     setKillerSlots([])
+    setOutsideVote(false)
     setSuicideVote(prev => !prev)
+  }
+
+  function selectOutside() {
+    setKillerSlots([])
+    setSuicideVote(false)
+    setOutsideVote(prev => !prev)
   }
 
   function setPuzzleKiller(victimSlot: CharacterSlot, killerSlot: CharacterSlot | '') {
@@ -164,9 +180,9 @@ export default function VotingPage() {
               <section>
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-2 h-2 rounded-full bg-red-400" />
-                  <h3 className="text-red-300 text-sm font-medium">犯人候補</h3>
+                  <h3 className="text-red-300 text-sm font-medium">投票先を選んでください</h3>
                 </div>
-                <p className="text-purple-600 text-xs mb-3 pl-4">犯人と思う人物をチェックしてください</p>
+                <p className="text-purple-600 text-xs mb-3 pl-4">犯人だと思う人物（複数可）、または外部犯・自殺</p>
                 <div className="grid grid-cols-2 gap-2">
                   {allSlots.map(slot => (
                     <CheckCard
@@ -174,51 +190,30 @@ export default function VotingPage() {
                       slot={slot}
                       checked={killerSlots.includes(slot)}
                       isVictim={victimSlots.includes(slot)}
+                      playerName={playerNameForSlot(slot)}
                       onToggle={() => toggleKiller(slot)}
                     />
                   ))}
-                </div>
-              </section>
-
-              {/* Special verdict options */}
-              <section>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-amber-400" />
-                  <h3 className="text-amber-300 text-sm font-medium">特殊判定（人物以外）</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => { setKillerSlots([]); setSuicideVote(false) }}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      killerSlots.length === 0 && !suicideVote
-                        ? 'border-amber-500 bg-amber-900/20'
-                        : 'border-purple-900 bg-[#1a0f2e] hover:border-purple-700'
-                    }`}
-                  >
-                    <div className="text-lg mb-1">🔫</div>
-                    <div className="text-purple-100 text-xs font-medium">外部犯</div>
-                    <div className="text-purple-500 text-[10px] mt-0.5">組織の殺し屋</div>
-                  </button>
-                  <button
-                    onClick={toggleSuicide}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      suicideVote
-                        ? 'border-amber-500 bg-amber-900/20'
-                        : 'border-purple-900 bg-[#1a0f2e] hover:border-purple-700'
-                    }`}
-                  >
-                    <div className="text-lg mb-1">💊</div>
-                    <div className="text-purple-100 text-xs font-medium">自殺</div>
-                    <div className="text-purple-500 text-[10px] mt-0.5">当主が自ら命を絶った</div>
-                  </button>
+                  <SpecialCard
+                    emoji="🔫" title="外部犯" subtitle="組織の殺し屋の犯行"
+                    checked={outsideVote} onToggle={selectOutside}
+                  />
+                  <SpecialCard
+                    emoji="💊" title="自殺" subtitle="当主が自ら命を絶った"
+                    checked={suicideVote} onToggle={selectSuicide}
+                  />
                 </div>
               </section>
 
               <button
                 onClick={handleSubmit}
-                className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold rounded-xl py-3 text-sm tracking-wide transition-colors"
+                disabled={killerSlots.length === 0 && !suicideVote && !outsideVote}
+                className="w-full bg-purple-700 hover:bg-purple-600 disabled:opacity-40 text-white font-bold rounded-xl py-3 text-sm tracking-wide transition-colors"
               >
-                {suicideVote ? '自殺で投票する' : killerSlots.length === 0 ? '外部犯で投票する' : '投票する'}
+                {suicideVote ? '自殺で投票する'
+                  : outsideVote ? '外部犯で投票する'
+                  : killerSlots.length > 0 ? '投票する'
+                  : '投票先を選んでください'}
               </button>
             </>
           )
@@ -272,11 +267,13 @@ function CheckCard({
   slot,
   checked,
   isVictim,
+  playerName,
   onToggle,
 }: {
   slot: CharacterSlot
   checked: boolean
   isVictim: boolean
+  playerName?: string | null
   onToggle: () => void
 }) {
   const char = CHARACTERS[slot]
@@ -294,16 +291,46 @@ function CheckCard({
       <div className="flex items-start justify-between gap-1">
         <div className="min-w-0">
           <div className="flex items-center gap-1">
-            <span className="text-purple-500 text-xs">{slot}枠</span>
+            <span className="text-purple-500 text-xs">{char.role}</span>
             {isVictim && (
               <span className="text-xs bg-blue-900/50 text-blue-300 border border-blue-800 rounded px-1">死亡</span>
             )}
           </div>
           <div className="text-purple-100 text-sm font-medium mt-0.5 truncate">{char.name}</div>
-          <div className="text-purple-500 text-xs mt-0.5 truncate">{char.role}</div>
+          <div className="text-amber-300/80 text-xs mt-0.5 truncate">
+            {playerName ? `プレイヤー: ${playerName}` : '（不参加）'}
+          </div>
         </div>
         <div className={`w-5 h-5 rounded flex-shrink-0 mt-0.5 border-2 flex items-center justify-center transition-colors ${
           checked ? 'bg-red-500 border-transparent' : 'border-purple-700'
+        }`}>
+          {checked && <span className="text-white text-xs font-bold">✓</span>}
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function SpecialCard({
+  emoji, title, subtitle, checked, onToggle,
+}: {
+  emoji: string; title: string; subtitle: string; checked: boolean; onToggle: () => void
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`p-3 rounded-xl border text-left transition-all ${
+        checked ? 'border-amber-500 bg-amber-900/20 shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'border-purple-900 bg-[#1a0f2e] hover:border-purple-700'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-1">
+        <div className="min-w-0">
+          <div className="text-lg leading-none mb-1">{emoji}</div>
+          <div className="text-purple-100 text-sm font-medium truncate">{title}</div>
+          <div className="text-purple-500 text-xs mt-0.5 truncate">{subtitle}</div>
+        </div>
+        <div className={`w-5 h-5 rounded flex-shrink-0 mt-0.5 border-2 flex items-center justify-center transition-colors ${
+          checked ? 'bg-amber-500 border-transparent' : 'border-purple-700'
         }`}>
           {checked && <span className="text-white text-xs font-bold">✓</span>}
         </div>

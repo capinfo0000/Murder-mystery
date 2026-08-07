@@ -4,6 +4,7 @@ import { CARD_TEMPLATES } from '../data/cardTemplates'
 import { PAST_PROFESSIONS } from '../data/pastProfessions'
 import { CHARACTERS } from '../data/characters'
 import { LOCATION_NAMES } from '../data/locations'
+import { naturalizeTime } from './timeText'
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -14,15 +15,9 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-// カード本文中の枠記号（A〜G）をキャラクター名に、時刻トークン（T1/T2/T3）を
-// 自然な日本語表現に置換する。前後がラテン英数字でない単独のA〜Gのみ対象。
+// カード本文中の枠記号（A〜G）をキャラ名に、時刻トークン（T1/T2/T3）を自然表現に置換。
 function resolveNames(text: string): string {
-  let t = text
-  // 時刻トークン → 自然表現（後続の「の時間帯／の時刻／頃／前後」も吸収して重複を防ぐ）
-  t = t.replace(/T2(前後|の時間帯|の時刻|頃)?/g, (_m, suf: string) => (suf === '前後' ? '事件の前後' : '事件のあった時間帯'))
-  t = t.replace(/T1(前後|の時間帯|の時刻|頃)?/g, () => '宵のうち')
-  t = t.replace(/T3(前後|の時間帯|の時刻|頃)?/g, () => '夜更け')
-  // 枠記号 → キャラ名
+  let t = naturalizeTime(text)
   t = t.replace(/(^|[^A-Za-z0-9])([A-G])(?![A-Za-z0-9])/g,
     (_m, pre: string, letter: string) => pre + (CHARACTERS[letter as CharacterSlot]?.name ?? letter))
   return t

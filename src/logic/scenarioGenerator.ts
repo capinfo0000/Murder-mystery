@@ -23,6 +23,7 @@ import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
 import { VICTIM_BACKGROUNDS } from '../data/victimBackgrounds'
 import { EXTRA_NPCS } from '../data/extraNpcs'
 import { generateAlibis } from './alibiGenerator'
+import { naturalizeTime } from './timeText'
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -127,8 +128,8 @@ function generateConnections(slots: CharacterSlot[]): PlayerConnection[] {
         fromSlot: from,
         toSlot: to,
         type,
-        fromText: connFromText(type, CHARACTERS[to].name),
-        toText: connToText(type, CHARACTERS[from].name),
+        fromText: naturalizeTime(connFromText(type, CHARACTERS[to].name)),
+        toText: naturalizeTime(connToText(type, CHARACTERS[from].name)),
       })
       break
     }
@@ -179,7 +180,7 @@ function buildChainLink(
     toText = `${fromName}に弱みを握られていた。直接「今夜の凶行に協力しろ。断れば秘密を暴く」と脅された。${fromName}が何を企んでいるかは教えてもらえなかった。${relayReceiveText}逆らえなかった。`
   }
 
-  return { fromSlot: from, toSlot: to, method, senderKnown, relayToSlot: relayTo, relayMethod, fromText, toText }
+  return { fromSlot: from, toSlot: to, method, senderKnown, relayToSlot: relayTo, relayMethod, fromText: naturalizeTime(fromText), toText: naturalizeTime(toText) }
 }
 
 function generateCooperationChain(killerSlots: CharacterSlot[]): CooperationChain | null {
@@ -583,7 +584,7 @@ export function generateScenario(
         detail = `${k1Name}がT2より前に${LOCATION_NAMES[k1.location]}で${k1.weapon.name}を仕掛け、${v}が罠にかかり負傷した。その場を立ち去った後、事情を知らない${k2Name}が${k2.weapon.name}を手に現れ止めを刺した。ふたりは互いの計画を知らない。`
         break
     }
-    npcVictims[0] = { ...npcVictims[0], trueMurderDetail: detail }
+    npcVictims[0] = { ...npcVictims[0], trueMurderDetail: naturalizeTime(detail) }
     if (dualPattern === 'environment_then_weapon') {
       npcVictims[0] = { ...npcVictims[0], apparentCause: killers[0].weapon.disguisedAs }
     }
