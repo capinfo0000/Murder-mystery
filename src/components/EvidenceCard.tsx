@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { EvidenceCard } from '../types/game'
-import { CHARACTERS } from '../data/characters'
 
 const CATEGORY_LABELS: Record<string, string> = {
   physical: '物的証拠',
@@ -52,7 +51,6 @@ export default function EvidenceCardView({
   const colorClass = CATEGORY_COLORS[card.category] ?? 'bg-purple-900/30 text-purple-300 border-purple-800/50'
   const accent = CATEGORY_ACCENT[card.category] ?? '#7c3aed'
   const isPublic = (card.sharedWith ?? []).includes('all')
-  const characterName = card.relatedSlot ? CHARACTERS[card.relatedSlot]?.name : null
   const label = CATEGORY_LABELS[card.category] ?? card.category
 
   return (
@@ -72,10 +70,7 @@ export default function EvidenceCardView({
           <p className="text-[13px] text-purple-200 leading-snug flex-1 min-h-0 overflow-hidden line-clamp-5 break-words">
             {card.content}
           </p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-purple-900/60">
-            {characterName ? (
-              <span className="text-[10px] text-purple-500 truncate">関係: {characterName}</span>
-            ) : <span />}
+          <div className="flex items-center justify-end mt-2 pt-2 border-t border-purple-900/60">
             <span className="text-purple-600 text-[10px] shrink-0">詳細 ›</span>
           </div>
         </div>
@@ -95,7 +90,6 @@ export default function EvidenceCardView({
             <div className="p-4">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${colorClass}`}>{label}</span>
-                {characterName && <span className="text-xs text-purple-500">関係: {characterName}</span>}
                 {isPublic && <span className="text-xs text-green-400">公開済み</span>}
               </div>
               <p className="text-[15px] text-purple-100 leading-relaxed break-words">{card.content}</p>
