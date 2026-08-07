@@ -16,7 +16,10 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function generateAlibis(
-  slots: CharacterSlot[]
+  slots: CharacterSlot[],
+  // 犯行現場・遺体発見場所。22時台(T3)にここへ無実の者を置くと、深夜の発見前に
+  // 遺体を見つけてしまう矛盾になるため、T3の候補から外す。
+  excludeFromT3: Location[] = [],
 ): Record<CharacterSlot, { T1: Location; T2: Location; T3: Location }> {
   const alibis = {} as Record<CharacterSlot, { T1: Location; T2: Location; T3: Location }>
 
@@ -30,7 +33,9 @@ export function generateAlibis(
     const t2 = CHARACTERS[slot].t2Location
     const available = shuffle(otherLocations)
     const t1 = available[0] || pickRandom(ALL_LOCATIONS)
-    const t3 = available[1] || pickRandom(ALL_LOCATIONS)
+    // T3 は現場・遺体発見場所を避ける（避けられないときだけ従来どおり）
+    const t3pool = available.filter(l => l !== t1 && !excludeFromT3.includes(l))
+    const t3 = t3pool[0] || available.find(l => l !== t1) || available[1] || pickRandom(ALL_LOCATIONS)
     alibis[slot] = { T1: t1, T2: t2, T3: t3 }
   }
 

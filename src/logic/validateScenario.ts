@@ -186,6 +186,31 @@ function checkRouteClue(scenario: Scenario): string[] {
   return out
 }
 
+// 犯行時刻(21時台)に、犯人以外のプレイヤーが犯行現場と同じ部屋にいないか。
+// いると「無実の者が犯行を目撃していたはず」という論理矛盾になる（複数カード＝
+// アリバイ表＋犯行現場を突き合わせて初めて分かる矛盾）。
+function checkNoCoLocatedWitness(scenario: Scenario): string[] {
+  const out: string[] = []
+  const killers = scenario.killers ?? []
+  const mainKillers = killers.filter(k => k.victimName === MAIN_VICTIM.name)
+  // 犯行現場（21時台に源太郎が殺された部屋）
+  const scene = mainKillers[0]?.location ?? scenario.mainVictimLocation
+  if (!scene) return out
+  const bodyLoc = scenario.mainVictimLocation // 遺体が最終的に発見される部屋
+  const perps = new Set(killers.map(k => k.slot))
+  for (const [slot, a] of Object.entries(scenario.alibis ?? {}) as [string, { T2: string; T3: string } | undefined][]) {
+    if (!a || perps.has(slot as never)) continue
+    if (a.T2 === scene) {
+      out.push(`無実の${slot}が犯行時刻に現場(${LOCATION_NAMES[scene]})と同室——目撃者矛盾`)
+    }
+    // 22時台(T3)に遺体のある部屋にいる無実の者 → 深夜の発見前に遺体を見つけるはず
+    if (bodyLoc && a.T3 === bodyLoc) {
+      out.push(`無実の${slot}が22時台に遺体のある部屋(${LOCATION_NAMES[bodyLoc]})にいる——発見時期の矛盾`)
+    }
+  }
+  return out
+}
+
 // 「計画外の衝動的犯行」に、事前準備の要る手口（毒殺・放火や階段の仕掛け）が
 // 使われていないか。とっさに毒を盛ったり放火装置を組むことはできない。
 function checkImprovisedMethod(scenario: Scenario): string[] {
@@ -336,6 +361,7 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   if (opts?.cards) for (const p of checkKillerAtSceneAtCrimeTime(scenario, trueCards)) problems.push(p)
   for (const p of checkProfessionConsistency(scenario)) problems.push(p)
   for (const p of checkImprovisedMethod(scenario)) problems.push(p)
+  for (const p of checkNoCoLocatedWitness(scenario)) problems.push(p)
 
   // 決定的手がかり（目撃証言）が配布カードに含まれているか（cards指定時のみ）
   if (opts?.cards && scenario.mainTrick?.eyewitness) {
