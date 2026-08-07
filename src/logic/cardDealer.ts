@@ -42,68 +42,64 @@ function generateNpcTestimonyCards(
   if (killers.length === 0) return []
   const cards: EvidenceCard[] = []
   const innocentSlots = slots.filter(s => !killers.some(k => k.slot === s))
-  const shuffledKillers = shuffle([...killers])
+  // 当主(源太郎)を殺した犯人＝21時台に犯行現場にいた者。生存者の「現場へ向かうのを見た」証言はこの犯人に紐づける。
+  const mainKillers = killers.filter(k => k.victimName === MAIN_VICTIM.name)
+  const testimonyKillers = mainKillers.length > 0 ? mainKillers : killers
 
   survivors.forEach((npc, i) => {
-    const killer = shuffledKillers[i % shuffledKillers.length]
+    const killer = testimonyKillers[i % testimonyKillers.length]
     const killerName = CHARACTERS[killer.slot].name
     const locationName = LOCATION_NAMES[killer.location]
 
-    // True: survivor saw killer heading toward crime scene
+    // True: survivor saw the main-victim killer heading toward the crime scene at 21時
     const trueVariants = [
-      `${npc.role}は、T2の頃に${killerName}が${locationName}の方向へ急ぎ足で向かうのを廊下から目撃したという。`,
-      `${npc.role}によれば、夜中に${locationName}の方向から物音がした時刻、${killerName}の姿が廊下に見当たらなかったという。`,
-      killer.weapon.isPoison
-        ? `${npc.role}は「${killerName}が食事の準備が終わった後も厨房周辺をうろついていた」と証言している。`
-        : `${npc.role}は「${killerName}が${locationName}付近で立ち止まって何かを確かめるような様子だった」と話している。`,
+      `${npc.role}は、21時頃に${killerName}が${locationName}の方向へ急ぎ足で向かうのを廊下から目撃したという。`,
+      `${npc.role}によれば、21時頃に${locationName}の方向から物音がした時刻、${killerName}の姿が廊下に見当たらなかったという。`,
+      `${npc.role}は「21時頃、${killerName}が${locationName}付近で立ち止まって何かを確かめるような様子だった」と話している。`,
     ]
     cards.push(makeCard(trueVariants[i % trueVariants.length], 'alibi', killer.slot, true))
 
-    // False: vague testimony pointing to innocent
+    // False: vague testimony pointing to innocent（ミスリード）
     if (innocentSlots.length > 0) {
       const innocentSlot = innocentSlots[i % innocentSlots.length]
       const innocentName = CHARACTERS[innocentSlot].name
       const falseVariants = [
         `${npc.role}は「${innocentName}が夜中に何度も廊下を行き来していた」と証言している。`,
-        `${npc.role}によれば、T2頃に${innocentName}が落ち着かない様子で部屋の外をのぞいていたのを見たという。`,
+        `${npc.role}によれば、21時頃に${innocentName}が落ち着かない様子で部屋の外をのぞいていたのを見たという。`,
       ]
       cards.push(makeCard(falseVariants[i % falseVariants.length], 'alibi', innocentSlot, false))
     } else {
-      cards.push(makeCard(`${npc.role}は、T2前後に廊下で誰かと誰かが口論しているのを聞いたというが、声の主は特定できていない。`, 'alibi', null, false))
+      cards.push(makeCard(`${npc.role}は、21時前後に廊下で誰かと誰かが口論しているのを聞いたというが、声の主は特定できていない。`, 'alibi', null, false))
     }
   })
 
-  // Dead NPCs: cipher card (behavior described, no name) + decoder card (name + behavior)
-  // Players must hold both cards to identify who the diary entry points to.
-  npcVictims.filter(v => v.isRelatedToCase).forEach((victim, i) => {
-    const killer = shuffledKillers[i % shuffledKillers.length]
-    const killerSlot = killer.slot
-    const killerName = CHARACTERS[killerSlot].name
+  // 殺されたNPCの手記：そのNPCを"実際に殺した犯人"（秘密を目撃された相手）の癖を記す。
+  // 暗号カード（癖の描写・名前なし）＋解読カード（名前＋同じ癖）の2枚で犯人を特定できる。
+  npcVictims.filter(v => v.isRelatedToCase).forEach((victim) => {
+    const killerSlot = victim.killerSlot ?? testimonyKillers[0]?.slot ?? killers[0].slot
+    const killerName = CHARACTERS[killerSlot]?.name ?? killerSlot
+    const place = victim.deathLocation || '館の一角'
     const profId = assignedProfessions[killerSlot]
     const prof = profId ? PAST_PROFESSIONS.find(p => p.id === profId) : undefined
 
     if (prof) {
-      // Remove trailing 。for embedding mid-sentence
       const hint = prof.observableHint.replace(/。$/, '')
-
-      // Cipher: observableHint written as description, no name
+      // Cipher: 癖の描写のみ（名前なし）。「秘密を見てしまった」文脈を添える。
       const cipherVariants = [
-        `死亡した${victim.role}の手帳に走り書きが残されていた。『T2前後、${hint}人物が廊下でこちらを見た。何か知っているのだろうか』——誰のことを指しているのか。`,
-        `死亡した${victim.role}の遺品にメモがあった。『${hint}者が夜、${LOCATION_NAMES[killer.location]}付近にいた』とだけ記されていた。人物は特定されていない。`,
+        `死亡した${victim.role}の手帳に走り書きが残されていた。『あの夜、${hint}人物の秘密を見てしまった。気づかれていないといいが』——誰のことを指しているのか。`,
+        `死亡した${victim.role}の遺品にメモがあった。『${hint}者の、人に言えない行いを${place}の近くで目にした』とだけ記されていた。人物は特定されていない。`,
       ]
-      cards.push(makeCard(cipherVariants[i % cipherVariants.length], 'alibi', killerSlot, true))
-
-      // Decoder: name the person and describe the same behavior
+      cards.push(makeCard(cipherVariants[hint.length % cipherVariants.length], 'alibi', killerSlot, true))
+      // Decoder: 名前＋同じ癖
       const decoderVariants = [
         `周囲の者は${killerName}についてこう語る——「${hint}のが気になる。昔から染み付いた習慣なのかもしれない」。`,
         `館の滞在者数名が${killerName}の独特の癖を指摘している。${hint}という。本人は意識していないようだ。`,
       ]
-      cards.push(makeCard(decoderVariants[i % decoderVariants.length], 'background', killerSlot, true))
+      cards.push(makeCard(decoderVariants[place.length % decoderVariants.length], 'background', killerSlot, true))
     } else {
-      // Fallback: vague but not direct
       cards.push(makeCard(
-        `死亡した${victim.role}の手帳の最終ページに断片的な記録があった。『T2頃、廊下で見知った顔と目が合った。あの足取りはどこへ向かっていたのか』——読み取れるのはそれだけだ。`,
-        'alibi', killerSlot, true
+        `死亡した${victim.role}の手帳の最終ページに断片的な記録があった。『あの夜、見てはいけない秘密を目にしてしまった。相手は気づいただろうか』——読み取れるのはそれだけだ。`,
+        'alibi', killerSlot, true,
       ))
     }
   })

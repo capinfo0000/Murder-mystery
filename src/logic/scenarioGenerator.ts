@@ -915,6 +915,19 @@ export function generateScenario(
           flaw: `だが${locName}には、何かを固定するために打たれた真新しい釘穴と、切れた糸の端が残っていた。人の手を借りずに凶器が動いた——自動で作動する仕掛けがあったのだ。`,
           misdirection: `21時頃、${innocentNameG}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
         }
+      } else if (bodyMoved) {
+        // 死体移動が主軸のシナリオ。時刻トリックや変装は重ねず（過剰・混乱を避ける）、
+        // 死斑による「別室で殺され運ばれた」手がかりを決定的なものとする（後段で付与）。
+        mainTrick = {
+          name: '死体移動による犯行現場の偽装',
+          premeditated: true,
+          killerSlots: [mainKiller.slot],
+          killerNote: `あなたは${locName}で源太郎を手にかけた。`,
+          eyewitness,
+          sound,
+          trace,
+          misdirection: `21時頃、${innocentNameG}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+        }
       } else if (premeditated) {
         // 濡れ衣を着せる相手（変装トリックを使う場合の対象）
         const framedSlot = innocentSlots.length > 0 ? pickRandom(innocentSlots) : null
@@ -1258,7 +1271,7 @@ function generateSynopsis(
       `${n}が最近、源太郎の日課や就寝時刻を頻繁に尋ねていたという証言がある。`,
       `源太郎の部屋の窓の外に、${n}の足跡らしきものが残されていた。`,
       `${n}が事件前、誰にも言わずに何かを庭の隅に埋めていたのを見た者がいる。`,
-      `${n}が源太郎の飲み物に近づく機会を持っていた唯一の人物だと囁かれている。`,
+      `${n}が事件の直前まで源太郎の身近にいられた数少ない人物だと囁かれている。`,
       `事件の朝、${n}の手が小刻みに震えていたのを気づいた者がいた。`,
       `${n}が前夜、「今夜ですべてが終わる」と独り言のように呟いていたという。`,
       `源太郎が最後に会っていたのは${n}だったのではないか、という証言がある。`,
