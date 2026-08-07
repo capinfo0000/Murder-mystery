@@ -1095,8 +1095,8 @@ function generateTimelines(
       if (!isMain) {
         result[slot] = [
           { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `${LOCATION_NAMES[a.T1]}にいた。${arrival}` },
-          { period: PERIOD_T2, location: LOCATION_NAMES[a.T2], action: `人に言えない事情があり、ひそかに${LOCATION_NAMES[a.T2]}にいた。${secret}——だが、この秘密の行動を${victimName}に見られてしまった。この時点では、まだ源太郎の死にも${victimName}の死にも関わっていない。` },
-          { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}にいた。${late}（——そして後日、秘密を知った${victimName}を口封じのために手にかけることになる。）` },
+          { period: PERIOD_T2, location: LOCATION_NAMES[a.T2], action: `人に言えない事情があり、ひそかに${LOCATION_NAMES[a.T2]}にいた。${secret}——だが、この秘密の行動を${victimName}に見られてしまった。露見すれば破滅だ。` },
+          { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}にいた。${late}（——そして秘密を知った${victimName}を、危険が去らぬうちにと、その夜のうちに口封じのため手にかけることになる。）` },
         ]
         continue
       }
@@ -1168,7 +1168,7 @@ function generateStories(
       // NPC殺し犯：源太郎は手にかけていない。秘密の行動を目撃され、後日その口を封じた。
       const v = killer.victimName ?? '相手'
       paras.push(`——念のため言っておく。あなたは源太郎を手にかけてはいない。だが事件の夜、人には言えない秘密の行動をしているところを、${v}に見られてしまった。`)
-      paras.push(`放っておけば、その秘密からすべてが露見する。追い詰められたあなたは後日、口止めを図る${v}を「${killer.weapon.disguisedAs}」に見せかけて手にかけた（手段は「${killer.weapon.name}」）。館で起きたのは源太郎殺しだけではない——これもまた、まぎれもないもう一つの殺人だ。\n\n夜が明けて始まる犯人捜しでは、源太郎を殺した犯人だけでなく、${v}を手にかけたあなたのことも暴かれてはならない。`)
+      paras.push(`放っておけば、その秘密からすべてが露見する。時間を置けば置くほど危うい——追い詰められたあなたは、危険が去らぬその夜のうちに、口止めを図る${v}を「${killer.weapon.disguisedAs}」に見せかけて手にかけた（手段は「${killer.weapon.name}」）。館で起きたのは源太郎殺しだけではない——これもまた、まぎれもないもう一つの殺人だ。\n\n夜が明けて始まる犯人捜しでは、源太郎を殺した犯人だけでなく、${v}を手にかけたあなたのことも暴かれてはならない。`)
     } else if (isKiller && killer) {
       const isMainKillerHere = !!mainTrick && mainTrick.killerSlots.includes(slot)
       const incidental = isMainKillerHere && !mainTrick!.premeditated
