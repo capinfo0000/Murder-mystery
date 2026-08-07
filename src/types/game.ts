@@ -106,6 +106,7 @@ export interface DualKillerInfo {
   poisonKillerSlot: CharacterSlot  // killers[0].slot; name kept for backward compat
   weaponKillerSlot: CharacterSlot  // killers[1].slot; name kept for backward compat
   victimName: string
+  detail?: string  // 二重犯行の真相（当主がどう二人に手にかけられたか）。結果画面で表示
 }
 
 export type ConnectionType =

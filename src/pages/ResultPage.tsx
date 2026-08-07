@@ -165,10 +165,16 @@ export default function ResultPage() {
               </Section>
             ) : (
               <Section title="真犯人">
+                {scenario.dualKillerInfo?.detail && (
+                  <div className="bg-red-950/40 border border-red-800 rounded-lg p-3 mb-2">
+                    <div className="text-red-300 font-medium text-sm mb-1">二重犯行：{scenario.dualKillerInfo.victimName}</div>
+                    <p className="text-red-200/80 text-xs leading-relaxed">{scenario.dualKillerInfo.detail}</p>
+                  </div>
+                )}
                 {(scenario.killers ?? []).map(k => (
                   <div key={k.slot} className="bg-red-950/30 border border-red-900/50 rounded-lg p-3 mb-2">
                     <div className="text-red-300 font-medium text-sm mb-1">
-                      {CHARACTERS[k.slot]?.name} ({k.slot}枠)
+                      {CHARACTERS[k.slot]?.name} ({k.slot}枠){k.isDualKiller ? '〔二重犯行〕' : ''}
                     </div>
                     <div className="text-red-200/70 text-xs space-y-0.5">
                       <p>被害者: {k.victimSlot ? `${CHARACTERS[k.victimSlot]?.name}（${k.victimSlot}枠）` : k.victimName}</p>

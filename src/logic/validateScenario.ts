@@ -133,6 +133,12 @@ export function scenarioNarrativeTexts(scenario: Scenario): string[] {
     if (link.fromText) texts.push(link.fromText)
     if (link.toText) texts.push(link.toText)
   }
+  // 各キャラの一人称物語もプレイヤー向け。走査対象に含める。
+  for (const story of Object.values(scenario.stories ?? {})) {
+    if (story) texts.push(story)
+  }
+  // 二重犯行の真相文
+  if (scenario.dualKillerInfo?.detail) texts.push(scenario.dualKillerInfo.detail)
   return texts
 }
 
