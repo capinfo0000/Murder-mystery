@@ -183,6 +183,11 @@ export interface MainTrick {
   remote?: boolean             // true=犯人は20時台に罠を設置し、犯行時刻(21時台)は別室にいた
   // ── 移動経路の手がかり（館の空間モデルから導出／matで整合）──
   routeClue?: string           // 真：犯人が犯行前に現場へ至った経路。廊下でのモブ目撃・階段の足音・秘密通路など
+  // ── 目撃証言・物音を犯人の実際の状況に合わせるためのメタ情報 ──
+  crimeTime?: string           // 犯行時刻ラベル（例「21時20分」）。周辺の証言・物音もこの時刻に揃える
+  killerApproach?: 'corridor' | 'passage' | 'remote'
+  // corridor=廊下を通って現場へ（目撃あり） / passage=秘密通路で廊下を通らず（廊下では見られない）
+  // remote=犯行時刻に現場不在（20時台に罠を設置。現場付近の目撃は設置時のみ）
 }
 
 export interface Scenario {
