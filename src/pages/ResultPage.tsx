@@ -244,9 +244,9 @@ export default function ResultPage() {
                   <thead>
                     <tr className="text-purple-500">
                       <th className="text-left pb-1">人物</th>
-                      <th className="text-left pb-1">宵のうち</th>
-                      <th className="text-left pb-1 text-red-400">事件の時間帯</th>
-                      <th className="text-left pb-1">夜更け</th>
+                      <th className="text-left pb-1">20時台</th>
+                      <th className="text-left pb-1 text-red-400">21時台(事件)</th>
+                      <th className="text-left pb-1">22時台</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -149,8 +149,16 @@ export interface CooperationChain {
   links: ChainLink[]
 }
 
+// 事件当日の一連の行動（時系列）。全キャラ共通のこの記録を"唯一の真実"とし、
+// ヒントカードはここから導出するので、カードと行動が矛盾しない。
+export interface TimelineEntry {
+  period: string    // 20時台 / 21時台(事件) / 22時台
+  location: string  // 場所（部屋名など）
+  action: string    // その時間に何をしていたか（本人の真実）
+}
+
 // コナン風トリック：犯人がアリバイ工作に使った手口と、その綻び（手がかり）。
-// すべて事件の実データ（犯人・場所・凶器）から生成し、矛盾しないようにする。
+// すべて事件の実データ（犯人・場所・凶器・タイムライン）から生成し、矛盾させない。
 export interface MainTrick {
   name: string                 // トリック名
   killerSlots: CharacterSlot[] // 実行した犯人
@@ -161,6 +169,10 @@ export interface MainTrick {
   appearance: string           // ミスリード：トリックが作り出した錯覚
   flaw: string                 // 真・決定的：トリックの綻び
   misdirection: string         // ミスリード：無実の人物を指す目撃証言
+  // ── 濡れ衣（変装）トリックのとき ──
+  framedName?: string          // 濡れ衣を着せられた人物
+  framedSighting?: string      // ミスリード：濡れ衣の人物を現場付近で目撃（実は変装）
+  framedAlibi?: string         // 真：濡れ衣の人物の本当の居場所（変装目撃と矛盾）
 }
 
 export interface Scenario {
@@ -181,6 +193,7 @@ export interface Scenario {
   npcSurvivors?: NpcSurvivor[]  // NPCs present in the manor who survived
   mainVictimLocation?: Location  // 当主の遺体が発見された場所（マップの★位置）
   mainTrick?: MainTrick          // コナン風アリバイ工作（プレイヤー犯の場合）
+  timelines?: Record<CharacterSlot, TimelineEntry[]>  // 各キャラの事件当日の行動（時系列）
 }
 
 export interface EvidenceCard {
