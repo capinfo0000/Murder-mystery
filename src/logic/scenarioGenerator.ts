@@ -484,6 +484,11 @@ export function generateScenario(
   const slots = getSlotsForCount(playerCount)
   const shuffledSlots = shuffle(slots)
 
+  // 当主殺しの犯行時刻（分単位）。単一の基準としてここで一度だけ決め、
+  // 目撃カード・時系列・凶行欄すべてをこの時刻から導出して矛盾させない。
+  const crimeMinute = [10, 15, 20, 25, 30, 35, 40, 45][Math.floor(Math.random() * 8)]
+  const crimeTime = `21時${crimeMinute}分`
+
   // ── killers ───────────────────────────────────────────────
   let killerSlots: CharacterSlot[]
   let outsideKiller = false
@@ -895,9 +900,9 @@ export function generateScenario(
       const innocentSlots = slots.filter(s => !killerSlots.includes(s))
       const premeditated = Math.random() < 0.5
       const eyeVariants = [
-        `21時頃、${killerName}が${locName}の方へ急ぎ足で向かうのを廊下で見た、という証言がある。`,
-        `21時頃、${killerName}が${locName}のあたりから出てくるのを見た者がいる。ひどく思いつめた様子だったという。`,
-        `21時前後、${killerName}の姿だけが${locName}付近で見当たらなくなった時間がある、と複数の者が話している。`,
+        `${crimeTime}の少し前、${killerName}が${locName}の方へ急ぎ足で向かうのを廊下で見た、という証言がある。`,
+        `${crimeTime}頃、${killerName}が${locName}のあたりから出てくるのを見た者がいる。ひどく思いつめた様子だったという。`,
+        `${crimeTime}前後、${killerName}の姿だけが${locName}付近で見当たらなくなっていた、と複数の者が話している。`,
       ]
       // 現場の物音・痕跡・目撃は、計画的でも衝動的でも共通の「真の手がかり」
       const eyewitness = pickRandom(eyeVariants)
@@ -913,7 +918,7 @@ export function generateScenario(
           premeditated: true,
           remote: true,
           killerSlots: [mainKiller.slot],
-          killerNote: `あなたは事前に${locName}へ、源太郎が通りかかると自動で作動する仕掛け（重りと糸で凶器が落ちる罠など）を設置した。そして源太郎が罠にかかった21時、あなた自身は別室で他の者と一緒にいた——犯行の瞬間に現場にいないことが、あなたの鉄壁のアリバイになっている。ただし仕掛けを固定した釘穴や糸、滑車の残骸を回収し損ねると、遠隔殺人だと露見する。`,
+          killerNote: `あなたは事前に${locName}へ、源太郎が通りかかると自動で作動する仕掛け（重りと糸で凶器が落ちる罠など）を設置した。そして源太郎が罠にかかった${crimeTime}頃、あなた自身は別室で他の者と一緒にいた——犯行の瞬間に現場にいないことが、あなたの鉄壁のアリバイになっている。ただし仕掛けを固定した釘穴や糸、滑車の残骸を回収し損ねると、遠隔殺人だと露見する。`,
           eyewitness: `20時頃、${killerName}が${locName}のあたりで何かを仕掛けるように屈み込んでいるのを見た、という証言がある。`,
           sound,
           trace,
@@ -1016,7 +1021,7 @@ export function generateScenario(
   }
 
   // ── タイムライン（各キャラの事件当日の行動＝唯一の真実）──────────────
-  const timelines = generateTimelines(slots, alibis, secretActions, killers, mainTrick)
+  const timelines = generateTimelines(slots, alibis, secretActions, killers, mainTrick, crimeTime)
   // ── 物語（個別ハンドアウトを一人称の物語として綴る）────────────────────
   const stories = generateStories(slots, timelines, killers, mainTrick, connections, cooperationChain ?? undefined)
 
@@ -1056,6 +1061,7 @@ export function generateScenario(
     mainTrick,
     timelines,
     stories,
+    crimeTime,
   }
 }
 
@@ -1094,6 +1100,7 @@ function generateTimelines(
   secretActions: Partial<Record<CharacterSlot, string>>,
   killers: KillerInfo[],
   mainTrick: MainTrick | undefined,
+  crimeTime: string,
 ): Record<CharacterSlot, TimelineEntry[]> {
   const result = {} as Record<CharacterSlot, TimelineEntry[]>
   const killerBySlot = new Map(killers.map(k => [k.slot, k] as const))
@@ -1118,7 +1125,7 @@ function generateTimelines(
         const awayName = LOCATION_NAMES[a.T2]
         result[slot] = [
           { period: PERIOD_T1, location: sceneName, action: `${sceneName}へひそかに向かい、源太郎が通りかかれば自動で作動する仕掛けを施した。あとは待つだけだった。` },
-          { period: PERIOD_T2, location: awayName, action: `${awayName}で人目を避けて過ごしていた（${secret}）。——まさにその頃、${sceneName}に仕掛けた装置が源太郎の命を奪った。あなたは現場にいなかった。これがこの事件の犯行時刻である。` },
+          { period: PERIOD_T2, location: awayName, action: `${awayName}で人目を避けて過ごしていた（${secret}）。——まさに${crimeTime}頃、${sceneName}に仕掛けた装置が源太郎の命を奪った。あなたは現場にいなかった。これがこの事件の犯行時刻である。` },
           { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}へ移り、仕掛けた装置の痕跡が見つからないことを祈りながら、何食わぬ顔で過ごした。` },
         ]
         continue
@@ -1152,7 +1159,7 @@ function generateTimelines(
       const motive = isIncidental
         ? '秘密の行動を源太郎に目撃され、露見を恐れたあなたは、とっさに'
         : (KILL_MOTIVE[slot] ?? '')
-      const t2Action = `${motive}${sceneName}で源太郎を手にかけた——これがこの事件の真の犯行時刻である。`
+      const t2Action = `${motive}${crimeTime}頃、${sceneName}で源太郎を手にかけた——これがこの事件の真の犯行時刻である。`
       const t3Action = !hasTrick
         ? `${LOCATION_NAMES[a.T3]}へ移り、動揺を隠しながら何事もなかったように振る舞った。`
         : isIncidental

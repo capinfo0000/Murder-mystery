@@ -449,7 +449,7 @@ function ProfileModal({
                 <PRow label="偽装死因" value={killerInfo.weapon.disguisedAs} />
                 <PRow label="時刻" value={
                   killerInfo.victimName === MAIN_VICTIM.name
-                    ? '事件のあった夜（21:00〜22:00頃）'
+                    ? `${scenario.crimeTime ?? '21時'}頃（事件のあった夜）`
                     : `${(scenario.npcVictims ?? []).find(v => v.killerSlot === slot)?.deathTime ?? '事件当夜'}（秘密を知られての口封じ）`
                 } />
               </div>
