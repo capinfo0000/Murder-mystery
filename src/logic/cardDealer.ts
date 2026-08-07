@@ -160,7 +160,19 @@ function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: S
   const appearance = makeCard(`【一見の状況】${t.appearance}`, 'alibi', null, false)
   const flaw = makeCard(`【トリックの綻び】${t.flaw}`, 'technical', null, true)
   const misdir = makeCard(t.misdirection, 'alibi', null, false)
-  return { cards: [eye, sound, trace, appearance, flaw, misdir], decisive: new Set([eye.id, flaw.id]) }
+  const cards = [eye, sound, trace, appearance, flaw, misdir]
+  const decisive = new Set<string>([eye.id, flaw.id])
+
+  // 変装による濡れ衣トリックがある場合：
+  // 現場付近での「目撃」（ミスリード）と、その人物の本当のアリバイ（決定的な真）を配る。
+  if (t.framedName && t.framedSighting && t.framedAlibi) {
+    const framedSight = makeCard(t.framedSighting, 'alibi', null, false)
+    const framedAlibi = makeCard(`【裏づけ】${t.framedAlibi}`, 'alibi', null, true)
+    cards.push(framedSight, framedAlibi)
+    decisive.add(framedAlibi.id)
+  }
+
+  return { cards, decisive }
 }
 
 export function dealCards(

@@ -11,6 +11,7 @@ import DeckPanel from '../components/DeckPanel'
 import SecretMessagePanel from '../components/SecretMessagePanel'
 import ManorMap from '../components/ManorMap'
 import AlibiMatrix from '../components/AlibiMatrix'
+import TimelineView from '../components/TimelineView'
 
 const PHASE_LABELS: Record<string, string> = {
   round1: 'ラウンド1 — 全体討議',
@@ -375,6 +376,12 @@ function ProfileModal({
           <PSection title="あなただけの秘密（誰にも言わないこと）" accent="amber">
             <p className="text-amber-200 text-sm leading-relaxed">{char.secretAction}</p>
           </PSection>
+
+          {scenario.timelines?.[slot] && (
+            <PSection title="事件当日のあなたの行動（時系列・厳重に秘密）" accent="amber">
+              <TimelineView entries={scenario.timelines[slot]} />
+            </PSection>
+          )}
 
           {myConns.length > 0 && (
             <PSection title="今夜の密約（あなただけが知ること）" accent="amber">

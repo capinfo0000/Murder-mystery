@@ -14,6 +14,8 @@ import type {
   NpcVictim,
   PlayerConnection,
   Scenario,
+  TimelineEntry,
+  MainTrick,
   VictimInfo,
 } from '../types/game'
 import { CHARACTERS, MAIN_VICTIM, getSlotsForCount } from '../data/characters'
@@ -23,7 +25,7 @@ import { CRIME_SCENE_LOCATIONS, LOCATION_NAMES } from '../data/locations'
 import { VICTIM_BACKGROUNDS } from '../data/victimBackgrounds'
 import { EXTRA_NPCS } from '../data/extraNpcs'
 import { generateAlibis } from './alibiGenerator'
-import { naturalizeTime } from './timeText'
+import { naturalizeTime, PERIOD_T1, PERIOD_T2, PERIOD_T3 } from './timeText'
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -253,10 +255,10 @@ const DEATH_CATS: DeathCat[] = ['natural', 'natural', 'natural', 'fall', 'hang',
 
 // 手口カテゴリごとの「物音・におい」と「物的痕跡」（凶器と一致する手がかり）
 const CAT_SOUND: Record<DeathCat, (loc: string) => string> = {
-  natural: loc => `事件のあった時間帯、${loc}の方から争う物音は聞こえなかった。ただ、源太郎が誰かと短く言葉を交わす声だけがした、という証言がある。`,
-  fall: loc => `事件のあった時間帯、${loc}の方から、重いものが落ちるような鈍い音がした、という証言がある。`,
-  hang: loc => `事件のあった時間帯、${loc}の方から、くぐもった短い呻き声のようなものを聞いた、という証言がある。`,
-  fire: loc => `事件のあった時間帯、${loc}の方から何かを引きずる音がし、しばらくして焦げ臭さが漂ってきた、という証言がある。`,
+  natural: loc => `21時頃、${loc}の方から争う物音は聞こえなかった。ただ、源太郎が誰かと短く言葉を交わす声だけがした、という証言がある。`,
+  fall: loc => `21時頃、${loc}の方から、重いものが落ちるような鈍い音がした、という証言がある。`,
+  hang: loc => `21時頃、${loc}の方から、くぐもった短い呻き声のようなものを聞いた、という証言がある。`,
+  fire: loc => `21時頃、${loc}の方から何かを引きずる音がし、しばらくして焦げ臭さが漂ってきた、という証言がある。`,
 }
 const CAT_TRACE: Record<DeathCat, (loc: string) => string> = {
   natural: loc => `${loc}の源太郎の傍らに、飲みかけの杯が残されていた。底にわずかな沈殿物がある。`,
@@ -593,6 +595,20 @@ export function generateScenario(
   // ── alibis ────────────────────────────────────────────────
   const alibis = generateAlibis(slots)
 
+  // 犯人のアリバイ整合：犯行時刻(21時台)は必ず犯行現場にいた、という真実にそろえる。
+  // 秘密行動の場所(t2Location)は20時台へ移す。これでアリバイ表・タイムライン・
+  // 目撃カード（21時台に犯人を現場付近で目撃）がすべて矛盾なく噛み合う。
+  for (const k of killers) {
+    const a = alibis[k.slot]
+    if (!a) continue
+    const secretSpot = CHARACTERS[k.slot].t2Location
+    alibis[k.slot] = {
+      T1: secretSpot,
+      T2: k.location,
+      T3: a.T3 === k.location ? a.T1 : a.T3,
+    }
+  }
+
   // ── secret actions ────────────────────────────────────────
   const secretActions = {} as Partial<Record<CharacterSlot, string>>
   for (const slot of slots) {
@@ -657,23 +673,23 @@ export function generateScenario(
   ).slice(0, 3).map(n => ({ role: n.role }))
 
   // ── コナン風トリック（非二重・プレイヤー犯のみ）───────────────────────
-  let mainTrick: import('../types/game').MainTrick | undefined
+  let mainTrick: MainTrick | undefined
   if (mainCat && !outsideKiller && !suicide && mode !== 'puzzle') {
     const mainKiller = killers.find(k => k.victimName === MAIN_VICTIM.name && !k.isDualKiller)
     if (mainKiller) {
       const killerName = CHARACTERS[mainKiller.slot].name
       const locName = LOCATION_NAMES[mainVictimLocation]
       const innocentSlots = slots.filter(s => !killerSlots.includes(s))
-      const innocentName = innocentSlots.length > 0
-        ? CHARACTERS[pickRandom(innocentSlots)].name
-        : '館の使用人'
+      // 濡れ衣を着せる相手（変装トリックを使う場合の対象）
+      const framedSlot = innocentSlots.length > 0 ? pickRandom(innocentSlots) : null
+      const framedName = framedSlot ? CHARACTERS[framedSlot].name : '館の使用人'
       const usable = TRICKS.filter(t => t.cats === 'any' || t.cats.includes(mainCat!))
       const trick = pickRandom(usable)
       const built = trick.build(locName)
       const eyeVariants = [
-        `事件のあった時間帯、${killerName}が${locName}の方へ急ぎ足で向かうのを廊下で見た、という証言がある。`,
-        `事件のあった時間帯、${killerName}が${locName}のあたりから出てくるのを見た者がいる。ひどく思いつめた様子だったという。`,
-        `事件の前後、${killerName}の姿だけが${locName}付近で見当たらなくなった時間がある、と複数の者が話している。`,
+        `21時頃、${killerName}が${locName}の方へ急ぎ足で向かうのを廊下で見た、という証言がある。`,
+        `21時頃、${killerName}が${locName}のあたりから出てくるのを見た者がいる。ひどく思いつめた様子だったという。`,
+        `21時前後、${killerName}の姿だけが${locName}付近で見当たらなくなった時間がある、と複数の者が話している。`,
       ]
       mainTrick = {
         name: trick.name,
@@ -684,10 +700,24 @@ export function generateScenario(
         trace: CAT_TRACE[mainCat](locName),
         appearance: built.appearance,
         flaw: built.flaw,
-        misdirection: `事件のあった時間帯、${innocentName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+        misdirection: `21時頃、${framedName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+      }
+
+      // 変装して無実の人物に濡れ衣を着せるトリック（コナン風）を一定確率で重ねる。
+      // 濡れ衣の相手の"本当のアリバイ"（21時台は自分の秘密行動の場所にいた）と
+      // 突き合わせれば、現場付近の目撃が変装だったと分かる——矛盾しない手がかりになる。
+      if (framedSlot && Math.random() < 0.4) {
+        const framedRealLoc = LOCATION_NAMES[alibis[framedSlot]?.T2 ?? CHARACTERS[framedSlot].t2Location]
+        mainTrick.framedName = framedName
+        mainTrick.framedSighting = `21時頃、${framedName}が${locName}のすぐ近くにいるのを見た、という証言がある。犯行現場のそばだ。`
+        mainTrick.framedAlibi = `だが${framedName}は21時頃、確かに${framedRealLoc}にいたことが別の証言から裏づけられている。${locName}付近で見かけられた「${framedName}」は、変装した何者かだった可能性が高い。`
+        mainTrick.killerNote += `\n\nさらにあなたは${framedName}の身なりを真似て変装し、わざと${locName}付近で目撃されることで、疑いを${framedName}へ向けようと仕組んだ。ただし${framedName}自身には21時頃の本当の居場所があり、そこを突かれると変装が露見する。`
       }
     }
   }
+
+  // ── タイムライン（各キャラの事件当日の行動＝唯一の真実）──────────────
+  const timelines = generateTimelines(slots, alibis, secretActions, killers, mainTrick)
 
   // ── synopsis ──────────────────────────────────────────────────────────
   const synopsis = generateSynopsis(npcVictims, slots, deathDiscovery)
@@ -710,7 +740,70 @@ export function generateScenario(
     npcSurvivors,
     mainVictimLocation,
     mainTrick,
+    timelines,
   }
+}
+
+// 各キャラの事件当日の行動を時系列で組み立てる。アリバイ表・凶行・トリックと
+// 同一の実データから導出するため、ヒントカードと矛盾しない「唯一の真実」となる。
+const ARRIVAL_ACTIONS = [
+  '夕食を終えたあと、人目を避けてここへ移っていた。',
+  'ひとり静かに、思いにふけって時間を過ごしていた。',
+  '雨音を聞きながら、落ち着かない気持ちを持て余していた。',
+  'ほかの滞在客の気配を感じつつ、身を落ち着けていた。',
+  '長旅の疲れを癒すように、しばらく腰を落ち着けていた。',
+]
+const LATE_ACTIONS = [
+  '寝支度をしながら、その夜の出来事を反芻していた。',
+  '廊下の物音に気を留めつつ、静かに過ごしていた。',
+  '館のどこかで上がった声に気づいたが、関わるまいと息をひそめていた。',
+  '寝つけぬまま、雨の音を聞いて過ごしていた。',
+  'ひとり、落ち着かない気持ちを持て余していた。',
+]
+
+function generateTimelines(
+  slots: CharacterSlot[],
+  alibis: Partial<Record<CharacterSlot, { T1: Location; T2: Location; T3: Location }>>,
+  secretActions: Partial<Record<CharacterSlot, string>>,
+  killers: KillerInfo[],
+  mainTrick: MainTrick | undefined,
+): Record<CharacterSlot, TimelineEntry[]> {
+  const result = {} as Record<CharacterSlot, TimelineEntry[]>
+  const killerBySlot = new Map(killers.map(k => [k.slot, k] as const))
+
+  for (const slot of slots) {
+    const a = alibis[slot]
+    if (!a) continue
+    const secret = secretActions[slot] ?? ''
+    const killer = killerBySlot.get(slot)
+    const arrival = ARRIVAL_ACTIONS[Math.floor(Math.random() * ARRIVAL_ACTIONS.length)]
+    const late = LATE_ACTIONS[Math.floor(Math.random() * LATE_ACTIONS.length)]
+
+    if (killer) {
+      const sceneName = LOCATION_NAMES[killer.location]
+      const isMain = killer.victimName === MAIN_VICTIM.name
+      const victimName = killer.victimSlot ? (CHARACTERS[killer.victimSlot]?.name ?? '相手') : (killer.victimName ?? '相手')
+      const usesTrick = !!mainTrick && mainTrick.killerSlots.includes(slot)
+      const t2Action = isMain
+        ? `${sceneName}で${MAIN_VICTIM.name}を手にかけた。これがこの事件の真の犯行時刻である。`
+        : `${sceneName}で、自分の秘密を目撃した${victimName}を口封じのため手にかけた。`
+      const t3Action = usesTrick
+        ? `${LOCATION_NAMES[a.T3]}へ移り、仕掛けたトリックによって「その時刻には別の場所にいた」というアリバイが成立するよう振る舞った。`
+        : `${LOCATION_NAMES[a.T3]}へ移り、何事もなかったように振る舞った。`
+      result[slot] = [
+        { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `人目を避けて${LOCATION_NAMES[a.T1]}に入り、${secret}この隠し事が、のちの行動の伏線になる。` },
+        { period: PERIOD_T2, location: sceneName, action: t2Action },
+        { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: t3Action },
+      ]
+    } else {
+      result[slot] = [
+        { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `${LOCATION_NAMES[a.T1]}にいた。${arrival}` },
+        { period: PERIOD_T2, location: LOCATION_NAMES[a.T2], action: `人に言えない事情があり、ひそかに${LOCATION_NAMES[a.T2]}にいた。${secret}そのため、事件の時刻に何をしていたかを正直には話しづらい。` },
+        { period: PERIOD_T3, location: LOCATION_NAMES[a.T3], action: `${LOCATION_NAMES[a.T3]}にいた。${late}` },
+      ]
+    }
+  }
+  return result
 }
 
 function generateSynopsis(
@@ -742,7 +835,7 @@ function generateSynopsis(
       `前夜、${n}と源太郎が言い争うような声が聞こえたという証言がある。`,
       `発見直前、${n}が廊下を急ぎ足で立ち去るのを見た者がいた。`,
       `源太郎の部屋の前に、${n}のものと思しき品が残されていた。`,
-      `${n}が事件のあった時間帯、なぜか自室にいなかったという証言がある。`,
+      `${n}が21時頃、なぜか自室にいなかったという証言がある。`,
       `源太郎の机の上に、${n}宛ての破り捨てられた手紙の切れ端があった。`,
       `${n}の袖口に、拭い切れなかった赤い染みが残っていたのを見た者がいる。`,
       `夜半、${n}が誰かと押し殺した声で口論しているのを使用人が耳にした。`,

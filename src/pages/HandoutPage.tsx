@@ -7,6 +7,7 @@ import { LOCATION_NAMES } from '../data/locations'
 import AlibiMatrix from '../components/AlibiMatrix'
 import EvidenceCardView from '../components/EvidenceCard'
 import ManorMap from '../components/ManorMap'
+import TimelineView from '../components/TimelineView'
 import { naturalizeTime } from '../logic/timeText'
 
 const ROUND1_PHASE = 'round1'
@@ -225,6 +226,14 @@ export default function HandoutPage() {
             <Section title="あなただけの秘密（誰にも言わないこと）">
               <p className="text-amber-200 text-sm leading-relaxed">{char.secretAction}</p>
             </Section>
+            {scenario.timelines?.[viewSlot] && (
+              <Section title="事件当日のあなたの行動（時系列・厳重に秘密）" accent="amber">
+                <p className="text-amber-400/70 text-xs mb-3 leading-relaxed">
+                  これはあなただけが知る真実の行動です。討議では、どこまで正直に話すかはあなた次第です。
+                </p>
+                <TimelineView entries={scenario.timelines[viewSlot]} />
+              </Section>
+            )}
             {(() => {
               const myConns = (scenario.connections ?? []).filter(
                 c => c.fromSlot === viewSlot || c.toSlot === viewSlot
