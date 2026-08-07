@@ -161,9 +161,9 @@ function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: S
   const cards = [eye, sound, trace, misdir]
   const decisive = new Set<string>([eye.id])
 
-  // 計画的犯行のときだけ、トリックの錯覚（ミスリード）とその綻び（決定的な真）を配る。
-  // 衝動的な口封じ（premeditated=false）には事前トリックが無いので出さない。
-  if (t.premeditated && t.appearance && t.flaw) {
+  // トリック（事前の仕掛け／犯行後の即席工作）があるときだけ、
+  // その錯覚（ミスリード）と綻び（決定的な真）を配る。ただ逃げただけの犯行には無い。
+  if (t.appearance && t.flaw) {
     const appearance = makeCard(`【一見の状況】${t.appearance}`, 'alibi', null, false)
     const flaw = makeCard(`【トリックの綻び】${t.flaw}`, 'technical', null, true)
     cards.push(appearance, flaw)

@@ -268,10 +268,13 @@ const CAT_TRACE: Record<DeathCat, (loc: string) => string> = {
 }
 
 // コナン風トリック。cats='any' は全カテゴリで使える。{n}=犯人名, {loc}=犯行場所
-const TRICKS: { name: string; cats: 'any' | DeathCat[]; build: (loc: string) => { appearance: string; flaw: string; note: string } }[] = [
+// needsPrep=true は事前準備が要る（＝計画的犯行でしか使えない）。
+// needsPrep=false は犯行後にその場で即席にできる（＝衝動的な口封じのあとでも使える）。
+const TRICKS: { name: string; cats: 'any' | DeathCat[]; needsPrep: boolean; build: (loc: string) => { appearance: string; flaw: string; note: string } }[] = [
   {
     name: '録音による生存偽装トリック',
     cats: 'any',
+    needsPrep: true,
     build: loc => ({
       appearance: `犯行のあった後になっても、${loc}の方から源太郎本人の声が聞こえた——だから源太郎はその時刻まで生きていた、と多くの者が思い込んでいる。`,
       flaw: `だが聞こえた「源太郎の声」は、いつも決まって同じ一言の繰り返しだった。後に、部屋の隅から小型の録音機が見つかっている。`,
@@ -281,6 +284,7 @@ const TRICKS: { name: string; cats: 'any' | DeathCat[]; build: (loc: string) => 
   {
     name: '替え玉による目撃偽装トリック',
     cats: 'any',
+    needsPrep: true,
     build: loc => ({
       appearance: `犯行の後、${loc}の窓辺に源太郎らしき人影が立っているのを遠目に見た、という証言がある。だから源太郎はその時刻まで生きていた、と思われている。`,
       flaw: `だがその人影は、源太郎にしては背が高すぎたという。源太郎が決して着なかったはずの色の上着をまとっていた、とも。`,
@@ -290,6 +294,7 @@ const TRICKS: { name: string; cats: 'any' | DeathCat[]; build: (loc: string) => 
   {
     name: '時計の細工による死亡時刻偽装トリック',
     cats: ['fall', 'natural'],
+    needsPrep: false,
     build: loc => ({
       appearance: `${loc}に落ちて止まっていた時計は、実際よりも遅い時刻を指していた。そのため、源太郎はもっと遅い時刻に亡くなったと思われている。`,
       flaw: `だがその時計は「数日前から進みがおかしい」と源太郎自身がこぼしていた。止まった時刻をそのまま信じることはできない。冷めきった料理が、本当の時刻を物語っている。`,
@@ -299,6 +304,7 @@ const TRICKS: { name: string; cats: 'any' | DeathCat[]; build: (loc: string) => 
   {
     name: '施錠トリック（外からの密室工作）',
     cats: ['hang', 'fall'],
+    needsPrep: false,
     build: loc => ({
       appearance: `${loc}の扉は内側から施錠されていた。そのため、これは事件ではなく源太郎自身の身に起きたこと（自死や事故）だと思われている。`,
       flaw: `だが鍵穴の内側に、細い糸か針でこすったような真新しい傷が残っていた。扉は、外から施錠された可能性がある。`,
@@ -725,17 +731,40 @@ export function generateScenario(
           mainTrick.killerNote += `\n\nさらにあなたは${framedName}の身なりを真似て変装し、わざと${locName}付近で目撃されることで、疑いを${framedName}へ向けようと仕組んだ。ただし${framedName}自身には21時頃の本当の居場所があり、そこを突かれると変装が露見する。`
         }
       } else {
-        // 衝動的な口封じ：事前トリックは無い。現場は荒れ、慌てて痕跡を消した跡が残る。
+        // 衝動的な口封じ：秘密の行動を目撃され、とっさに手を下した。
+        // 事前準備の要るトリック（録音・替え玉）は使えないが、犯行"後"に
+        // その場で即席にできる工作（時計細工・外からの施錠）なら使うことがある。
         const innocentName = innocentSlots.length > 0 ? CHARACTERS[pickRandom(innocentSlots)].name : '館の使用人'
-        mainTrick = {
-          name: '計画外の犯行（とっさの口封じ）',
-          premeditated: false,
-          killerSlots: [mainKiller.slot],
-          killerNote: `これは計画された殺人ではない。あなたが秘密の行動をしているところを源太郎に目撃され、露見を恐れてとっさに手を下してしまった。凝ったアリバイ工作をする余裕はなく、せいぜい現場に残った痕跡を慌てて拭い、その場を離れるのが精一杯だった。だからこそ、慌てて消し忘れた痕跡や、犯行時刻そのものを突かれると弱い。`,
-          eyewitness,
-          sound,
-          trace,
-          misdirection: `21時頃、${innocentName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+        const improvisable = TRICKS.filter(t => !t.needsPrep && (t.cats === 'any' || t.cats.includes(mainCat!)))
+        const improvises = improvisable.length > 0 && Math.random() < 0.6
+
+        if (improvises) {
+          const trick = pickRandom(improvisable)
+          const built = trick.build(locName)
+          mainTrick = {
+            name: trick.name,
+            premeditated: false,
+            killerSlots: [mainKiller.slot],
+            killerNote: `これは計画された殺人ではない。秘密の行動を源太郎に目撃され、露見を恐れてとっさに手を下してしまった。だが、そのまま立ち去れば真っ先に疑われる——我に返ったあなたは、その場でできる工作をとっさに施した。\n\n${built.note}\n\nただし事前に用意した計画ではなく即席の細工だ。どこかに綻びを残していないか、気を張っていなければならない。`,
+            eyewitness,
+            sound,
+            trace,
+            appearance: built.appearance,
+            flaw: built.flaw,
+            misdirection: `21時頃、${innocentName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+          }
+        } else {
+          // 工作もできず、痕跡を慌てて拭って逃げただけ。
+          mainTrick = {
+            name: '計画外の犯行（とっさの口封じ）',
+            premeditated: false,
+            killerSlots: [mainKiller.slot],
+            killerNote: `これは計画された殺人ではない。あなたが秘密の行動をしているところを源太郎に目撃され、露見を恐れてとっさに手を下してしまった。凝ったアリバイ工作をする余裕はなく、せいぜい現場に残った痕跡を慌てて拭い、その場を離れるのが精一杯だった。だからこそ、慌てて消し忘れた痕跡や、犯行時刻そのものを突かれると弱い。`,
+            eyewitness,
+            sound,
+            trace,
+            misdirection: `21時頃、${innocentName}が落ち着かない様子で廊下を行き来していた、という証言がある。`,
+          }
         }
       }
     }
@@ -825,7 +854,7 @@ function generateTimelines(
       const victimName = killer.victimSlot ? (CHARACTERS[killer.victimSlot]?.name ?? '相手') : (killer.victimName ?? '相手')
       const isMainKillerHere = !!mainTrick && mainTrick.killerSlots.includes(slot)
       const isIncidental = isMain && isMainKillerHere && !mainTrick!.premeditated
-      const usesTrick = isMainKillerHere && !!mainTrick!.premeditated
+      const hasTrick = isMainKillerHere && !!mainTrick!.appearance   // 実際に仕掛け／工作がある
       const motive = !isMain
         ? ''
         : isIncidental
@@ -834,9 +863,11 @@ function generateTimelines(
       const t2Action = isMain
         ? `${motive}${sceneName}で源太郎を手にかけた——これがこの事件の真の犯行時刻である。`
         : `自分の秘密の行動を目撃されてしまい、口封じのため${sceneName}で${victimName}を手にかけた。`
-      const t3Action = usesTrick
-        ? `${LOCATION_NAMES[a.T3]}へ移り、仕掛けたトリックによって「その時刻には別の場所にいた」というアリバイが成立するよう振る舞った。`
-        : `${LOCATION_NAMES[a.T3]}へ移り、動揺を隠しながら何事もなかったように振る舞った。`
+      const t3Action = !hasTrick
+        ? `${LOCATION_NAMES[a.T3]}へ移り、動揺を隠しながら何事もなかったように振る舞った。`
+        : isIncidental
+          ? `現場にとっさの工作を施したうえで${LOCATION_NAMES[a.T3]}へ移り、即席の細工が見抜かれないことを祈りながら振る舞った。`
+          : `${LOCATION_NAMES[a.T3]}へ移り、仕掛けたトリックによって「その時刻には別の場所にいた」というアリバイが成立するよう振る舞った。`
       result[slot] = [
         { period: PERIOD_T1, location: LOCATION_NAMES[a.T1], action: `人目を避けて${LOCATION_NAMES[a.T1]}に入り、${secret}この時点では、まだ最後の一線は越えていなかった。` },
         { period: PERIOD_T2, location: sceneName, action: t2Action },
@@ -892,14 +923,17 @@ function generateStories(
     if (isKiller && killer) {
       const isMainKillerHere = !!mainTrick && mainTrick.killerSlots.includes(slot)
       const incidental = isMainKillerHere && !mainTrick!.premeditated
+      const hasTrick = isMainKillerHere && !!mainTrick!.appearance
       let how: string
       if (incidental) {
-        how = `——断っておくが、これは計画された殺人ではなかった。あなたの本当の目的は別にあった。だがその秘密の行動の最中、よりにもよって源太郎に見咎められてしまう。露見すればすべてを失う——そう悟った瞬間、あなたはとっさに手を下していた。`
-        how += `\n\n使ったのは「${killer.weapon.name}」。とはいえ凝ったアリバイ工作をする余裕などなく、あなたはただ現場に残った痕跡を慌てて拭い、その場を離れるだけで精一杯だった。表向きは「${killer.weapon.disguisedAs}」として処理されるかもしれないが、それは仕組んだというより、ただの幸運にすぎない。`
+        how = `——断っておくが、これは計画された殺人ではなかった。あなたの本当の目的は別にあった。だがその秘密の行動の最中、よりにもよって源太郎に見咎められてしまう。露見すればすべてを失う——そう悟った瞬間、あなたはとっさに手を下していた。使ったのは「${killer.weapon.name}」。`
+        how += hasTrick
+          ? `\n\nそのまま逃げれば真っ先に疑われる。我に返ったあなたは、その場でできる工作をとっさに施し、少しでも追及を逸らそうとした（詳しくは下の「とっさに施した工作」欄を参照）。だが用意した計画ではない、即席の細工だ。綻びを残していないか気が気ではない。`
+          : ` とはいえ凝ったアリバイ工作をする余裕などなく、あなたはただ現場に残った痕跡を慌てて拭い、その場を離れるだけで精一杯だった。表向きは「${killer.weapon.disguisedAs}」として処理されるかもしれないが、それは仕組んだというより、ただの幸運にすぎない。`
       } else {
         how = `——手にかけるのに使ったのは「${killer.weapon.name}」。この死が表向きは「${killer.weapon.disguisedAs}」として片づけられるよう、あなたは入念に細工を施した。`
-        if (isMainKillerHere && mainTrick!.premeditated) {
-          how += `\n\nそして何より、あなたには周到に用意した仕掛けがある。${mainTrick!.killerNote}`
+        if (hasTrick) {
+          how += `\n\nそして何より、あなたには周到に用意した仕掛けがある——それがあなたのアリバイを作っている（詳しくは下の「仕掛けたトリック」欄を参照）。`
         }
       }
       how += `\n\n夜が明ければ、この孤立した館で「犯人捜し」が始まる。あなたは無実の顔で、その輪の中に紛れ込まなければならない。`
