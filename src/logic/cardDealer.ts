@@ -341,17 +341,23 @@ export function dealCards(
   const keyCards = allCards.filter(c => keyIds.has(c.id))
   const restCards = allCards.filter(c => !keyIds.has(c.id))
 
-  // フェアプレイ担保：決定的な真の手がかりを最低数、必ず手札領域に配る（山札に埋もれさせない）
-  const guaranteeN = Math.min(keyCards.length, handCapacity, Math.max(1, Math.ceil(playerIds.length / 2)))
-  const guaranteed = shuffle(keyCards).slice(0, guaranteeN)
-  const guaranteedSet = new Set(guaranteed.map(c => c.id))
-  const leftover = shuffle([...restCards, ...keyCards.filter(c => !guaranteedSet.has(c.id))])
-
-  const handFillCount = Math.max(0, handCapacity - guaranteed.length)
-  const handFill = leftover.slice(0, handFillCount)
-  const deckFill = leftover.slice(handFillCount)
-  const hands = shuffle([...guaranteed, ...handFill])       // 手札領域（決定的手がかりを内包）
-  const pool = [...hands, ...deckFill].slice(0, totalNeeded)
+  // ── フェアプレイ担保（ミステリーの鉄則：完全犯罪はない）──────────────────
+  //  ① 決定的な真の手がかり（痕跡・綻び・目撃・死斑など）は一枚残らず必ず場に出す。
+  //     山札に回ることはあっても、"配られず捨てられる"ことは絶対にない（＝解けない事件を作らない）。
+  //  ② そのうち相応の枚数は最初から手札に配り、鍵が山札に埋もれて解けない事態も防ぐ。
+  const shuffledKeys = shuffle(keyCards)
+  const guaranteeN = Math.min(shuffledKeys.length, handCapacity, Math.max(2, Math.ceil(playerIds.length * 0.75)))
+  const handKeys = shuffledKeys.slice(0, guaranteeN)   // 手札へ確実に配る鍵
+  const deckKeys = shuffledKeys.slice(guaranteeN)      // 残りの鍵は山札へ（＝ドロップしない）
+  const filler = shuffle(restCards)
+  const handFill = filler.slice(0, Math.max(0, handCapacity - handKeys.length))
+  const usedFiller = handFill.length
+  // 山札は通常 deckSize 枚だが、鍵カードは必ず全部収めるため下限を deckKeys.length に引き上げる
+  const deckCapacity = Math.max(deckKeys.length, totalNeeded - handCapacity)
+  const deckFill = filler.slice(usedFiller, usedFiller + Math.max(0, deckCapacity - deckKeys.length))
+  const hands = shuffle([...handKeys, ...handFill])    // ちょうど handCapacity 枚
+  const deck = shuffle([...deckKeys, ...deckFill])
+  const pool = [...hands, ...deck]                     // 鍵カードは一枚も欠けない
 
   const cards: Record<string, EvidenceCard> = {}
   pool.forEach((card, i) => {
