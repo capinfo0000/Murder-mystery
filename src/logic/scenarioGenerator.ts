@@ -256,11 +256,11 @@ const CAT_DISCOVERY: Record<DeathCat, (loc: string) => string> = {
 const DEATH_CATS: DeathCat[] = ['natural', 'natural', 'natural', 'fall', 'hang', 'fire']
 
 // 手口カテゴリごとの「物音・におい」と「物的痕跡」（凶器と一致する手がかり）
-const CAT_SOUND: Record<DeathCat, (loc: string) => string> = {
-  natural: loc => `21時頃、${loc}の方から争う物音は聞こえなかった。ただ、源太郎が誰かと短く言葉を交わす声だけがした、という証言がある。`,
-  fall: loc => `21時頃、${loc}の方から、重いものが落ちるような鈍い音がした、という証言がある。`,
-  hang: loc => `21時頃、${loc}の方から、くぐもった短い呻き声のようなものを聞いた、という証言がある。`,
-  fire: loc => `21時頃、${loc}の方から何かを引きずる音がし、しばらくして焦げ臭さが漂ってきた、という証言がある。`,
+const CAT_SOUND: Record<DeathCat, (loc: string, time: string) => string> = {
+  natural: (loc, time) => `${time}頃、${loc}の方から争う物音は聞こえなかった。ただ、源太郎が誰かと短く言葉を交わす声だけがした、という証言がある。`,
+  fall: (loc, time) => `${time}頃、${loc}の方から、重いものが落ちるような鈍い音がした、という証言がある。`,
+  hang: (loc, time) => `${time}頃、${loc}の方から、くぐもった短い呻き声のようなものを聞いた、という証言がある。`,
+  fire: (loc, time) => `${time}頃、${loc}の方から何かを引きずる音がし、しばらくして焦げ臭さが漂ってきた、という証言がある。`,
 }
 const CAT_TRACE: Record<DeathCat, (loc: string) => string> = {
   natural: loc => `${loc}の源太郎の傍らに、飲みかけの杯が残されていた。底にわずかな沈殿物がある。`,
@@ -901,38 +901,42 @@ export function generateScenario(
       const locName = LOCATION_NAMES[mainMurderLocation]
       const innocentSlots = slots.filter(s => !killerSlots.includes(s))
       const premeditated = Math.random() < 0.5
-      const eyeVariants = [
-        `${crimeTime}の少し前、${killerName}が${locName}の方へ急ぎ足で向かうのを廊下で見た、という証言がある。`,
-        `${crimeTime}頃、${killerName}が${locName}のあたりから出てくるのを見た者がいる。ひどく思いつめた様子だったという。`,
-        `${crimeTime}前後、${killerName}の姿だけが${locName}付近で見当たらなくなっていた、と複数の者が話している。`,
-      ]
-      // 現場の物音・痕跡・目撃は、計画的でも衝動的でも共通の「真の手がかり」
-      const eyewitness = pickRandom(eyeVariants)
-      const sound = CAT_SOUND[mainCat](locName)
-      const trace = CAT_TRACE[mainCat](locName)
 
-      const innocentNameG = innocentSlots.length > 0 ? CHARACTERS[pickRandom(innocentSlots)].name : '館の使用人'
-
-      // ── 移動経路の手がかり（館の空間モデル manor.ts から導出）──────────
-      // 犯人が犯行前にいた場所(T1)から現場までの最短経路を計算し、そこで通る
-      // 廊下でのモブ目撃・大階段の足音・秘密通路の近道といった、図面と矛盾しない
-      // 物理的な証拠を作る。徒歩の距離・階のまたぎもすべて図面どおりに一致する。
+      // ── 犯人の現場への到達経路（空間モデル manor.ts）を先に確定させ、
+      //    目撃・物音・経路の手がかりをこの経路と矛盾しないように作る。──────
       const FLOOR_ORDER = { '2F': 2, '1F': 1, 'B1': 0 } as const
       // 目撃者はこのシナリオに実在する使用人・関係者（npcSurvivors）の役職名だけを使う。
-      // ヒントカードは彼らを役職名で呼ぶ規約（HandoutPage参照）なので、新しい人物を勝手に
-      // 作らない。生存者がいない場合のみ一般名詞にフォールバックする。
+      // ヒントカードは彼らを役職名で呼ぶ規約（HandoutPage参照）なので新しい人物を作らない。
       const witnessRoles = shuffle(npcSurvivors.map(n => n.role.replace(/（.*?）/g, '')))
       const mob1 = witnessRoles[0] ?? '居合わせた使用人'
       const mob2 = witnessRoles[1] ?? witnessRoles[0] ?? '別の使用人'
       const killerHome = alibis[mainKiller.slot]?.T1
+      const ri = (killerHome && killerHome !== mainMurderLocation) ? routeInfo(killerHome, mainMurderLocation) : null
+      // 秘密通路などで廊下も階段も通らず現場へ達した＝廊下では誰にも見られない。
+      const usedPassage = !!ri && ri.corridorFloors.length === 0 && !ri.usesStairs
+
+      // 目撃証言（真・決定的）。廊下を通ったか秘密通路を使ったかで内容を変え、
+      // routeClue や物音と食い違わないようにする。
+      const corridorEye = [
+        `${crimeTime}の少し前、${killerName}が${locName}の方へ急ぎ足で向かうのを廊下で見た、という証言がある。`,
+        `${crimeTime}頃、${killerName}が${locName}のあたりから出てくるのを見た者がいる。ひどく思いつめた様子だったという。`,
+        `${crimeTime}前後、${killerName}の姿だけが${locName}付近で見当たらなくなっていた、と複数の者が話している。`,
+      ]
+      const passageEye = [
+        `${crimeTime}の少し前、${killerName}が${locName}へ通じる壁の奥——秘密通路の入口へ入っていくのを見た、という証言がある。`,
+        `${crimeTime}頃、廊下には誰の姿もなかったが、${locName}へ通じる隠し通路のあたりで${killerName}らしい人影が動いた、という証言がある。`,
+      ]
+      const eyewitness = usedPassage ? pickRandom(passageEye) : pickRandom(corridorEye)
+      const sound = CAT_SOUND[mainCat](locName, crimeTime)
+      const trace = CAT_TRACE[mainCat](locName)
+
+      const innocentNameG = innocentSlots.length > 0 ? CHARACTERS[pickRandom(innocentSlots)].name : '館の使用人'
+
+      // ── 移動経路の手がかり（空間モデルから導出。廊下でのモブ目撃・階段の足音・秘密通路）──
       let routeClue: string | undefined
-      if (killerHome && killerHome !== mainMurderLocation) {
-        const ri = routeInfo(killerHome, mainMurderLocation)
+      if (ri && killerHome) {
         const fromName = LOCATION_NAMES[killerHome]
-        // 廊下も階段も一切通らずに移動できた＝秘密通路の近道を使った場合のみ。
-        // （通路が経路の端点になるだけで実際は廊下・階段を通る経路は下の分岐へ）
-        const avoidedCorridors = ri.corridorFloors.length === 0 && !ri.usesStairs
-        if (avoidedCorridors) {
+        if (usedPassage) {
           const fromIsPassage = killerHome === 'secret_passage' || killerHome === 'hidden_room'
           routeClue = fromIsPassage
             ? `${fromName}から${locName}へは廊下に出ずに直接移れる。犯行の前後、廊下で${killerName}を見た者が誰もいないのはそのためだ——この抜け道を知る者にしか、人目を避けたこの移動はできない。`
@@ -1057,9 +1061,14 @@ export function generateScenario(
         mainTrick.killerNote += `\n\nまた、あなたは犯行後、源太郎の遺体を${locName}から${discoveryName}へ運び、そこで倒れていたように見せかけて本当の犯行現場を隠した。だが死斑は動かした事実まで消してはくれない。`
       }
 
-      // 移動経路の手がかりを付与（現場に居合わせた遠隔装置トリック以外）。
-      // 犯人が犯行時刻に現場へ来たことを、目撃証言とは別の物理的経路から裏づける。
-      if (mainTrick && !mainTrick.remote && routeClue) mainTrick.routeClue = routeClue
+      // 目撃証言・物音を犯人の実際の状況に揃えるためのメタ情報を付与。
+      // これを見て cardDealer が周辺証言（廊下で目撃／通路で不可視／遠隔で不在）を作る。
+      if (mainTrick) {
+        mainTrick.crimeTime = crimeTime
+        mainTrick.killerApproach = mainTrick.remote ? 'remote' : (usedPassage ? 'passage' : 'corridor')
+        // 移動経路の手がかりは現場に居合わせた犯行のみ（遠隔装置は犯行時刻に不在）。
+        if (!mainTrick.remote && routeClue) mainTrick.routeClue = routeClue
+      }
     }
   }
 

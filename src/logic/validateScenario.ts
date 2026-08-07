@@ -184,6 +184,44 @@ function checkRouteClue(scenario: Scenario): string[] {
   return out
 }
 
+// 犯人の到達経路（廊下／秘密通路／遠隔）と、配布される目撃証言が矛盾しないか。
+//  passage: 秘密通路で廊下を通らなかったのに「廊下で犯人を目撃」する証言が混じっていないか
+//  remote : 犯行時刻に現場不在なのに、その時刻に現場付近で犯人を見た証言が混じっていないか
+function checkApproachConsistency(scenario: Scenario, texts: (string | undefined)[]): string[] {
+  const out: string[] = []
+  const t = scenario.mainTrick
+  if (!t) return out
+  const mk = (scenario.killers ?? []).find(k => t.killerSlots.includes(k.slot))
+  if (!mk) return out
+  const killerName = CHARACTERS[mk.slot]?.name
+  const sceneName = LOCATION_NAMES[mk.location]
+  if (!killerName) return out
+  // あらすじは容疑をほのめかす地の文であり、犯行時刻の目撃主張ではない。対象外。
+  const synopsis = scenario.synopsis
+  // 20時台（事件前）の目撃は経路と無関係なので対象外。犯行時刻付近の主張だけを見る。
+  const isPreCrime = (txt: string) => /20時/.test(txt)
+  // 犯人が現場（sceneName）へ向かう／現場付近にいたとする"接近目撃"に限定する。
+  const approachSighting = /(現場|そば|付近|方向|の方へ).{0,10}(急ぎ足|向かう|目撃)|(急ぎ足|向かう).{0,6}(現場|付近|方)|付近で立ち止まって/
+
+  for (const txt of texts) {
+    if (!txt || txt === synopsis || !txt.includes(killerName) || !txt.includes(sceneName)) continue
+    if (isPreCrime(txt)) continue
+    if (t.killerApproach === 'passage') {
+      // 通路経路：廊下で犯人が現場へ向かうのを見た、という肯定的目撃は矛盾。
+      if (/廊下/.test(txt) && approachSighting.test(txt) && !/見当たらなかった|どこにもなかった|姿がない/.test(txt)) {
+        out.push(`秘密通路経路なのに廊下での接近目撃が混在: ${txt.slice(0, 44)}…`)
+      }
+    }
+    if (t.remote) {
+      // 遠隔犯：犯行時刻に現場付近で動いていたとする目撃は矛盾（不在が鉄則）。
+      if (approachSighting.test(txt)) {
+        out.push(`遠隔犯なのに犯行時刻の現場付近目撃が混在: ${txt.slice(0, 44)}…`)
+      }
+    }
+  }
+  return out
+}
+
 // 犯行時刻が設定され、目撃・時系列で共通に使われているか。
 function checkCrimeTime(scenario: Scenario): string[] {
   const out: string[] = []
@@ -208,6 +246,7 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   for (const p of checkTextResidue(allTexts)) problems.push(p)
   for (const p of checkLocationsMapped(scenario)) problems.push(p)
   for (const p of checkRouteClue(scenario)) problems.push(p)
+  for (const p of checkApproachConsistency(scenario, allTexts)) problems.push(p)
   for (const p of checkCrimeTime(scenario)) problems.push(p)
 
   // 決定的手がかり（目撃証言）が配布カードに含まれているか（cards指定時のみ）

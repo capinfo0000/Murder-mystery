@@ -38,6 +38,7 @@ function generateNpcTestimonyCards(
   killers: KillerInfo[],
   slots: CharacterSlot[],
   assignedProfessions: Partial<Record<CharacterSlot, string>>,
+  mainTrick?: MainTrick,
 ): EvidenceCard[] {
   if (killers.length === 0) return []
   const cards: EvidenceCard[] = []
@@ -45,19 +46,34 @@ function generateNpcTestimonyCards(
   // 当主(源太郎)を殺した犯人＝21時台に犯行現場にいた者。生存者の「現場へ向かうのを見た」証言はこの犯人に紐づける。
   const mainKillers = killers.filter(k => k.victimName === MAIN_VICTIM.name)
   const testimonyKillers = mainKillers.length > 0 ? mainKillers : killers
+  // 犯人の到達経路に合わせて周辺証言を作る（メイントリックと矛盾させない）。
+  const ct = mainTrick?.crimeTime ?? '21時'
+  const approach = mainTrick?.killerApproach ?? 'corridor'
 
   survivors.forEach((npc, i) => {
     const killer = testimonyKillers[i % testimonyKillers.length]
     const killerName = CHARACTERS[killer.slot].name
     const locationName = LOCATION_NAMES[killer.location]
 
-    // True: survivor saw the main-victim killer heading toward the crime scene at 21時
-    const trueVariants = [
-      `${npc.role}は、21時頃に${killerName}が${locationName}の方向へ急ぎ足で向かうのを廊下から目撃したという。`,
-      `${npc.role}によれば、21時頃に${locationName}の方向から物音がした時刻、${killerName}の姿が廊下に見当たらなかったという。`,
-      `${npc.role}は「21時頃、${killerName}が${locationName}付近で立ち止まって何かを確かめるような様子だった」と話している。`,
+    // True: 犯人の状況に応じた真の証言。
+    //  corridor … 廊下を通って現場へ向かうのを目撃
+    //  passage  … 廊下では見えず、隠し通路の方で気配（＝廊下では不在）
+    //  remote   … 犯行時刻には現場に不在。20時台に現場付近で"仕込み"を目撃
+    const corridorV = [
+      `${npc.role}は、${ct}頃に${killerName}が${locationName}の方向へ急ぎ足で向かうのを廊下から目撃したという。`,
+      `${npc.role}によれば、${ct}頃に${locationName}の方向から物音がした時刻、${killerName}の姿が廊下に見当たらなかったという。`,
+      `${npc.role}は「${ct}頃、${killerName}が${locationName}付近で立ち止まって何かを確かめるような様子だった」と話している。`,
     ]
-    cards.push(makeCard(trueVariants[i % trueVariants.length], 'alibi', killer.slot, true))
+    const passageV = [
+      `${npc.role}によれば、${ct}頃に${locationName}の方向から物音がした時、廊下に${killerName}の姿はどこにもなかったという。廊下を通らずに現場へ達する道があったとしか思えない。`,
+      `${npc.role}は「${ct}の少し前、壁の奥で衣擦れのような音がした。${killerName}が隠し通路を通ったのではないか」と話している。`,
+    ]
+    const remoteV = [
+      `${npc.role}は、20時頃に${killerName}が${locationName}のあたりで何かを仕込むように屈み込んでいるのを見たという。`,
+      `${npc.role}によれば、${ct}頃に${locationName}で物音がした時、${killerName}はその場におらず、別室で他の者と一緒だったという。`,
+    ]
+    const trueV = approach === 'passage' ? passageV : approach === 'remote' ? remoteV : corridorV
+    cards.push(makeCard(trueV[i % trueV.length], 'alibi', killer.slot, true))
 
     // False: vague testimony pointing to innocent（ミスリード）
     if (innocentSlots.length > 0) {
@@ -325,7 +341,7 @@ export function dealCards(
   }
 
   // NPC testimony cards
-  const npcCards = generateNpcTestimonyCards(npcSurvivors, npcVictims, killers, slots, assignedProfessions)
+  const npcCards = generateNpcTestimonyCards(npcSurvivors, npcVictims, killers, slots, assignedProfessions, mainTrick)
   // NPC cause-of-death finding cards (gradual death-cause reveal)
   const npcCauseCards = generateNpcCauseCards(npcVictims)
   // secret passage / hidden room discovery hints
