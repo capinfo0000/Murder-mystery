@@ -7,13 +7,14 @@
 // うっかり新しい人物（例：下男の三次）を作っていないかを、目撃・証言の節を
 // 抜き出して照合することで検出する。
 // ════════════════════════════════════════════════════════════════════════
-import type { Scenario, EvidenceCard } from '../types/game'
+import type { Scenario, EvidenceCard, CharacterSlot } from '../types/game'
 import { CHARACTERS, MAIN_VICTIM } from '../data/characters'
 import { EXTRA_NPCS } from '../data/extraNpcs'
 import { LOCATION_NAMES } from '../data/locations'
 import { PIN_COORDS, MAIN_LOC_COORDS, routeInfo } from '../data/manor'
 import { isBloodPlausible } from '../data/weapons'
 import { CANONICAL_SLOT_PROFESSION } from '../data/pastProfessions'
+import { deriveFacts } from './scenarioFacts'
 
 // テンプレートで使われる一般名詞（役割・集合・関係を表す語）。個人名ではない。
 const GENERIC_PERSONS = [
@@ -432,6 +433,35 @@ function checkBalance(scenario: Scenario): string[] {
   return []
 }
 
+// ② 構造版：アリバイ系の真カードが、名指しした人物を"その者の居場所でない部屋"に
+//    置いていないか（al_006/007型の場所ズレの一般化）。真相ファクトと突き合わせる。
+function checkCardPresence(scenario: Scenario, trueCards: EvidenceCard[]): string[] {
+  const out: string[] = []
+  const facts = deriveFacts(scenario)
+  const inPlaySlots = Object.keys(scenario.roles ?? {}) as CharacterSlot[]
+  const killerSlots = new Set((scenario.killers ?? []).map(k => k.slot))
+  const locEntries = Object.entries(LOCATION_NAMES) as [string, string][]
+  for (const c of trueCards) {
+    if (c.category !== 'alibi') continue        // 在室を主張するのはアリバイ系カード
+    if (/変装|裏づけ/.test(c.content)) continue // 濡れ衣の否定文（現場を"否定"するため場所を挙げる）は対象外
+    // カードが名指しする在席キャラ（ちょうど一人のとき）。犯人は経路上で複数の部屋を
+    // 通るため対象外——無実の者は自分の居場所以外に置かれてはならない、を検査する。
+    const named = inPlaySlots.filter(s => c.content.includes(CHARACTERS[s].name))
+    if (named.length !== 1) continue
+    const slot = named[0]
+    if (killerSlots.has(slot)) continue
+    const rooms = facts.roomsBySlot.get(slot) ?? new Set<string>()
+    for (const [, roomName] of locEntries) {
+      if (roomName === '食堂' || roomName === '主寝室') continue // 夕食は全員共有／主寝室は当主private
+      if (!c.content.includes(roomName)) continue
+      if (rooms.has(roomName)) continue                         // 本人の居場所ならOK
+      out.push(`カードが無実の${CHARACTERS[slot].name}を居場所にない「${roomName}」へ置いている: ${c.content.slice(0, 40)}…`)
+      break
+    }
+  }
+  return out
+}
+
 // シナリオ全体の不変条件をまとめて検査する統合ハーネス。
 // cards を渡すと配布カードの内容も対象に含める。
 export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCard[] }): string[] {
@@ -453,6 +483,7 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   for (const p of checkPhysicalPlausibility(scenario, trueTexts)) problems.push(p)
   if (opts?.cards) for (const p of checkKillerAtSceneAtCrimeTime(scenario, trueCards)) problems.push(p)
   if (opts?.cards) for (const p of checkSolvability(scenario, trueCards)) problems.push(p)
+  if (opts?.cards) for (const p of checkCardPresence(scenario, trueCards)) problems.push(p)
   for (const p of checkProfessionConsistency(scenario)) problems.push(p)
   for (const p of checkImprovisedMethod(scenario)) problems.push(p)
   for (const p of checkNoCoLocatedWitness(scenario)) problems.push(p)
