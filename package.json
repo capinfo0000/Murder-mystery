@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "check": "vite-node scripts/check-scenarios.ts"
+    "check": "npx --yes vite-node scripts/check-scenarios.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
