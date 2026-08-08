@@ -366,6 +366,72 @@ function checkProfessionConsistency(scenario: Scenario): string[] {
   return out
 }
 
+// ① 可解性と一意性：真の手がかりだけで各犯人が特定でき、無実の者が殺人の証拠で
+//    名指されないこと。犯人を指し示す"決め手"の目印（現場へ向かう目撃・通路の気配・
+//    遠隔の仕込み・凶行・死斑・綻び・癖の解読 等）で名前が挙がるかを見る。
+const CULPRIT_CLUE = /急ぎ足で.{0,6}向かう|向かうのを.{0,8}目撃|付近で立ち止まって|見当たらなかった|隠し通路のあたり|壁の奥で衣擦れ|仕掛けるように屈み込|別室で他の者と一緒|手にかけ|殺害|止めを刺|致命傷|返り血|死斑|トリックの綻び|独特の癖|癖を指摘|習慣なのかもしれない/
+const MURDER_ACT = /手にかけ|殺害|返り血|死斑/
+function checkSolvability(scenario: Scenario, trueCards: EvidenceCard[]): string[] {
+  const out: string[] = []
+  if (scenario.outsideKiller || scenario.suicide || scenario.puzzleTargets) return out
+  const killers = scenario.killers ?? []
+  // 各犯人に、名前を挙げる"決め手"の真クルーがあるか（＝特定可能／可解）
+  for (const k of killers) {
+    const name = CHARACTERS[k.slot]?.name
+    if (!name) continue
+    const identified = trueCards.some(c =>
+      (c.content.includes(name) || c.relatedSlot === k.slot) && CULPRIT_CLUE.test(c.content))
+    if (!identified) out.push(`犯人 ${name} を特定できる決定的な真クルーが無い（可解性の欠落）`)
+  }
+  // 無実の者が殺人そのものの証拠で名指されていないか（一意性）
+  for (const [slot, role] of Object.entries(scenario.roles ?? {}) as [string, string][]) {
+    if (role !== 'innocent') continue
+    const name = CHARACTERS[slot as never]?.name
+    if (!name) continue
+    const framed = trueCards.find(c => c.content.includes(name) && MURDER_ACT.test(c.content))
+    if (framed) out.push(`無実の ${name} が殺人の証拠で名指されている（一意性の破れ）: ${framed.content.slice(0, 36)}…`)
+  }
+  return out
+}
+
+// ④ 因果整合：協力連鎖・口封じ・NPC死亡時刻の筋が通っているか。
+function checkCausalIntegrity(scenario: Scenario): string[] {
+  const out: string[] = []
+  const killerSlots = new Set((scenario.killers ?? []).map(k => k.slot))
+  // 協力連鎖の参加者は全員"犯人"であること
+  const cc = scenario.cooperationChain
+  if (cc) {
+    if (!killerSlots.has(cc.mastermindSlot)) out.push(`協力連鎖の首謀者 ${cc.mastermindSlot} が犯人でない`)
+    for (const l of cc.links) {
+      for (const s of [l.fromSlot, l.toSlot, l.relayToSlot]) {
+        if (s && !killerSlots.has(s)) out.push(`協力連鎖の参加者 ${s} が犯人でない`)
+      }
+    }
+  }
+  // 口封じされたNPCには、そのNPCを手にかけた犯人が実在すること／殺害は犯行(21時)より後
+  for (const v of scenario.npcVictims ?? []) {
+    if (!v.isRelatedToCase) continue
+    if (v.killerSlot !== undefined) {
+      const hit = (scenario.killers ?? []).some(k => k.slot === v.killerSlot && k.victimName === v.role)
+      if (!hit) out.push(`口封じ被害者「${v.role}」に対応する犯人がいない（killerSlot=${v.killerSlot}）`)
+    }
+    if (/20時|21時/.test(v.deathTime ?? '')) {
+      out.push(`口封じ被害者「${v.role}」の死亡時刻が犯行時刻帯(${v.deathTime})——口封じは犯行後のはず`)
+    }
+  }
+  return out
+}
+
+// ⑤(バランス) 退化防止：無実が最低1人いること（全員犯人だと事件が成立しない）。
+function checkBalance(scenario: Scenario): string[] {
+  if (scenario.outsideKiller || scenario.suicide || scenario.puzzleTargets) return []
+  const roles = Object.values(scenario.roles ?? {})
+  if (roles.length > 0 && !roles.includes('innocent')) {
+    return ['無実のプレイヤーが一人もいない（全員犯人＝事件として退化）']
+  }
+  return []
+}
+
 // シナリオ全体の不変条件をまとめて検査する統合ハーネス。
 // cards を渡すと配布カードの内容も対象に含める。
 export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCard[] }): string[] {
@@ -386,9 +452,12 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   const trueTexts = [...narrative, ...trueCards.map(c => c.content)]
   for (const p of checkPhysicalPlausibility(scenario, trueTexts)) problems.push(p)
   if (opts?.cards) for (const p of checkKillerAtSceneAtCrimeTime(scenario, trueCards)) problems.push(p)
+  if (opts?.cards) for (const p of checkSolvability(scenario, trueCards)) problems.push(p)
   for (const p of checkProfessionConsistency(scenario)) problems.push(p)
   for (const p of checkImprovisedMethod(scenario)) problems.push(p)
   for (const p of checkNoCoLocatedWitness(scenario)) problems.push(p)
+  for (const p of checkCausalIntegrity(scenario)) problems.push(p)
+  for (const p of checkBalance(scenario)) problems.push(p)
 
   // 決定的手がかり（目撃証言）が配布カードに含まれているか（cards指定時のみ）
   if (opts?.cards && scenario.mainTrick?.eyewitness) {
