@@ -45,6 +45,10 @@ Math.random = () => {
 }
 
 const counts: Record<string, number> = {}
+// 事件タイプの分布。外部犯・自殺のような「プレイヤーが誰も殺していない」経路が
+// 将来の変更でうっかり生成されなくなる（＝ハーネスが素通りする）のを防ぐため、
+// 分布を出力し、規定タイプが0件なら失敗させる。
+const caseCounts: Record<string, number> = { single: 0, multi: 0, outside: 0, suicide: 0, puzzle: 0 }
 let failed = 0
 let firstFailures = 0
 
@@ -52,6 +56,11 @@ for (let i = 0; i < N; i++) {
   const pc = 3 + (i % 5) // 3..7 を均等に
   const mode = MODES[i % MODES.length]
   const s = generateScenario(pc, mode)
+  if (s.outsideKiller) caseCounts.outside++
+  else if (s.suicide) caseCounts.suicide++
+  else if (mode === 'puzzle') caseCounts.puzzle++
+  else if ((s.killers ?? []).length >= 2) caseCounts.multi++
+  else caseCounts.single++
   const slots = getSlotsForCount(pc)
   const playerIds = slots.map((_, j) => `p${j}`)
   const cards = dealCards(
@@ -73,6 +82,17 @@ for (let i = 0; i < N; i++) {
 Math.random = origRandom
 
 console.log(`\n検査したシナリオ: ${N}`)
+console.log('事件タイプの分布:')
+for (const [k, v] of Object.entries(caseCounts)) {
+  console.log(`  ${v.toString().padStart(6)}  ${k} (${((v / N) * 100).toFixed(1)}%)`)
+}
+// 「プレイヤーが誰も殺していない」経路（外部犯・自殺）が生成され続けていることを保証する。
+const deadPaths = (['outside', 'suicide', 'single', 'multi', 'puzzle'] as const).filter(k => caseCounts[k] === 0)
+if (deadPaths.length) {
+  console.error(`\n❌ 生成されなかった事件タイプがある: ${deadPaths.join(', ')}（生成器の分岐が死んでいる可能性）`)
+  process.exit(1)
+}
+
 if (failed === 0) {
   console.log('✅ 不変条件の違反なし')
   process.exit(0)

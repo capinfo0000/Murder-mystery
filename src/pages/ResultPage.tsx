@@ -154,6 +154,9 @@ export default function ResultPage() {
                 <div className="bg-amber-950/30 border border-amber-900/50 rounded-lg p-3">
                   <div className="text-amber-300 font-medium text-sm mb-1">神条源太郎（自死）</div>
                   <p className="text-amber-200/70 text-xs">裏社会の組織が自分を消しに来ることを悟った当主は、追い詰められた末に自ら命を絶った。プレイヤーの誰も殺人は犯していない。館に集う者たちはそれぞれの秘密行動に追われ、当主の最後の苦悩を知らなかった。</p>
+                  {scenario.victimBackground && (
+                    <p className="text-amber-200/50 text-xs mt-2 pt-2 border-t border-amber-900/40">当主の背景: {scenario.victimBackground}</p>
+                  )}
                 </div>
               </Section>
             ) : scenario.outsideKiller ? (
@@ -161,6 +164,9 @@ export default function ResultPage() {
                 <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-3">
                   <div className="text-red-300 font-medium text-sm mb-1">組織の殺し屋（身元不明・逃走済み）</div>
                   <p className="text-red-200/70 text-xs">犯罪組織から派遣されたプロの殺し屋が当主を暗殺し、目撃者を口封じした後に逃走した。プレイヤーの誰も殺人は犯していない。</p>
+                  {scenario.victimBackground && (
+                    <p className="text-red-200/50 text-xs mt-2 pt-2 border-t border-red-900/40">当主の背景: {scenario.victimBackground}</p>
+                  )}
                 </div>
               </Section>
             ) : (

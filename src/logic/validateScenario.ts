@@ -433,6 +433,48 @@ function checkBalance(scenario: Scenario): string[] {
   return []
 }
 
+// ⑤(公平性) 「プレイヤーは誰も殺していない」事件（外部犯・自殺）の内部整合を
+//    積極的に検査する。ここが崩れると、正解が「外部犯／自殺」なのにプレイヤーが
+//    犯人としてカードで名指しされる等の不公平が生じる（無実の断罪）。
+function checkNoPlayerKiller(scenario: Scenario): string[] {
+  const out: string[] = []
+  const outside = !!scenario.outsideKiller
+  const suicide = !!scenario.suicide
+  if (!outside && !suicide) return out
+
+  if (outside && suicide) out.push('外部犯と自殺が同時に立っている（相互排他のはず）')
+
+  // プレイヤー犯人は一人も存在しない
+  if ((scenario.killers ?? []).length > 0) {
+    out.push(`プレイヤーが誰も殺していない事件なのに killers が空でない（${scenario.killers.length}名）`)
+  }
+  const killerRoles = (Object.entries(scenario.roles ?? {}) as [CharacterSlot, string][]).filter(([, r]) => r === 'killer')
+  if (killerRoles.length > 0) {
+    out.push(`プレイヤーが誰も殺していない事件なのに role=killer のプレイヤーがいる: ${killerRoles.map(([s]) => s).join(',')}`)
+  }
+  // プレイヤー犯を前提とする構造物は付いていてはならない
+  if (scenario.mainTrick) out.push('プレイヤーが誰も殺していない事件なのにプレイヤー犯のトリック(mainTrick)が付いている')
+  if (scenario.dualKillerInfo) out.push('プレイヤーが誰も殺していない事件なのに二重犯行情報(dualKillerInfo)が付いている')
+  if (scenario.cooperationChain) out.push('プレイヤーが誰も殺していない事件なのに協力連鎖(cooperationChain)が付いている')
+
+  // NPCの他殺は「プレイヤー犯」に紐づいていてはならない（外部犯＝殺し屋 / 自殺＝他殺なし）
+  const murdered = (scenario.npcVictims ?? []).filter(v => v.isRelatedToCase)
+  for (const v of murdered) {
+    if (v.killerSlot) out.push(`外部犯/自殺事件なのに口封じ被害者「${v.role}」がプレイヤー(${v.killerSlot})に紐づいている`)
+  }
+  if (suicide && murdered.length > 0) {
+    out.push(`自殺事件なのに他殺（口封じ）の死亡者が${murdered.length}件ある——自殺なら他殺は生じないはず`)
+  }
+  if (outside && murdered.length === 0) {
+    out.push('外部犯事件なのに殺し屋による口封じ被害者が一人もいない（外部犯である手がかりが皆無）')
+  }
+  // 動機（＝当主が組織に消される背景）が提示されていること
+  if (!scenario.victimBackground) {
+    out.push(`外部犯/自殺事件なのに当主の背景(victimBackground)が設定されていない`)
+  }
+  return out
+}
+
 // ② 構造版：アリバイ系の真カードが、名指しした人物を"その者の居場所でない部屋"に
 //    置いていないか（al_006/007型の場所ズレの一般化）。真相ファクトと突き合わせる。
 function checkCardPresence(scenario: Scenario, trueCards: EvidenceCard[]): string[] {
@@ -522,6 +564,7 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   for (const p of checkNoCoLocatedWitness(scenario)) problems.push(p)
   for (const p of checkCausalIntegrity(scenario)) problems.push(p)
   for (const p of checkBalance(scenario)) problems.push(p)
+  for (const p of checkNoPlayerKiller(scenario)) problems.push(p)
   for (const p of checkTimelineAlibiAgreement(scenario)) problems.push(p)
   for (const p of checkTemporalConsistency(scenario)) problems.push(p)
 

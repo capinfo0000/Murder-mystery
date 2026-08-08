@@ -201,6 +201,7 @@ export interface Scenario {
   puzzleTargets?: Partial<Record<CharacterSlot, CharacterSlot>>
   outsideKiller?: boolean      // true when a hired hitman (not any player) committed all murders
   suicide?: boolean            // true when the main victim took their own life
+  victimBackground?: string    // 当主が組織に狙われた背景（外部犯・自殺事件で真相に表示）
   connections?: PlayerConnection[]  // optional inter-player secret arrangements
   dualKillerInfo?: DualKillerInfo  // set when two killers independently targeted the same victim
   cooperationChain?: CooperationChain  // anonymous chain coordination between killers

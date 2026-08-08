@@ -1079,6 +1079,13 @@ export function generateScenario(
   // ── synopsis ──────────────────────────────────────────────────────────
   const synopsis = generateSynopsis(npcVictims, slots, deathDiscovery, discoveryScene)
 
+  // 外部犯・自殺事件では、当主が犯罪組織の傀儡だった／組織に消された背景を真相に添える。
+  // （プレイヤー犯の事件では従来どおり固定の当主背景 MAIN_VICTIM.background を使う）
+  const victimBackground =
+    outsideKiller || suicide
+      ? pickRandom(VICTIM_BACKGROUNDS.filter(b => b.id.startsWith('organization_puppet'))).detail
+      : undefined
+
   const scenario: Scenario = {
     discoveredBy,
     victims,
@@ -1090,6 +1097,7 @@ export function generateScenario(
     puzzleTargets,
     outsideKiller: outsideKiller || undefined,
     suicide: suicide || undefined,
+    victimBackground,
     connections: connections.length > 0 ? connections : undefined,
     dualKillerInfo,
     cooperationChain: cooperationChain ?? undefined,
