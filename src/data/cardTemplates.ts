@@ -109,41 +109,10 @@ export const CARD_TEMPLATES: CardTemplate[] = [
 
   // ───── アリバイ証言（alibi）─────
   {
-    id: 'al_001',
-    content: '私はT2の時間帯に書斎の前を通った際、中から紙をめくる音が聞こえたのを確かに覚えている。',
-    category: 'alibi', relatedSlot: 'A', baseIsTrue: true, secretSpotAlibi: true,
-  },
-  {
-    id: 'al_002',
-    content: 'T2頃、図書室の明かりが点いていた。誰かが本棚を漁っているような物音も聞こえた。',
-    category: 'alibi', relatedSlot: 'B', baseIsTrue: true, secretSpotAlibi: true,
-  },
-  {
-    id: 'al_003',
-    content: 'T2頃、絵画室から重い物を動かす音がした。扉の隙間から明かりが漏れていた。',
-    category: 'alibi', relatedSlot: 'C', baseIsTrue: true, secretSpotAlibi: true,
-  },
-  {
-    id: 'al_004',
-    content: 'T2の時刻、廊下の壁がかすかに振動した。誰かが秘密通路を移動していたのではないか。',
-    category: 'alibi', relatedSlot: 'D', baseIsTrue: true, secretSpotAlibi: true,
-  },
-  {
-    id: 'al_005',
-    content: '金庫室のある方向から、金属音が断続的に聞こえた。鍵をいじる音のように聞こえた。',
-    category: 'alibi', relatedSlot: 'E', baseIsTrue: true,
-  },
-  {
-    id: 'al_006',
-    content: 'T2頃、館の奥まった隠し部屋のあたりから、湿った土と青い草の匂いがかすかに漂っていた。誰かがひそかに植物の世話をしていたようだ。',
-    category: 'alibi', relatedSlot: 'F', baseIsTrue: true, secretSpotAlibi: true,
-  },
-  {
-    id: 'al_007',
-    content: 'T2の時間帯、書斎で誰かが引き出しや書類をひそかに漁るような物音がした。何かを探している気配だった。',
-    category: 'alibi', relatedSlot: 'G', baseIsTrue: true, secretSpotAlibi: true,
-  },
-  {
+    // al_001〜al_007（各キャラの「秘密の間」アリバイ）は固定文字列をやめ、真相ファクトから
+    // 生成する（cardDealer.generateSecretActionCards）。場所は本人の t2Location に、時刻は
+    // 役割（当主犯＝20時台/T1、無実＝21時台/T2）に機械的に束縛され、al_006/007型の
+    // 場所・時刻ズレが構造的に発生しなくなる。
     id: 'al_008',
     content: 'T2の頃、Aが「ずっと自室で眠っていた」と主張していたが、廊下でAの足音を聞いた者がいる。',
     category: 'alibi', relatedSlot: 'A', baseIsTrue: true,
