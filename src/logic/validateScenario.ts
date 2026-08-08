@@ -462,6 +462,39 @@ function checkCardPresence(scenario: Scenario, trueCards: EvidenceCard[]): strin
   return out
 }
 
+// 時系列(timeline)とアリバイ表の居場所が完全一致するか。ハンドアウトは両方を
+// 同時に見せるため、ズレれば本人の記録同士が食い違って見える。
+function checkTimelineAlibiAgreement(scenario: Scenario): string[] {
+  const out: string[] = []
+  for (const [slotKey, a] of Object.entries(scenario.alibis ?? {})) {
+    const slot = slotKey as CharacterSlot
+    const tl = scenario.timelines?.[slot]
+    if (!a || !tl) continue
+    const expect = [LOCATION_NAMES[a.T1], LOCATION_NAMES[a.T2], LOCATION_NAMES[a.T3]]
+    for (let p = 0; p < 3 && p < tl.length; p++) {
+      if (tl[p].location !== expect[p]) {
+        out.push(`${CHARACTERS[slot]?.name ?? slot} の時系列(${tl[p].location})とアリバイ(${expect[p]})が不一致[T${p + 1}]`)
+      }
+    }
+  }
+  return out
+}
+
+// 時間の前後関係の整合：犯行は21時台、口封じはその後（深夜）、遠隔の罠は犯行前(20時台)。
+function checkTemporalConsistency(scenario: Scenario): string[] {
+  const out: string[] = []
+  const facts = deriveFacts(scenario)
+  // 犯行時刻ラベルが21時台であること（分単位でも21時始まり）
+  const ct = facts.scene?.crimeTime
+  if (ct && !/^21時/.test(ct)) out.push(`犯行時刻(${ct})が21時台でない`)
+  // 遠隔装置：罠設置(20時台)→作動(21時台)の順。目撃文が20時の設置に言及するはず。
+  if (facts.scene?.remote) {
+    const eye = scenario.mainTrick?.eyewitness ?? ''
+    if (eye && !/20時/.test(eye)) out.push('遠隔装置なのに設置目撃(20時台)への言及がない')
+  }
+  return out
+}
+
 // シナリオ全体の不変条件をまとめて検査する統合ハーネス。
 // cards を渡すと配布カードの内容も対象に含める。
 export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCard[] }): string[] {
@@ -489,6 +522,8 @@ export function validateScenario(scenario: Scenario, opts?: { cards?: EvidenceCa
   for (const p of checkNoCoLocatedWitness(scenario)) problems.push(p)
   for (const p of checkCausalIntegrity(scenario)) problems.push(p)
   for (const p of checkBalance(scenario)) problems.push(p)
+  for (const p of checkTimelineAlibiAgreement(scenario)) problems.push(p)
+  for (const p of checkTemporalConsistency(scenario)) problems.push(p)
 
   // 決定的手がかり（目撃証言）が配布カードに含まれているか（cards指定時のみ）
   if (opts?.cards && scenario.mainTrick?.eyewitness) {
