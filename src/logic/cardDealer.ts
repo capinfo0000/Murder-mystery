@@ -166,6 +166,29 @@ function generateSecretRouteCards(): EvidenceCard[] {
   return shuffle(routes).slice(0, count).map(r => makeCard(r, 'technical', null, true))
 }
 
+// 各キャラの「秘密の間」アリバイカードを真相ファクトから生成する（固定文字列をやめる）。
+// 場所＝本人の秘密行動の場所(t2Location)、時刻＝当主を手にかけた犯人なら20時台(T1)、
+// それ以外(無実・NPC殺し犯)は21時台(T2)。場所・時刻が真相に機械的に束縛されるため、
+// al_006/007 型の「カードでは○○にいるのに行動記録に無い」矛盾が構造的に起きない。
+const SECRET_ACTION_FLAVOR: Partial<Record<CharacterSlot, (time: string, room: string) => string>> = {
+  A: (t, r) => `${t}頃、${r}の前を通ると、中から紙をめくるような音が聞こえた、という証言がある。`,
+  B: (t, r) => `${t}頃、${r}の明かりが点いており、本棚を漁るような物音がした、という証言がある。`,
+  C: (t, r) => `${t}頃、${r}から重い物を動かす音がし、扉の隙間から明かりが漏れていた、という証言がある。`,
+  D: (t, r) => `${t}の頃、廊下の壁がかすかに振動した。${r}を通って移動していた者がいたのではないか。`,
+  E: (t, r) => `${t}頃、${r}の方向から、金属を扱うような、鍵をいじる音が断続的に聞こえた、という証言がある。`,
+  F: (t, r) => `${t}頃、${r}のあたりから湿った土と青い草の匂いがかすかに漂っていた。誰かがひそかに植物の世話をしていたようだ。`,
+  G: (t, r) => `${t}の時間帯、${r}で引き出しや書類をひそかに漁るような物音がした、という証言がある。`,
+}
+function generateSecretActionCards(slots: CharacterSlot[], mainKillerSlots: Set<CharacterSlot>): EvidenceCard[] {
+  return slots.flatMap(slot => {
+    const flavor = SECRET_ACTION_FLAVOR[slot]
+    if (!flavor) return []
+    const room = LOCATION_NAMES[CHARACTERS[slot].t2Location]
+    const time = mainKillerSlots.has(slot) ? '20時' : '21時'
+    return [makeCard(flavor(time, room), 'alibi', slot, true)]
+  })
+}
+
 // コナン風トリックと現場の手がかりを、事件の実データから生成する。
 // eyewitness/flaw は決定的な真の手がかり（フェアプレイ担保の対象）。
 function generateTrickCards(t?: MainTrick): { cards: EvidenceCard[]; decisive: Set<string> } {
@@ -383,6 +406,8 @@ export function dealCards(
   const npcCauseCards = generateNpcCauseCards(npcVictims)
   // secret passage / hidden room discovery hints
   const secretRouteCards = generateSecretRouteCards()
+  // 各キャラの「秘密の間」アリバイ（真相ファクトから生成）
+  const secretActionCards = generateSecretActionCards(slots, mainKillerSlots)
   // コナン風トリック＋現場の手がかり（事件データから生成）
   const trickResult = generateTrickCards(mainTrick)
   // 現場に残った痕跡（庭の花・血痕の付いた品など）＝目撃証言とは別型の決定的手がかり
@@ -394,8 +419,10 @@ export function dealCards(
   for (const c of npcCauseCards) if (c.isTrue && c.category === 'psychology') keyIds.add(c.id)
   for (const id of trickResult.decisive) keyIds.add(id)
   for (const id of traceResult.decisive) keyIds.add(id)
+  // 犯人の秘密行動アリバイは決定的手がかり扱い（従来の al_00X 相当）
+  for (const c of secretActionCards) if (c.relatedSlot && killerSlots.includes(c.relatedSlot)) keyIds.add(c.id)
 
-  const candidateCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards, ...trickResult.cards, ...traceResult.cards]
+  const candidateCards = [...resolved, ...professionCards, ...npcCards, ...npcCauseCards, ...secretRouteCards, ...secretActionCards, ...trickResult.cards, ...traceResult.cards]
 
   // ── 真相ゲート：確定した真相（凶器・手口・配役）に矛盾するカードは配らない ──────
   // 真相を先に固め、それに合わないカードは物理的にありえない／役柄と食い違うものとして
